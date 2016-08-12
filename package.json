@@ -1,0 +1,40 @@
+{
+  "name": "kompactor",
+  "version": "1.0.0",
+  "description": "A compression library for the modern web",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha tests/index.js",
+    "build": "webpack  -p -d -j --define process.env.NODE_ENV='\"browser\"' --config ./webpack.config"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fed135/kompactor.git"
+  },
+  "keywords": [
+    "socket",
+    "io",
+    "kompactor",
+    "compact",
+    "encode",
+    "encoding",
+    "serializing",
+    "buffer",
+    "byte",
+    "decode",
+    "decoding",
+    "compress",
+    "data"
+  ],
+  "author": "frederic charette <fredericcharette@gmail.com>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/fed135/kompactor/issues"
+  },
+  "homepage": "https://github.com/fed135/kompactor#readme",
+  "devDependencies": {
+    "chai": "3.5.x",
+    "mocha": "2.5.x"
+  },
+  "dependencies": {}
+}
