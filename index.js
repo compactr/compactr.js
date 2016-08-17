@@ -6,8 +6,8 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const Kompactor = require('./src');
+const Compactr = require('./src');
 
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = Kalm;
+module.exports = Compactr;

@@ -1,17 +1,17 @@
-# Kompactor
+# Compactr
 *A compression library for the modern web*
 
-[![Kompactor](https://img.shields.io/npm/v/kompactor.svg)](https://www.npmjs.com/package/kompactor)
-[![Build Status](https://travis-ci.org/fed135/kompactor.svg?branch=master)](https://travis-ci.org/fed135/kompactor)
-[![Dependencies Status](https://david-dm.org/fed135/kompactor.svg)](https://www.npmjs.com/package/kompactor)
-[![Code Climate](https://codeclimate.com/github/fed135/kompactor/badges/gpa.svg)](https://codeclimate.com/github/fed135/kompactor)
-[![Gitter](https://img.shields.io/gitter/room/fed135/kompactor.svg)](https://gitter.im/fed135/kompactor)
+[![Compactr](https://img.shields.io/npm/v/compactr.svg)](https://www.npmjs.com/package/compactr)
+[![Build Status](https://travis-ci.org/fed135/compactr.svg?branch=master)](https://travis-ci.org/fed135/compactr)
+[![Dependencies Status](https://david-dm.org/fed135/compactr.svg)](https://www.npmjs.com/package/compactr)
+[![Code Climate](https://codeclimate.com/github/fed135/compactr/badges/gpa.svg)](https://codeclimate.com/github/fed135/compactr)
+[![Gitter](https://img.shields.io/gitter/room/fed135/compactr.svg)](https://gitter.im/fed135/compactr)
 
 ---
 
 ## What is this and why does it matter?
 
-Kompactor is a library to compress and decompress Javascript objects before sending them over the web. It's immencely usefull for web applications that use sockets a lot. Smaller payloads equals better, faster throughput and less bandwidth costs.
+Compactr is a library to compress and decompress Javascript objects before sending them over the web. It's immencely usefull for web applications that use sockets a lot. Smaller payloads equals better, faster throughput and less bandwidth costs.
 
 
 ## Aren't there any other libraries out there that do this?
@@ -30,12 +30,12 @@ Not only are they overly complex, they are also written in a different markup, w
 
 ## So what's your solution?
 
-Protocol Buffers are awesome. Having schemas to deflate and inflate data while maintaining some kind of validation is a great concept. Kompactor's goal is to build on that to better suite Node server developement and reduce noise by allowing you to re-use your current Model schemas.
+Protocol Buffers are awesome. Having schemas to deflate and inflate data while maintaining some kind of validation is a great concept. Compactr's goal is to build on that to better suite Node server developement and reduce noise by allowing you to re-use your current Model schemas.
 
 
 ## Examples, please.
 
-For example, if you have a DB schema for users, you can use that directly as a schema for Kompactor.
+For example, if you have a DB schema for users, you can use that directly as a schema for Compactr.
 
 ```
 /* Waterline Schema (User) */
@@ -56,10 +56,10 @@ For example, if you have a DB schema for users, you can use that directly as a s
 ```
 /* User compessing in controller */
 
-const Kompactor = require('kompactor');
+const Compactr = require('compactr');
 
 User.create({ id: 0, name: 'Bruce' })
-  .then(user => Kompactor.encode(User, user))
+  .then(user => Compactr.encode(User, user))
   .then(deflated => /* Send encoded User */);
 
 ``` 
@@ -67,7 +67,7 @@ User.create({ id: 0, name: 'Bruce' })
 ```
 /* Decoding the User data */
 
-let user = Kompactor.decode(User, deflated);
+let user = Compactr.decode(User, deflated);
 
 ```
 
@@ -95,10 +95,11 @@ See this chart:
 
 In the near future, you will be able to:
 
-[ ] Use Waterline schemas
-[ ] Synchronously encode/decode
-[ ] Asynchronously encode/decode (Promise-based)
-[ ] Stream encoding-decoding
+- [ ] Use Waterline schemas
+- [ ] Synchronously encode/decode
+- [ ] Asynchronously encode/decode (Promise-based)
+- [ ] Stream encoding-decoding
+- [ ] Nested objects
 
 ## Alright, I'm convinced! How can I help?
 

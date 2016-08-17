@@ -1,5 +1,5 @@
 {
-  "name": "kompactor",
+  "name": "compactr",
   "version": "1.0.0",
   "description": "A compression library for the modern web",
   "main": "index.js",
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fed135/kompactor.git"
+    "url": "git+https://github.com/fed135/compactr.git"
   },
   "keywords": [
     "socket",
     "io",
-    "kompactor",
+    "compactr",
     "compact",
     "encode",
     "encoding",
@@ -29,9 +29,9 @@
   "author": "frederic charette <fredericcharette@gmail.com>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/fed135/kompactor/issues"
+    "url": "https://github.com/fed135/compactr/issues"
   },
-  "homepage": "https://github.com/fed135/kompactor#readme",
+  "homepage": "https://github.com/fed135/compactr#readme",
   "devDependencies": {
     "chai": "3.5.x",
     "mocha": "2.5.x"
