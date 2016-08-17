@@ -27,6 +27,8 @@ The first thing that comes to mind is the painful management of `.proto` files.
 
 Not only are they overly complex, they are also written in a different markup, which makes dynamic generation or property probing a bit of a hassle. Not to mention that you have to maintain parity across services of these messages that are more often than not a copy of your data Models. (See [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself))
 
+Furthermore, Compactr has **NO** dependencies or compiled modules. It's the lightest module you've ever seen!
+
 
 ## So what's your solution?
 
