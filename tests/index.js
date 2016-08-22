@@ -7,8 +7,6 @@ let encodeTime;
 let time;
 let mult = 512;
 
-console.log('Compactr');
-
 time = Date.now();
 
 for(let i = 0; i<mult*mult; i++) {
@@ -17,7 +15,7 @@ for(let i = 0; i<mult*mult; i++) {
 
 encodeTime = Date.now() - time;
 
-console.log('encode:', encodeTime);
+console.log('Compactr encode:', encodeTime);
 time = Date.now();
 
 for(let i = 0; i<mult*mult; i++) {
@@ -25,13 +23,9 @@ for(let i = 0; i<mult*mult; i++) {
 	unpacked = Compactr.decode(User, packed);
 }
 
-console.log('decode:', (Date.now() - time) - encodeTime);
+console.log('Compactr decode:', (Date.now() - time) - encodeTime);
 
-console.log('size:', packed.length);
-console.log(unpacked);
-console.log('---');
-
-console.log('JSON')
+console.log('Compactr size:', packed.length);
 
 time = Date.now();
 
@@ -41,7 +35,7 @@ for(let i = 0; i<mult*mult; i++) {
 
 encodeTime = Date.now() - time;
 
-console.log('encode:', encodeTime);
+console.log('JSON encode:', encodeTime);
 time = Date.now();
 
 for(let i = 0; i<mult*mult; i++) {
@@ -50,9 +44,6 @@ for(let i = 0; i<mult*mult; i++) {
 	unpacked = JSON.parse(packed.toString());
 }
 
-console.log('decode:', (Date.now() - time) - encodeTime);
+console.log('JSON decode:', (Date.now() - time) - encodeTime);
 
-console.log('size:', packed.length);
-
-console.log(unpacked);
-console.log('---');
+console.log('JSON size:', packed.length);

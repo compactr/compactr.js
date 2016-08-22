@@ -79,18 +79,35 @@ You need Node 6.0.0 and up
 
 ## What about performances?
 
-(512*512 Objects)
+### 512*512 Objects - Single core
 
-Compactr
-encode: 2157 ms
-decode: 3522 ms
-size: 37 bytes
----
-JSON
-encode: 2281 ms
-decode: 2017 ms
-size: 82 bytes
+**Compactr**
 
+- encode: 2157 ms
+- decode: 3522 ms
+- size: 37 bytes
+
+
+**JSON**
+- encode: 2281 ms
+- decode: 2017 ms
+- size: 82 bytes
+
+### 512*512 Object - Multi core (4)
+
+**Compactr**
+
+- encode: 19660 ms
+- decode: 25515 ms
+- size: 37 bytes
+
+
+**JSON**
+- encode: 17912 ms
+- decode: 13369 ms
+- size: 82 bytes
+
+*Benchmarks performed on core i3 zenbook running Ubuntu 16.04 and Node 6.2.2*
 
 ## Alright, what about features?
 
