@@ -39,13 +39,13 @@ Protocol Buffers are awesome. Having schemas to deflate and inflate data while m
 
 For example, if you have a DB schema for users, you can use that directly as a schema for Compactr.
 
-| **Waterline** | **Schema.js** | **Mongoose** |
+| **Waterline** | **Mongoose** |
 | --- | --- | --- |
-| `{` <br> `  id: {` <br> `    type: 'integer',`  <br> `   required: true`  <br> `  },`  <br> `  name: 'string'`  <br>  `}` | `[` <br> `  {` <br> `    name: 'id',` <br>  `    type: 'int',` <br> `  },` <br> `  {` <br> `   name:'name'` <br> `   type:'varchar'` <br> `  }` <br> `]` | `{` <br> `  id: {` <br> `    type: Number,`  <br> `   required: true`  <br> `  },`  <br> `  name: String`  <br>  `}` |
+| `{` <br> `  id: {` <br> `    type: 'integer',`  <br> `   required: true`  <br> `  },`  <br> `  name: 'string'`  <br>  `}` | `{` <br> `  id: {` <br> `    type: Number,`  <br> `   required: true`  <br> `  },`  <br> `  name: String`  <br>  `}` |
 
 
 ```
-/* User compessing in controller */
+/* User compessing in a controller */
 
 const Compactr = require('compactr');
 
@@ -61,6 +61,7 @@ User.create({ id: 0, name: 'Bruce' })
 let user = Compactr.decode(User, deflated);
 
 ```
+No need to create additionnal models for serialization!
 
 
 ## Can that be used for Websockets too?
