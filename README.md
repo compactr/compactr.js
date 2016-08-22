@@ -79,18 +79,27 @@ You need Node 6.0.0 and up
 
 ## What about performances?
 
-See this chart:
+(512*512 Objects)
+
+Compactr
+encode: 2157 ms
+decode: 3522 ms
+size: 37 bytes
+---
+JSON
+encode: 2281 ms
+decode: 2017 ms
+size: 82 bytes
 
 
 ## Alright, what about features?
 
 In the near future, you will be able to:
 
-- [ ] Use Waterline schemas
-- [ ] Synchronously encode/decode
-- [ ] Asynchronously encode/decode (Promise-based)
-- [ ] Stream encoding-decoding
-- [ ] Nested objects
+- [x] Use Waterline schemas
+- [x] Use Mongoose schemas
+- [x] Synchronously encode/decode
+- [ ] Nested objects/ Arrays
 
 ## Alright, I'm convinced! How can I help?
 
