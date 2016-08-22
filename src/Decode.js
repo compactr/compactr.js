@@ -13,29 +13,24 @@ const Types = require('./Types');
 
 function Decode(schema, data) {
 	let result = {};
-	let keys = Object.keys(schema);
+	const keys = Object.keys(schema);
 	let bytes = new Workbench(data);
 
-	let _propName;
-	let _propType;
-	let _caret = 0;
+	const len = data.length;
+	const read_skip = 2;
+	let _caret = len;
 
-	data.forEach((byte, index) => {
-		// SEP
-		if (byte === Workbench.SEP_CODE) {
-			if (index > 0) {
-				_propName = keys[bytes.read(Types.NUMBER, _caret + 1, _caret + 2)];
-				_propType = Types.resolve(schema[_propName].type || schema[_propName]);
-				result[_propName] = bytes.read(_propType, _caret + 2, index);
+	for (let i = len - 1; i >= 0; i--) {
+		if (data[i] === Workbench.SEP_CODE) {
+			let _propName = keys[bytes.read(Types.INDEX, i + 1, i + read_skip)];
+			if (_propName !== undefined && schema[_propName] !== undefined) {
+				let _propType = Types.resolve(schema[_propName].type || schema[_propName]);
+				result[_propName] = bytes.read(_propType, i + read_skip, _caret);
+				_caret = i;
+				i -= read_skip;
 			}
-			_caret = index;
-		}
-		if (index === data.length - 1) {
-			_propName = keys[bytes.read(Types.NUMBER, _caret + 1, _caret + 2)];
-			_propType = Types.resolve(schema[_propName].type || schema[_propName]);
-			result[_propName] = bytes.read(_propType, _caret + 2, index + 1);
-		}
-	});
+		}		
+	}
 	
 	return result;
 }

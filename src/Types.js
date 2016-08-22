@@ -12,13 +12,13 @@ const BUFFER = 2;
 const NUMBER = 3;
 const STRING = 4;
 const SEP = 5;
+const INDEX = 6;
 
 /* Methods -------------------------------------------------------------------*/
 
 function resolve(type) {
 	type = type.toLowerCase();
 
-	if (type === 'array' || type === Array) return ARRAY;
 	if (type === 'boolean' || type === Boolean) return BOOLEAN;
 	if (type === 'buffer' || type === Buffer) return BUFFER;
 	if (type === 'number' || type === Number) return NUMBER;
@@ -29,4 +29,4 @@ function resolve(type) {
 
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = { ARRAY, BOOLEAN, BUFFER, NUMBER, STRING, resolve };
+module.exports = { ARRAY, BOOLEAN, BUFFER, NUMBER, STRING, SEP, INDEX, resolve };

@@ -13,79 +13,122 @@ const Types = require('./Types');
 // One frame - all overheads
 const MAX_SIZE = 1400;
 
+// Number ranges and byte sizes
+const MIN_INT8 = -128;
+const MAX_INT8 = 127;
+const MIN_INT16 = -32768;
+const MAX_INT16 = 32767;
+const INT8_SIZE = 1;
+const INT16_SIZE = 2;
+const INT32_SIZE = 4;
+const DOUBLE_SIZE = 6;
+
 // Re-use of same buffer to read full doubles
 let doubleBuffer = Buffer.alloc(8);
+let workBuffer = Buffer.allocUnsafe(MAX_SIZE);
+
 
 /* Methods -------------------------------------------------------------------*/
 
 class Workbench {
-	constructor(buffer, trim) {
-		this.buffer = buffer || Buffer.allocUnsafe(MAX_SIZE);
-		this._caret = 0;
+	constructor(buffer) {
+		this.buffer = buffer || workBuffer;
+		this.caret = 0;
+	}
 
-		this.DOUBLE_TRIM = trim || 6;
+	_append_boolean(data) {
+		this.buffer[this.caret] = data ? 1 : 0;
+		this.caret += INT8_SIZE;
+	}
+
+	_append_int8(data) {
+		this.buffer.writeInt8(data, this.caret);
+		this.caret += INT8_SIZE;
+	}
+
+	_append_int16(data) {
+		this.buffer.writeInt16BE(data, this.caret);
+		this.caret += INT16_SIZE;
+	}
+
+	_append_int32(data) {
+		this.buffer.writeInt32BE(data, this.caret);
+		this.caret += INT32_SIZE;
+	}
+
+	_append_double(data) {
+		// Ommit last 2 digits of the double 
+		this.buffer.writeDoubleBE(data, this.caret);
+		this.caret += DOUBLE_SIZE;
+	}
+
+	_append_string(data) {
+		this.buffer.write(data, this.caret, data.length);
+		this.caret += data.length;
+	}
+
+	_append_buffer(data) {
+		data.copy(this.buffer, this.caret, 0, data.length);
+		this.caret += data.length;
+	}
+
+	_append_index(data) {
+		// Unsigned Int
+		this.buffer[this.caret] = data;
+		this.caret += INT8_SIZE;
+	}
+
+	_append_sep() {
+		this.buffer[this.caret] = Workbench.SEP_CODE;
+		this.caret += INT8_SIZE;
 	}
 
 	append(type, data) {
-		switch(type) {
-			case Types.ARRAY:
-				throw new Error('Not implemented yet');
-			case Types.BOOLEAN:
-				this.buffer[this._caret] = data ? 1 : 0;
-				this._caret += 1;
-				break;
-			case Types.NUMBER:
-				// Check if Double or int8
-				// Reserving 255 for SEP
-				if (Number.isInteger(data) && data < 255 && data >= 0) {
-					this.buffer.writeInt8(data, this._caret);
-					this._caret += 1;
+		if (type === Types.BOOLEAN) this._append_boolean(data);
+		else if (type === Types.NUMBER) {
+			if (Number.isInteger(data)) {
+				if (data <= MAX_INT8 && data >= MIN_INT8) {
+					this._append_int8(data);
 				}
-				else {
-					// Ommit last 2 digits of the double 
-					this.buffer.writeDoubleBE(data, this._caret);
-					this._caret += this.DOUBLE_TRIM;
+				else if (data <= MAX_INT16 && data >= MIN_INT16) {
+					this._append_int16(data);
 				}
-				break;
-			case Types.STRING:
-				this.buffer.write(data, this._caret, data.length);
-				this._caret += data.length;
-				break;
-			case Types.BUFFER:
-				data.copy(this.buffer, this._caret, 0, data.length);
-				this._caret += data.length;
-				break;
-			case Types.SEP:
-				this.buffer[this._caret] = Workbench.SEP_CODE;
-				this._caret += 1;
-				break;
+				else this._append_int32(data);
+			}
+			else this._append_double(data);
 		}
+		else if (type === Types.STRING) this._append_string(data);
+		else if (type === Types.INDEX) this._append_index(data);		
+		else if (type === Types.BUFFER) this._append_buffer(data);
+		else if (type === Types.SEP) this._append_sep();
 	}
 
-	read(type, from=0, to=null) {
-		to = to || this._caret;
-
-		switch(type) {
-			case Types.ARRAY:
-				throw new Error('Not implemented yet');
-			case Types.BOOLEAN:
-				return this.buffer[from] === 1;
-			case Types.NUMBER:
-				if (to - from === 1) return this.buffer.readInt8(from, to);
-				else {
-					this.buffer.copy(
-						doubleBuffer, 
-						0, 
-						from, 
-						from + this.DOUBLE_TRIM
-					);
-					return doubleBuffer.readDoubleBE();
-				}
-			case Types.STRING:
-				return this.buffer.toString(undefined, from, to);
-			case Types.BUFFER:
-				return this.buffer.slice(from, to);
+	read(type, from, to) {
+		if (type === Types.BOOLEAN) return this.buffer[from] === 1;
+		else if (type === Types.NUMBER) {
+			if (to - from === INT8_SIZE) {
+				return this.buffer.readInt8(from, to);
+			}
+			else if (to - from === INT16_SIZE) {
+				return this.buffer.readInt16BE(from, to);
+			}
+			else if (to - from === INT32_SIZE) {
+				return this.buffer.readInt32BE(from, to);
+			}
+			else {
+				this.buffer.copy(
+					doubleBuffer, 
+					0, 
+					from, 
+					from + DOUBLE_SIZE
+				);
+				return doubleBuffer.readDoubleBE();
+				//return this.buffer.readDoubleBE(from, to);
+			}
 		}
+		else if (type === Types.STRING)	return this.buffer.toString(undefined, from, to);
+		else if (type === Types.BUFFER) return this.buffer.slice(from, to);
+		else if (type === Types.INDEX) return this.buffer[from];
 	}
 }
 
