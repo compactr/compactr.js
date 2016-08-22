@@ -39,21 +39,10 @@ Protocol Buffers are awesome. Having schemas to deflate and inflate data while m
 
 For example, if you have a DB schema for users, you can use that directly as a schema for Compactr.
 
-```
-/* Waterline Schema (User) */
+| **Waterline** | **Schema.js** | **Mongoose** |
+| --- | --- | --- |
+| `{` <br> `  id: {` <br> `    type: 'integer',`  <br> `   required: true`  <br> `  },`  <br> `  name: 'string'`  <br>  `}` | `[` <br> `  {` <br> `    name: 'id',` <br>  `    type: 'int',` <br> `  },` <br> `  {` <br> `   name:'name'` <br> `   type:'varchar'` <br> `  }` <br> `]` | `{` <br> `  id: {` <br> `    type: Number,`  <br> `   required: true`  <br> `  },`  <br> `  name: String`  <br>  `}` |
 
-{
-  id: {
-    type: 'integer',
-    required: true
-  },
-  name: {
-    type: 'string',
-    defaultsTo: 'John'
-  }
-}
-
-``` 
 
 ```
 /* User compessing in controller */
