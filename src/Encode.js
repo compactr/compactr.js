@@ -25,12 +25,14 @@ const DOUBLE_SIZE = 6;
 
 const SEP_CODE = 255;
 
-let work_buffers = [Buffer.allocUnsafe(MAX_SIZE)];
+const allowed_types = ['number', 'boolean', 'string'];
+
+let work_buffer = Buffer.allocUnsafe(MAX_SIZE);
 
 /* Methods -------------------------------------------------------------------*/
 
-function Encode(schema, obj) {
-	let result = getBuffer();
+function Encode(schema, payload) {
+	let result = work_buffer;
 	const keys = Object.keys(schema);
 	const len = keys.length;
 	
@@ -38,41 +40,38 @@ function Encode(schema, obj) {
 
 	for (let i = len - 1; i >= 0; i--) {
 		let key = keys[i];
-		if (key in obj && obj[key] !== null && obj[key] !== undefined) {
-			let _type = schema[key].type || schema[key];
+
+		if (is_valid(key, payload)) {
+			let type = Types.resolve(schema[key].type || schema[key]);
 			append_index(result, i);
-			append(result, Types.resolve(_type), obj[key]);
+			if (type === Types.BOOLEAN) append_boolean(result, payload[key]);
+			else if (type === Types.NUMBER) append_number(result, payload[key]);
+			else if (type === Types.STRING) append_string(result, payload[key]);
 		}
 	}
 	 
-	releaseBuffer(result);
 	return result.slice(0, result.caret);
 }
 
-function getBuffer() {
-	if (work_buffers.length === 0) return Buffer.allocUnsafe(MAX_SIZE);
-	else return work_buffers.shift();
-}
-
-function releaseBuffer(buffer) {
-	work_buffers.push(buffer);
-}
-
-function append(buffer, type, data) {
-	if (type === Types.BOOLEAN) append_boolean(buffer, data);
-	else if (type === Types.NUMBER) {
-		if (Number.isInteger(data)) {
-			if (data <= MAX_INT8 && data >= MIN_INT8) {
-				append_int8(buffer, data);
-			}
-			else if (data <= MAX_INT16 && data >= MIN_INT16) {
-				append_int16(buffer, data);
-			}
-			else append_int32(buffer, data);
-		}
-		else append_double(buffer, data);
+function is_valid(key, payload) {
+	if (key in payload) {
+		let _type = typeof payload[key];
+		return (allowed_types.includes(_type));
 	}
-	else if (type === Types.STRING) append_string(buffer, data);
+	return false;
+}
+
+function append_number(buffer, data) {
+	if (Number.isInteger(data)) {
+		if (data <= MAX_INT8 && data >= MIN_INT8) {
+			append_int8(buffer, data);
+		}
+		else if (data <= MAX_INT16 && data >= MIN_INT16) {
+			append_int16(buffer, data);
+		}
+		else append_int32(buffer, data);
+	}
+	else append_double(buffer, data);
 }
 
 function append_boolean(buffer, data) {
