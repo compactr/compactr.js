@@ -11,7 +11,7 @@
 
 ## What is this and why does it matter?
 
-Compactr is a library to compress and decompress Javascript objects before sending them over the web. It's immencely usefull for web applications that use sockets a lot. Smaller payloads equals better, faster throughput and less bandwidth costs.
+Compactr is a library to compress and decompress Javascript objects before sending them over the web. It's immensely useful for web applications that use sockets a lot. Smaller payloads equals better, faster throughput and less bandwidth costs.
 
 
 ## Aren't there any other libraries out there that do this?
@@ -21,7 +21,7 @@ Yes, yes there are. Like [msgpack](http://msgpack.org/), [snappy](https://google
 
 ## Then why make another one, isn't Protobuf like... the best thing?
 
-Why yes, Protocol Buffer is by far the better performing protocol out there, but there's a few things about it I don't like - as a Node developper. 
+Why yes, Protocol Buffer is by far the better performing protocol out there, but there's a few things about it I don't like - as a Node developer.
 
 The first thing that comes to mind is the painful management of `.proto` files.
 
@@ -32,20 +32,20 @@ Furthermore, Compactr has **NO** dependencies or compiled modules. It's the ligh
 
 ## So what's your solution?
 
-Protocol Buffers are awesome. Having schemas to deflate and inflate data while maintaining some kind of validation is a great concept. Compactr's goal is to build on that to better suite Node server developement and reduce noise by allowing you to re-use your current Model schemas.
+Protocol Buffers are awesome. Having schemas to deflate and inflate data while maintaining some kind of validation is a great concept. Compactr's goal is to build on that to better suit Node server development and reduce noise by allowing you to re-use your current Model schemas.
 
 
 ## Examples, please.
 
 For example, if you have a DB schema for users, you can use that directly as a schema for Compactr.
 
-| **Waterline** | **Schema.js** | **Mongoose** |
+| **Waterline** | **Mongoose** |
 | --- | --- | --- |
-| `{` <br> `  id: {` <br> `    type: 'integer',`  <br> `   required: true`  <br> `  },`  <br> `  name: 'string'`  <br>  `}` | `[` <br> `  {` <br> `    name: 'id',` <br>  `    type: 'int',` <br> `  },` <br> `  {` <br> `   name:'name'` <br> `   type:'varchar'` <br> `  }` <br> `]` | `{` <br> `  id: {` <br> `    type: Number,`  <br> `   required: true`  <br> `  },`  <br> `  name: String`  <br>  `}` |
+| `{` <br> `  id: {` <br> `    type: 'integer',`  <br> `   required: true`  <br> `  },`  <br> `  name: 'string'`  <br>  `}` | `{` <br> `  id: {` <br> `    type: Number,`  <br> `   required: true`  <br> `  },`  <br> `  name: String`  <br>  `}` |
 
 
 ```
-/* User compessing in controller */
+/* User compessing in a controller */
 
 const Compactr = require('compactr');
 
@@ -53,7 +53,7 @@ User.create({ id: 0, name: 'Bruce' })
   .then(user => Compactr.encode(User, user))
   .then(deflated => /* Send encoded User */);
 
-``` 
+```
 
 ```
 /* Decoding the User data */
@@ -61,6 +61,7 @@ User.create({ id: 0, name: 'Bruce' })
 let user = Compactr.decode(User, deflated);
 
 ```
+No need to create additional models for serialization!
 
 
 ## Can that be used for Websockets too?
@@ -121,5 +122,5 @@ In the near future, you will be able to:
 ## Alright, I'm convinced! How can I help?
 
 Just open an issue, identifying it as a feature that you want to tackle.
-Ex: `STORY - [...]` 
-And we'll take the discussion there. 
+Ex: `STORY - [...]`
+And we'll take the discussion there.
