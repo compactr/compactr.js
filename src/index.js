@@ -1,5 +1,5 @@
 /**
- * Main module for Kompactor
+ * Main module for Compactr
  */
 
 'use strict';

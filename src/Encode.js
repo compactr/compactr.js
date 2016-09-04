@@ -31,6 +31,12 @@ let work_buffer = Buffer.allocUnsafe(MAX_SIZE);
 
 /* Methods -------------------------------------------------------------------*/
 
+/**
+ * Encodes a JS object into a Buffer using a Schema
+ * @param {object} schema The Schema to use for encoding
+ * @param {object} payload The payload to encode
+ * @returns {Buffer} The encoded Buffer
+ */
 function Encode(schema, payload) {
 	let result = work_buffer;
 	const keys = Object.keys(schema);
@@ -53,6 +59,13 @@ function Encode(schema, payload) {
 	return result.slice(0, result.caret);
 }
 
+/**
+ * Returns wether a payload property is valid for encoding
+ * If not, it will be skipped
+ * @param {string} key The property key to validate
+ * @param {object} payload The payload to encode
+ * @returns {boolean} Wether the property is valid for encoding
+ */
 function is_valid(key, payload) {
 	if (key in payload) {
 		let _type = typeof payload[key];
@@ -61,6 +74,11 @@ function is_valid(key, payload) {
 	return false;
 }
 
+/**
+ * Appends a Number type value to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {number} data The data to append
+ */
 function append_number(buffer, data) {
 	if (Number.isInteger(data)) {
 		if (data <= MAX_INT8 && data >= MIN_INT8) {
@@ -74,32 +92,62 @@ function append_number(buffer, data) {
 	else append_double(buffer, data);
 }
 
+/**
+ * Appends a Boolean type value to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {number} data The data to append
+ */
 function append_boolean(buffer, data) {
 	buffer[buffer.caret] = data ? 1 : 0;
 	buffer.caret += INT8_SIZE;
 }
 
+/**
+ * Appends a signed INT8 type value to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {number} data The data to append
+ */
 function append_int8(buffer, data) {
 	buffer.writeInt8(data, buffer.caret);
 	buffer.caret += INT8_SIZE;
 }
 
+/**
+ * Appends a signed INT16 type value to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {number} data The data to append
+ */
 function append_int16(buffer, data) {
 	buffer.writeInt16BE(data, buffer.caret);
 	buffer.caret += INT16_SIZE;
 }
 
+/**
+ * Appends a signed INT32 type value to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {number} data The data to append
+ */
 function append_int32(buffer, data) {
 	buffer.writeInt32BE(data, buffer.caret);
 	buffer.caret += INT32_SIZE;
 }
 
+/**
+ * Appends a double type value to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {number} data The data to append
+ */
 function append_double(buffer, data) {
 	// Ommit last 2 digits of the double 
 	buffer.writeDoubleBE(data, buffer.caret);
 	buffer.caret += DOUBLE_SIZE;
 }
 
+/**
+ * Appends a String type value to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {number} data The data to append
+ */
 function append_string(buffer, data) {
 	let len = data.length;
 
@@ -109,6 +157,11 @@ function append_string(buffer, data) {
 	buffer.caret += len;
 }
 
+/**
+ * Appends an index type value to the Buffer [255, x]
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {number} data The data to append
+ */
 function append_index(buffer, data) {
 	buffer[buffer.caret] = SEP_CODE;
 	// Unsigned Int

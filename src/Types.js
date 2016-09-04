@@ -19,11 +19,14 @@ const STRING_STR = 'string';
 
 /* Methods -------------------------------------------------------------------*/
 
+/**
+ * Returns the matching id for a data type
+ * @param {string|function} type Either a type constructor or name
+ * @returns {integer} The matching index
+ */
 function resolve(type) {
 	let res = BOOLEAN;
 	if (typeof type === STRING_STR) {
-		type = type.toLowerCase();
-
 		if (type === BUFFER_STR) res = BUFFER;
 		else if (type === NUMBER_STR) res = NUMBER;
 		else if (type === STRING_STR) res = STRING;
