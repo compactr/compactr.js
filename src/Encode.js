@@ -101,8 +101,12 @@ function append_double(buffer, data) {
 }
 
 function append_string(buffer, data) {
-	buffer.write(data, buffer.caret, data.length);
-	buffer.caret += data.length;
+	let len = data.length;
+
+	for (let i = 0; i < len; i++) {
+		buffer[buffer.caret + i] = data.codePointAt(i);
+	}
+	buffer.caret += len;
 }
 
 function append_index(buffer, data) {

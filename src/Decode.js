@@ -18,6 +18,8 @@ const INT16_SIZE = 2;
 const INT32_SIZE = 4;
 const DOUBLE_SIZE = 6;
 
+const CPR = Object.create(null);
+
 let doubleBuffer = Buffer.alloc(8);
 
 /* Methods -------------------------------------------------------------------*/
@@ -66,7 +68,11 @@ function read_int32(buffer, from, to) {
 }
 
 function read_string(buffer, from, to) {
-	return buffer.toString(undefined, from, to);
+	let acc = [];
+	for (let i = from; i < to; i++) {
+		acc.push(buffer[i]);
+	}
+	return String.fromCodePoint.apply(CPR, acc);
 }
 
 function read_double(buffer, from, to) {
