@@ -16,11 +16,14 @@ const READ_SKIP = 2;
 const INT8_SIZE = 1;
 const INT16_SIZE = 2;
 const INT32_SIZE = 4;
-const DOUBLE_SIZE = 6;
+const DOUBLE_SIZE = 8;
+
+const ARRAY_SEP_CODE = 44;
+
+const ZERO = 0;
+const ONE = 1;
 
 const CPR = Object.create(null);
-
-let doubleBuffer = Buffer.alloc(8);
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -31,36 +34,31 @@ let doubleBuffer = Buffer.alloc(8);
  * @returns {object} The decoded buffer
  */
 function Decode(schema, data) {
-	let result = {};
+	schema = schema.attributes || schema;	// Waterline Model
 	const keys = Object.keys(schema);
 	const len = data.length;
-	
-	let _caret = len;
 
-	for (let i = len - 1; i >= 0; i--) {
-		if (data[i] === SEP_CODE) {
-			let _propName = keys[read_index(data, i)];
+	let result = {};
+	let _caret = len;
+	let prev;
+
+	for (let i = len - READ_SKIP; i >= ZERO; i--) {
+		let curr = data[i];
+		if (curr === SEP_CODE) {
+			let _propName = keys[prev];
 			if (_propName !== undefined && schema[_propName] !== undefined) {
-				let _propType = Types.resolve(schema[_propName].type || schema[_propName]);
+				let _propType = Types.resolve(schema[_propName]);
 				result[_propName] = read(data, _propType, i + READ_SKIP, _caret);
-				if (i === 0) break;
+				if (i === ZERO) break;
 				_caret = i;
 				i -= READ_SKIP;
+				prev = data[i];
 			}
-		}		
+		}
+		else prev = curr;
 	}
 
 	return result;
-}
-
-/**
- * Returns a Schema key index - 1 byte - (0<->255)
- * @param {Buffer} buffer The buffer to read from
- * @param {integer} index The buffer index to read at
- * @returns {integer} The Schema index key
- */
-function read_index(buffer, index) {
-	return buffer[index + 1];
 }
 
 /**
@@ -70,7 +68,7 @@ function read_index(buffer, index) {
  * @returns {integer} The Boolean value
  */
 function read_boolean(buffer, index) {
-	return buffer[index] === 1;
+	return buffer[index] === ONE;
 }
 
 /**
@@ -122,21 +120,89 @@ function read_string(buffer, from, to) {
 }
 
 /**
- * Returns a double value - 6 bytes
- * !Doubles are in fact 8 bytes long, but only the first 6 are encoded!
+ * Returns an Array of String values
+ * @param {Buffer} buffer The buffer to read from
+ * @param {integer} from The buffer index to read from
+ * @param {integer} to The buffer index to read to
+ * @returns {array} The Array value
+ */
+function read_string_array(buffer, from, to) {
+	let acc = [];
+	let res = [];
+	for (let i = from; i < to; i++) {
+		if (buffer[i] !== ARRAY_SEP_CODE) acc.push(buffer[i]);
+		else {
+			res.push(String.fromCodePoint.apply(CPR, acc));
+			acc.length = ZERO;
+		}
+	}
+	res.push(String.fromCodePoint.apply(CPR, acc));
+	return res;
+}
+
+/**
+ * Returns an Array of Boolean values
+ * @param {Buffer} buffer The buffer to read from
+ * @param {integer} from The buffer index to read from
+ * @param {integer} to The buffer index to read to
+ * @returns {array} The Array value
+ */
+function read_boolean_array(buffer, from, to) {
+	let res = [];
+	for (let i = from; i < to; i++) {
+		if (buffer[i] !== ARRAY_SEP_CODE) {
+			res.push(buffer[i] === ONE);
+			i++;
+		}
+	}
+	return res;
+}
+
+/**
+ * Returns an Array of Number values
+ * @param {Buffer} buffer The buffer to read from
+ * @param {integer} from The buffer index to read from
+ * @param {integer} to The buffer index to read to
+ * @returns {array} The Array value
+ */
+function read_number_array(buffer, from, to) {
+	let acc = from;
+	let res = [];
+	for (let i = from + ONE; i < to; i++) {
+		if (buffer[i] === ARRAY_SEP_CODE) {
+			res.push(read_number(buffer, acc, i));
+			acc = i + ONE;
+			i++;
+		}
+	}
+	res.push(read_number(buffer, acc, to));
+	return res;
+}
+
+/**
+ * Returns a double value - 8 bytes
  * @param {Buffer} buffer The buffer to read from
  * @param {integer} from The buffer index to read from
  * @param {integer} to The buffer index to read to
  * @returns {integer} The double value
  */
 function read_double(buffer, from, to) {
-	buffer.copy(
-		doubleBuffer, 
-		0, 
-		from, 
-		from + DOUBLE_SIZE
-	);
-	return doubleBuffer.readDoubleBE();
+	return buffer.readDoubleBE(from, to);
+}
+
+/**
+ * Returns a number value - 1 to 8 bytes
+ * @param {Buffer} buffer The buffer to read from
+ * @param {integer} from The buffer index to read from
+ * @param {integer} to The buffer index to read to
+ * @returns {integer} The double value
+ */
+function read_number(buffer, from, to) {
+	let size = to - from;
+	if (size === INT8_SIZE) return read_int8(buffer, from, to);
+	else if (size === INT16_SIZE) return read_int16(buffer, from, to);
+	else if (size === INT32_SIZE) return read_int32(buffer, from, to);
+	else if (size === DOUBLE_SIZE) return read_double(buffer, from, to);
 }
 
 /**
@@ -148,18 +214,16 @@ function read_double(buffer, from, to) {
  * @returns {?} The decoded value
  */
 function read(buffer, type, from, to) {
-	let res;
-
-	if (type === Types.BOOLEAN) res = read_boolean(buffer, from);
-	else if (type === Types.NUMBER) {
-		if (to - from === INT8_SIZE) res = read_int8(buffer, from, to);
-		else if (to - from === INT16_SIZE) res = read_int16(buffer, from, to);
-		else if (to - from === INT32_SIZE) res = read_int32(buffer, from, to);
-		else res = read_double(buffer, from, to);
+	if (type === Types.BOOLEAN) return read_boolean(buffer, from);
+	else if (type === Types.NUMBER) return read_number(buffer, from, to);
+	else if (type === Types.STRING)	return read_string(buffer, from, to);
+	else if (type === Types.BOOLEAN_ARRAY) {
+		return read_boolean_array(buffer, from, to);
 	}
-	else if (type === Types.STRING)	res = read_string(buffer, from, to);
-		
-	return res;
+	else if (type === Types.NUMBER_ARRAY) {
+		return read_number_array(buffer, from, to);
+	}
+	else return read_string_array(buffer, from, to);
 }
 
 /* Exports -------------------------------------------------------------------*/

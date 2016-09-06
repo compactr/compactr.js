@@ -21,11 +21,15 @@ const MAX_INT16 = 32767;
 const INT8_SIZE = 1;
 const INT16_SIZE = 2;
 const INT32_SIZE = 4;
-const DOUBLE_SIZE = 6;
+const DOUBLE_SIZE = 8;
 
+const ARRAY_SEP_CODE = 44;
 const SEP_CODE = 255;
 
-const allowed_types = ['number', 'boolean', 'string'];
+const ZERO = 0;
+const ONE = 1;
+
+const allowed_types = ['number', 'boolean', 'string', 'object'];
 
 let work_buffer = Buffer.allocUnsafe(MAX_SIZE);
 
@@ -38,49 +42,47 @@ let work_buffer = Buffer.allocUnsafe(MAX_SIZE);
  * @returns {Buffer} The encoded Buffer
  */
 function Encode(schema, payload) {
-	let result = work_buffer;
+	schema = schema.attributes || schema;	// Waterline Model
+
 	const keys = Object.keys(schema);
 	const len = keys.length;
-	
-	result.caret = 0;
 
-	for (let i = len - 1; i >= 0; i--) {
+	let result = work_buffer;
+	
+	result.caret = ZERO;
+
+	for (let i = len - ONE; i >= ZERO; i--) {
 		let key = keys[i];
 
-		if (is_valid(key, payload)) {
-			let type = Types.resolve(schema[key].type || schema[key]);
+		if (payload[key] !== undefined && payload[key] !== null) {
+			let type = Types.resolve(schema[key]);
 			append_index(result, i);
 			if (type === Types.BOOLEAN) append_boolean(result, payload[key]);
 			else if (type === Types.NUMBER) append_number(result, payload[key]);
 			else if (type === Types.STRING) append_string(result, payload[key]);
+			else if (type === Types.BOOLEAN_ARRAY) {
+				append_boolean_array(result, payload[key]);
+			}
+			else if (type === Types.NUMBER_ARRAY) {
+				append_number_array(result, payload[key]);
+			}
+			else {
+				append_string_array(result, payload[key]);
+			}
 		}
 	}
 	 
-	return result.slice(0, result.caret);
-}
-
-/**
- * Returns wether a payload property is valid for encoding
- * If not, it will be skipped
- * @param {string} key The property key to validate
- * @param {object} payload The payload to encode
- * @returns {boolean} Wether the property is valid for encoding
- */
-function is_valid(key, payload) {
-	if (key in payload) {
-		let _type = typeof payload[key];
-		return (allowed_types.includes(_type));
-	}
-	return false;
+	return result.slice(ZERO, result.caret);
 }
 
 /**
  * Appends a Number type value to the Buffer
  * @param {Buffer} buffer The Buffer to append to
  * @param {number} data The data to append
+ * @returns {integer} The number of bytes written
  */
 function append_number(buffer, data) {
-	if (Number.isInteger(data)) {
+	if (isInt(data)) {
 		if (data <= MAX_INT8 && data >= MIN_INT8) {
 			append_int8(buffer, data);
 		}
@@ -93,12 +95,71 @@ function append_number(buffer, data) {
 }
 
 /**
+ * Super weak bitwise check if a number is an integer. Will not check for
+ * variable type or is it's NaN. It would have thrown later down the line anyway
+ * and this is way faster.
+ * @param {number} value The number to check
+ * @returns {boolean} Wether the number is an Integer or a float
+ */
+function isInt(value) {
+ 	return (value | ZERO) === value;
+}
+
+/**
+ * Appends an Array of  Number type values to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {array} data The data to append
+ */
+function append_number_array(buffer, data) {
+	const len = data.length;
+	for (let i = ZERO; i < len; i++) {
+		append_number(buffer, data[i]);
+		if (i < len - ONE) append_array_separator(buffer);
+	}
+}
+
+/**
+ * Appends an Array of  Boolean type values to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {array} data The data to append
+ */
+function append_boolean_array(buffer, data) {
+	const len = data.length;
+	for (let i = ZERO; i < len; i++) {
+		append_boolean(buffer, data[i]);
+		if (i < len - ONE) append_array_separator(buffer);
+	}
+}
+
+/**
+ * Appends an Array of  String type values to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {array} data The data to append
+ */
+function append_string_array(buffer, data) {
+	const len = data.length;
+	for (let i = ZERO; i < len; i++) {
+		append_string(buffer, data[i]);
+		if (i < len - ONE) append_array_separator(buffer);
+	}
+}
+
+/**
+ * Appends an Array separator charcter to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ */
+function append_array_separator(buffer) {
+	buffer[buffer.caret] = ARRAY_SEP_CODE;
+	buffer.caret += INT8_SIZE;
+}
+
+/**
  * Appends a Boolean type value to the Buffer
  * @param {Buffer} buffer The Buffer to append to
  * @param {number} data The data to append
  */
 function append_boolean(buffer, data) {
-	buffer[buffer.caret] = data ? 1 : 0;
+	buffer[buffer.caret] = data ? ONE : ZERO;
 	buffer.caret += INT8_SIZE;
 }
 
@@ -138,7 +199,6 @@ function append_int32(buffer, data) {
  * @param {number} data The data to append
  */
 function append_double(buffer, data) {
-	// Ommit last 2 digits of the double 
 	buffer.writeDoubleBE(data, buffer.caret);
 	buffer.caret += DOUBLE_SIZE;
 }
@@ -149,9 +209,10 @@ function append_double(buffer, data) {
  * @param {number} data The data to append
  */
 function append_string(buffer, data) {
+	data = String(data);
 	let len = data.length;
 
-	for (let i = 0; i < len; i++) {
+	for (let i = ZERO; i < len; i++) {
 		buffer[buffer.caret + i] = data.codePointAt(i);
 	}
 	buffer.caret += len;
@@ -165,7 +226,7 @@ function append_string(buffer, data) {
 function append_index(buffer, data) {
 	buffer[buffer.caret] = SEP_CODE;
 	// Unsigned Int
-	buffer[buffer.caret + 1] = data;
+	buffer[buffer.caret + ONE] = data;
 	buffer.caret += INT16_SIZE;
 }
 
