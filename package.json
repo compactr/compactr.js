@@ -1,6 +1,6 @@
 {
   "name": "compactr",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A compression library for the modern web",
   "main": "index.js",
   "scripts": {
