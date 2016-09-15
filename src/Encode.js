@@ -6,32 +6,27 @@
 
 /* Requires ------------------------------------------------------------------*/
 
+const ieee754 = require('ieee754');
+
 const Types = require('./Types');
 
 /* Local variables -----------------------------------------------------------*/
 
-// One frame - all overheads
-const MAX_SIZE = 1400;
-
 // Number ranges and byte sizes
-const MIN_INT8 = -128;
-const MAX_INT8 = 127;
+// Reserving 5 characters for separations
+const MIN_INT8 = 0;
+const MAX_INT8 = 250;
 const MIN_INT16 = -32768;
 const MAX_INT16 = 32767;
-const INT8_SIZE = 1;
-const INT16_SIZE = 2;
-const INT32_SIZE = 4;
-const DOUBLE_SIZE = 8;
+const MIN_INT32 = -2147483648;
+const MAX_INT32 = 2147483647;
 
-const ARRAY_SEP_CODE = 44;
+const ARRAY_SEP_CODE = 253;
 const SEP_CODE = 255;
+const SCHEMA_SEP_CODE = 254;
 
 const ZERO = 0;
 const ONE = 1;
-
-const allowed_types = ['number', 'boolean', 'string', 'object'];
-
-let work_buffer = Buffer.allocUnsafe(MAX_SIZE);
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -39,17 +34,16 @@ let work_buffer = Buffer.allocUnsafe(MAX_SIZE);
  * Encodes a JS object into a Buffer using a Schema
  * @param {object} schema The Schema to use for encoding
  * @param {object} payload The payload to encode
+ * @param {boolean} nested Wether this was called for a nested schema
  * @returns {Buffer} The encoded Buffer
  */
-function Encode(schema, payload) {
+function Encode(schema, payload, nested) {
 	schema = schema.attributes || schema;	// Waterline Model
 
 	const keys = Object.keys(schema);
 	const len = keys.length;
 
-	let result = work_buffer;
-	
-	result.caret = ZERO;
+	let result = [];
 
 	for (let i = len - ONE; i >= ZERO; i--) {
 		let key = keys[i];
@@ -60,19 +54,56 @@ function Encode(schema, payload) {
 			if (type === Types.BOOLEAN) append_boolean(result, payload[key]);
 			else if (type === Types.NUMBER) append_number(result, payload[key]);
 			else if (type === Types.STRING) append_string(result, payload[key]);
+			else if (type === Types.SCHEMA) {
+				if (!nested) {
+					append_schema(
+						result, 
+						payload[key], 
+						Types.get_schema(schema[key])
+					);
+				}
+				else throw new Error('Cannot embed schemas at this depth');
+			}
 			else if (type === Types.BOOLEAN_ARRAY) {
 				append_boolean_array(result, payload[key]);
 			}
 			else if (type === Types.NUMBER_ARRAY) {
 				append_number_array(result, payload[key]);
 			}
-			else {
+			else if (type === Types.STRING_ARRAY){
 				append_string_array(result, payload[key]);
+			}
+			else if (type === Types.SCHEMA_ARRAY){
+				if (!nested) {
+					append_schema_array(
+						result, 
+						payload[key], 
+						Types.get_schema(schema[key])
+					);
+				}
+				else throw new Error('Cannot embed schemas at this depth');
 			}
 		}
 	}
 	 
-	return result.slice(ZERO, result.caret);
+	return array_to_buffer(result);
+}
+
+/**
+ * Turns an array of UINT8 into a Buffer
+ * Faster than Buffer.from because it skips a lot of checks
+ * @param {array} data An array of UINT8
+ * @returns {Buffer} The resulting Buffer 
+ */
+function array_to_buffer(data) {
+	let len = data.length;
+	let res = Buffer.allocUnsafe(len);
+
+	for (let i = ZERO; i < len; i++) {
+		res[i] = data[i];
+	}
+
+	return res;
 }
 
 /**
@@ -89,7 +120,12 @@ function append_number(buffer, data) {
 		else if (data <= MAX_INT16 && data >= MIN_INT16) {
 			append_int16(buffer, data);
 		}
-		else append_int32(buffer, data);
+		else if (data <= MAX_INT32 && data >= MIN_INT32) {
+			append_int32(buffer, data);
+		}
+		else {
+			append_double(buffer, data);
+		}
 	}
 	else append_double(buffer, data);
 }
@@ -106,41 +142,79 @@ function isInt(value) {
 }
 
 /**
- * Appends an Array of  Number type values to the Buffer
+ * Appends an Array of Number type values to the Buffer
  * @param {Buffer} buffer The Buffer to append to
  * @param {array} data The data to append
  */
 function append_number_array(buffer, data) {
 	const len = data.length;
 	for (let i = ZERO; i < len; i++) {
-		append_number(buffer, data[i]);
-		if (i < len - ONE) append_array_separator(buffer);
+		if (data[i] !== undefined && data[i] !== null) {
+			append_number(buffer, data[i]);
+			if (i < len - ONE) append_array_separator(buffer);
+		}
 	}
 }
 
 /**
- * Appends an Array of  Boolean type values to the Buffer
+ * Appends an Array of Boolean type values to the Buffer
  * @param {Buffer} buffer The Buffer to append to
  * @param {array} data The data to append
  */
 function append_boolean_array(buffer, data) {
 	const len = data.length;
 	for (let i = ZERO; i < len; i++) {
-		append_boolean(buffer, data[i]);
-		if (i < len - ONE) append_array_separator(buffer);
+		if (data[i] !== undefined && data[i] !== null) {
+			append_boolean(buffer, data[i]);
+		}
 	}
 }
 
 /**
- * Appends an Array of  String type values to the Buffer
+ * Appends an Array of String type values to the Buffer
  * @param {Buffer} buffer The Buffer to append to
  * @param {array} data The data to append
  */
 function append_string_array(buffer, data) {
 	const len = data.length;
 	for (let i = ZERO; i < len; i++) {
-		append_string(buffer, data[i]);
-		if (i < len - ONE) append_array_separator(buffer);
+		if (data[i] !== undefined && data[i] !== null) {
+			append_string(buffer, data[i]);
+			if (i < len - ONE) append_array_separator(buffer);
+		}
+	}
+}
+
+/**
+ * Appends a Schema type value to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {array} data The data to append
+ * @param {object} schema The child Schema to use
+ */
+function append_schema(buffer, data, schema) {
+	let res = Encode(schema, data, true);
+	let len = res.length;
+
+	buffer[buffer.length] = SCHEMA_SEP_CODE;
+
+	for (let i = ZERO; i < len; i++) {
+		buffer[buffer.length] = res[i];
+	}
+	buffer[buffer.length] = SCHEMA_SEP_CODE;
+}
+
+/**
+ * Appends an Array of Schema type values to the Buffer
+ * @param {Buffer} buffer The Buffer to append to
+ * @param {array} data The data to append
+ * @param {object} schema The child Schema to use
+ */
+function append_schema_array(buffer, data, schema) {
+	let len = data.length;
+	for (let i = 0; i < len; i++) {
+		if (data[i] !== undefined && data[i] !== null) {
+			append_schema(buffer, data[i], schema);
+		}
 	}
 }
 
@@ -149,8 +223,7 @@ function append_string_array(buffer, data) {
  * @param {Buffer} buffer The Buffer to append to
  */
 function append_array_separator(buffer) {
-	buffer[buffer.caret] = ARRAY_SEP_CODE;
-	buffer.caret += INT8_SIZE;
+	buffer[buffer.length] = ARRAY_SEP_CODE;
 }
 
 /**
@@ -159,8 +232,7 @@ function append_array_separator(buffer) {
  * @param {number} data The data to append
  */
 function append_boolean(buffer, data) {
-	buffer[buffer.caret] = data ? ONE : ZERO;
-	buffer.caret += INT8_SIZE;
+	buffer[buffer.length] = data ? ONE : ZERO;
 }
 
 /**
@@ -169,8 +241,9 @@ function append_boolean(buffer, data) {
  * @param {number} data The data to append
  */
 function append_int8(buffer, data) {
-	buffer.writeInt8(data, buffer.caret);
-	buffer.caret += INT8_SIZE;
+	/*if (data < 0) data = 0xff + data + 1;
+	buffer[buffer.length] = (data & 0xff);*/
+	buffer[buffer.length] = data;
 }
 
 /**
@@ -179,8 +252,8 @@ function append_int8(buffer, data) {
  * @param {number} data The data to append
  */
 function append_int16(buffer, data) {
-	buffer.writeInt16BE(data, buffer.caret);
-	buffer.caret += INT16_SIZE;
+	buffer[buffer.length] = (data >>> 8);
+	buffer[buffer.length] = (data & 0xff);
 }
 
 /**
@@ -189,8 +262,11 @@ function append_int16(buffer, data) {
  * @param {number} data The data to append
  */
 function append_int32(buffer, data) {
-	buffer.writeInt32BE(data, buffer.caret);
-	buffer.caret += INT32_SIZE;
+	if (data < 0) data = 0xffffffff + data + 1;
+	buffer[buffer.length] = (data >>> 24);
+	buffer[buffer.length] = (data >>> 16);
+	buffer[buffer.length] = (data >>> 8);
+	buffer[buffer.length] = (data & 0xff);
 }
 
 /**
@@ -199,8 +275,7 @@ function append_int32(buffer, data) {
  * @param {number} data The data to append
  */
 function append_double(buffer, data) {
-	buffer.writeDoubleBE(data, buffer.caret);
-	buffer.caret += DOUBLE_SIZE;
+	ieee754.write(buffer, data, buffer.length, false, 52, 8);
 }
 
 /**
@@ -213,9 +288,8 @@ function append_string(buffer, data) {
 	let len = data.length;
 
 	for (let i = ZERO; i < len; i++) {
-		buffer[buffer.caret + i] = data.codePointAt(i);
+		buffer[buffer.length] = data.codePointAt(i);
 	}
-	buffer.caret += len;
 }
 
 /**
@@ -224,10 +298,9 @@ function append_string(buffer, data) {
  * @param {number} data The data to append
  */
 function append_index(buffer, data) {
-	buffer[buffer.caret] = SEP_CODE;
+	buffer[buffer.length] = SEP_CODE;
 	// Unsigned Int
-	buffer[buffer.caret + ONE] = data;
-	buffer.caret += INT16_SIZE;
+	buffer[buffer.length] = data;
 }
 
 /* Exports -------------------------------------------------------------------*/

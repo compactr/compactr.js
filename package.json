@@ -36,5 +36,7 @@
     "chai": "3.5.x",
     "mocha": "2.5.x"
   },
-  "dependencies": {}
+  "dependencies": {
+    "ieee754": "1.1.x"
+  }
 }

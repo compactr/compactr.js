@@ -11,7 +11,7 @@
 
 ## What is this and why does it matter?
 
-Compactr is a library to compress and decompress Javascript objects before sending them over the web. It's immensely useful for web applications that use sockets a lot. Smaller payloads equals better, faster throughput and less bandwidth costs.
+Compactr is a library to compress and decompress Javascript objects before sending them over the web. It's immensely useful for web applications that use sockets a lot. Smaller payloads equals faster throughput and less bandwidth costs.
 
 
 ## Aren't there any other libraries out there that do this?
@@ -25,14 +25,14 @@ Why yes, Protocol Buffer is by far the better performing protocol out there, but
 
 The first thing that comes to mind is the painful management of `.proto` files.
 
-Not only are they overly complex, they are also written in a different markup, which makes dynamic generation or property probing a bit of a hassle. Not to mention that you have to maintain parity across services of these messages that are more often than not a copy of your data Models. (See [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself))
+Not only are they overly complex, they are also written in a different markup, which makes dynamic generation or property checking a bit of a hassle. Not to mention that you have to maintain parity across services of these messages that are more often than not a copy of your data Models. (See [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself))
 
-Furthermore, Compactr has **NO** dependencies or compiled modules. It's the lightest module you've ever seen!
+Furthermore, Protobuf variable types don't mean a lot in Javascript. 
 
 
 ## So what's your solution?
 
-Protocol Buffers are awesome. Having schemas to deflate and inflate data while maintaining some kind of validation is a great concept. Compactr's goal is to build on that to better suit Node server development and reduce noise by allowing you to re-use your current Model schemas.
+Protocol Buffers are awesome. Having schemas to deflate and inflate data while maintaining some kind of validation is a great concept. Compactr's goal is to build on that to better suit Node development and reduce repetition by allowing you to re-use your current Model schemas.
 
 
 ## Examples, please.
@@ -62,7 +62,7 @@ let user = Compactr.decode(User, deflated);
 
 ```
 No need to create additional models for serialization!
-
+Note that you can also use plain Objects as Schemas
 
 ## Can that be used for Websockets too?
 
@@ -86,12 +86,17 @@ I'm still working on graphs and proper test scenarios, but I can say that it per
 
 ## Alright, what about features?
 
-In the near future, you will be able to:
+Right now, Compactr allows you to
 
 - [x] Use Waterline schemas
 - [x] Use Mongoose schemas
 - [x] Synchronously encode/decode
-- [ ] Nested objects/ Arrays
+- [x] Encode nested objects/Arrays
+
+And in the near future
+
+- [ ] Run validation checks on payloads
+
 
 ## Alright, I'm convinced! How can I help?
 

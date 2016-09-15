@@ -1,72 +1,413 @@
-const Compactr = require('../');
+/**
+ * Unit test suite
+ */
 
-let User = { 
-	user_id: 'number', 
-	user_name: 'string', 
-	x: 'number', 
-	y: { 
-		type: 'number', 
-		defaultsTo: 0
-	}, 
-	z: 'number', 
-	alive: 'boolean', 
-	coords: { 
-		type: 'json', 
-		items: 'number' 
-	}, 
-	friends: { 
-		type: 'json', 
-		items: 'string' 
-	},
-	moods: {
-		type: 'json',
-		items: 'boolean'
-	}
-};
+'use strict';
 
-let packed;
-let unpacked;
-let encodeTime;
-let time;
-let mult = 512;
+/* Requires ------------------------------------------------------------------*/
 
-time = Date.now();
+const expect = require('chai').expect;
 
-for(let i = 0; i<mult*mult; i++) {
-	packed = Compactr.encode(User, { user_id: i, user_name: 'steve irwin', x: 32.5, y: 2000, z: 0, alive: false, coords: [0,1,2,272,3.6], friends: ['a', 'bb', 'ccc'], moods: [true, false]});
-}
+const Compactr = require('../src/');
 
-encodeTime = Date.now() - time;
+const KEY_OVERHEAD = 2;
 
-console.log('Compactr encode:', encodeTime);
-time = Date.now();
+/* Tests ---------------------------------------------------------------------*/
 
-for(let i = 0; i<mult*mult; i++) {
-	packed = Compactr.encode(User, { user_id: i, user_name: 'steve irwin', x: 32.5, y: 2000, z: 0, alive: false, coords: [0,1,2,272,3.6], friends: ['a', 'bb', 'ccc'], moods: [true, false]});
-	unpacked = Compactr.decode(User, packed);
-}
+describe('Data integrity', () => {
+	describe('Booleans', () => {
+		describe('String types', () => {
+			const T = {t: 'boolean'};
+			it('should preserve boolean value and type - true', () => {
+				let val = true;
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+			});
 
-console.log('Compactr decode:', (Date.now() - time) - encodeTime);
+			it('should preserve boolean value and type - false', () => {
+				let val = true;
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+			});
 
-console.log('Compactr size:', packed.length);
-console.log(unpacked);
+			it('should skip null or undefined values', () => {
+				let val = null;
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({});
+			});
 
-time = Date.now();
+			it('should only take 1 byte', () => {
+				let val = true;
+				expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 1);
+			});
+		});
+		describe('Function types', () => {
+			const T = {t: Boolean};
+			it('should preserve boolean value and type - true', () => {
+				let val = true;
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+			});
+		});
+	});
 
-for(let i = 0; i<mult*mult; i++) {
-	packed = new Buffer(JSON.stringify({user_id: i, user_name: 'steve irwin', x: 32.5, y: 2000, z: 0, alive: false, coords: [0,1,2,272,3.6], friends: ['a', 'bb', 'ccc'], moods: [true, false]}));
-}
+	describe('Numbers', () => {
+		describe('String types', () => {
+			const T = {t: 'number'};
+			describe('INT8', () => {
+				it('should preserve integer value and type lowest', () => {
+					let val = 0;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
 
-encodeTime = Date.now() - time;
+				it('should preserve integer value and type highest', () => {
+					let val = 250;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
 
-console.log('JSON encode:', encodeTime);
-time = Date.now();
+				it('should only take 1 byte', () => {
+					let val = 127;
+					expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 1);
+				});
 
-for(let i = 0; i<mult*mult; i++) {
-	packed = new Buffer(JSON.stringify({user_id: i, user_name: 'steve irwin', x: 32.5, y: 2000, z: 0, alive: false, coords: [0,1,2,272,3.6], friends: ['a', 'bb', 'ccc'], moods: [true, false]}));
-	unpacked = JSON.parse(packed.toString());
-}
+				it('should skip null or undefined values', () => {
+					let val = null;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({});
+				});
+			});
 
-console.log('JSON decode:', (Date.now() - time) - encodeTime);
+			describe('INT16', () => {
+				it('should preserve integer value and type lowest', () => {
+					let val = -32768;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
 
-console.log('JSON size:', packed.length);
+				it('should preserve integer value and type highest', () => {
+					let val = 32767;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should only take 2 bytes', () => {
+					let val = 32767;
+					expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 2);
+				});
+			});
+
+			describe('INT32', () => {
+				it('should preserve integer value and type lowest', () => {
+					let val = -2147483648;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should preserve integer value and type highest', () => {
+					let val = 2147483647;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should only take 4 bytes', () => {
+					let val = 2147483647;
+					expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 4);
+				});
+			});
+
+			describe('Double', () => {
+				it('should preserve numeric value and type positive', () => {
+					let val = 0.1;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should preserve integer value and type negative', () => {
+					let val = -3.5;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should allow huge integers as well', () => {
+					let val = 2147483648;
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should only take 8 bytes', () => {
+					let val = 2147483648;
+					expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 8);
+				});
+			});
+		});
+		describe('Function types', () => {
+			const T = {t: Number};
+			it('should preserve integer value and type', () => {
+				let val = 2;
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+			});
+		});
+	});
+
+	describe('Strings', () => {
+		describe('String types', () => {
+			const T = {t: 'string'};
+			it('should preserve string value and type - true', () => {
+				let val = 'The quick brown fox...';
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+			});
+
+			it('should preserve special characters (utf8)', () => {
+				let val = '\\/|!@#$%?&*()-_=+`^çàé<}{°~> .,è;[]';
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+			});
+
+			it('should preserve Number characters', () => {
+				let val = '0123456789';
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+			});
+
+			it('should skip null or undefined values', () => {
+				let val = null;
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({});
+			});
+
+			it('should only take 1 byte per character', () => {
+				let val = 'This is a string';
+				expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + val.length);
+			});
+		});
+		describe('Function types', () => {
+			const T = {t: String};
+			it('should preserve boolean value and type - true', () => {
+				let val = 'Function types test';
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+			});
+		});
+	});
+
+	describe('Arrays', () => {
+		describe('Array of Booleans', () => {
+			describe('String types', () => {
+				const T = {t: {
+					type: 'json',
+					items: 'boolean'
+				}};
+				it('should preserve boolean value and type - true/true', () => {
+					let val = [true, true];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should preserve boolean value and type - true/false', () => {
+					let val = [true, false];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should preserve boolean value and type - false/false', () => {
+					let val = [false, false];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should skip null or undefined values', () => {
+					let val = [false, null];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:[false]});
+				});
+
+				it('should only take 1 byte', () => {
+					let val = [true];
+					expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 1);
+				});
+
+				it('should only take 2 bytes for 2 values', () => {
+					let val = [true, false];
+					expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 2);
+				});
+			});
+			describe('Function types', () => {
+				const T = {t: { 
+					type: Array,
+					items: Boolean
+				}};
+				it('should preserve boolean value and type - true', () => {
+					let val = [true, false];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+			});
+		});
+
+		describe('Numbers', () => {
+			describe('String types', () => {
+				const T = {t: {
+					type: 'json',
+					items: 'number'
+				}};
+				describe('INT8', () => {
+					it('should preserve integer value and type lowest', () => {
+						let val = [0, 2];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should preserve integer value and type zero', () => {
+						let val = [0, 0];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should preserve integer value and type highest', () => {
+						let val = [127, 250];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should only take 1 byte', () => {
+						let val = [127];
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 1);
+					});
+
+					it('should only take 3 bytes for 2', () => {
+						let val = [127, 12];
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 3);
+					});
+
+					it('should skip null or undefined values', () => {
+						let val = [null, 32];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:[32]});
+					});
+				});
+
+				describe('INT16', () => {
+					it('should preserve integer value and type lowest', () => {
+						let val = [-32768, 2];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should preserve integer value and type highest', () => {
+						let val = [32767, -1];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should only take 2 bytes', () => {
+						let val = [32767];
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 2);
+					});
+				});
+
+				describe('INT32', () => {
+					it('should preserve integer value and type lowest', () => {
+						let val = [-2147483648, 2];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should preserve integer value and type highest', () => {
+						let val = [2147483647, -1];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should only take 4 bytes', () => {
+						let val = [2147483647];
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 4);
+					});
+				});
+
+				describe('Double', () => {
+					it('should preserve numeric value and type positive', () => {
+						let val = [0.1, -2.22];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should preserve integer value and type negative', () => {
+						let val = [-3.5, 1.11];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should allow huge integers as well', () => {
+						let val = [2147483648, -2147483648.75];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should only take 8 bytes', () => {
+						let val = [2147483648];
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 8);
+					});
+				});
+
+				describe('Mix and match', () => {
+					it('should preserve numeric value and type', () => {
+						let val = [0.1, 1, 1111, 111111111];
+						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+					});
+
+					it('should take the minimum byte allocation possible', () => {
+						let val = [0.1, 1, 1111, 111111];
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 18);
+					});
+				});
+			});
+			describe('Function types', () => {
+				const T = {t: {
+					type: Array,
+					items: Number
+				}};
+				it('should preserve integer value and type', () => {
+					let val = [2, 2.2];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+			});
+		});
+
+		describe('Strings', () => {
+			describe('String types', () => {
+				const T = {t: {
+					type: 'json',
+					items: 'string'
+				}};
+				it('should preserve string value and type - true', () => {
+					let val = ['The', 'quick', 'brown', 'fox...'];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should preserve special characters (utf8)', () => {
+					let val = ['\\/|!@#$%?&*()-_=+`^çàé<}{°~> .,è;[]', 'second!'];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should preserve Number characters', () => {
+					let val = ['01234', '56789'];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+
+				it('should skip null or undefined values', () => {
+					let val = [null, 'null'];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t: ['null']});
+				});
+
+				it('should only take 1 byte per character', () => {
+					let val = ['This is a string', 'This is another string'];
+					let len = val[0].length + val[1].length + 1;
+					expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + len);
+				});
+			});
+			describe('Function types', () => {
+				const T = {t: {
+					type: Array,
+					items: String
+				}};
+				it('should preserve string value and type', () => {
+					let val = ['Function', 'types', 'test'];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+			});
+		});
+		describe('Schemas', () => {
+			describe('String types', () => {
+				const T = {t: {
+					type: 'json',
+					items: {i: 'string'}
+				}};
+				it('should preserve object value and type', () => {
+					let val = [{ i: 'I\'m nested!' }, { i: 'I am also nested!'}];
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+				});
+			});
+		});
+	});
+
+	describe('Schemas', () => {
+		describe('String types', () => {
+			const T = {t: {
+				type: 'json',
+				schema: {i: 'string'}
+			}};
+			it('should preserve object value and type', () => {
+				let val = { i: 'I\'m nested!' };
+				expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
+			});
+		});
+	});
+});
