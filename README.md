@@ -96,6 +96,7 @@ Right now, Compactr allows you to
 And in the near future
 
 - [ ] Run validation checks on payloads
+- [ ] Allow multiple levels of encoding
 
 
 ## Alright, I'm convinced! How can I help?
