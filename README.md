@@ -80,13 +80,22 @@ You need Node 6.0.0 and up
 
 ## What about performances?
 
+*JSON serialization shown as a reference point*
+
+
 **Speed**
+(Lower is better)
+
 <img src="http://i231.photobucket.com/albums/ee109/FeD135/speed.png">
 
 **Size**
+(Lower is better)
+
 <img src="http://i231.photobucket.com/albums/ee109/FeD135/size.png">
 
 **Score**
+(Efficiency vs JSON 50% Speed, 50% Size - Higher is better)
+
 <img src="http://i231.photobucket.com/albums/ee109/FeD135/score.png">
 
 ## Alright, what about features?
