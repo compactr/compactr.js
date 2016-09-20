@@ -80,9 +80,14 @@ You need Node 6.0.0 and up
 
 ## What about performances?
 
-**TODO**
+**Speed**
+<img src="http://i231.photobucket.com/albums/ee109/FeD135/speed.png">
 
-I'm still working on graphs and proper test scenarios, but I can say that it performs as fast, and sometimes faster than JSON encoding/decoding and outputs a buffer that is more or less half the size!
+**Size**
+<img src="http://i231.photobucket.com/albums/ee109/FeD135/size.png">
+
+**Score**
+<img src="http://i231.photobucket.com/albums/ee109/FeD135/score.png">
 
 ## Alright, what about features?
 
@@ -96,8 +101,6 @@ Right now, Compactr allows you to
 And in the near future
 
 - [ ] Run validation checks on payloads
-- [ ] Allow multiple levels of encoding
-
 
 ## Alright, I'm convinced! How can I help?
 
