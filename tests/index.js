@@ -52,17 +52,17 @@ describe('Data integrity', () => {
 			const T = {t: 'number'};
 			describe('INT8', () => {
 				it('should preserve integer value and type lowest', () => {
-					let val = 0;
+					let val = -128;
 					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
 				});
 
 				it('should preserve integer value and type highest', () => {
-					let val = 250;
+					let val = 127
 					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
 				});
 
 				it('should only take 1 byte', () => {
-					let val = 127;
+					let val = 0;
 					expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 1);
 				});
 
@@ -196,9 +196,9 @@ describe('Data integrity', () => {
 					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
 				});
 
-				it('should skip null or undefined values', () => {
+				it('should coerce null or undefined values', () => {
 					let val = [false, null];
-					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:[false]});
+					expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:[false, false]});
 				});
 
 				it('should only take 1 byte', () => {
@@ -241,18 +241,18 @@ describe('Data integrity', () => {
 					});
 
 					it('should preserve integer value and type highest', () => {
-						let val = [127, 250];
+						let val = [127, 127];
 						expect(Compactr.decode(T,Compactr.encode(T,{t:val}))).to.deep.equal({t:val});
 					});
 
 					it('should only take 1 byte', () => {
 						let val = [127];
-						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 1);
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 3);
 					});
 
 					it('should only take 3 bytes for 2', () => {
 						let val = [127, 12];
-						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 3);
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 5);
 					});
 
 					it('should skip null or undefined values', () => {
@@ -274,7 +274,7 @@ describe('Data integrity', () => {
 
 					it('should only take 2 bytes', () => {
 						let val = [32767];
-						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 2);
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 4);
 					});
 				});
 
@@ -291,7 +291,7 @@ describe('Data integrity', () => {
 
 					it('should only take 4 bytes', () => {
 						let val = [2147483647];
-						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 4);
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 6);
 					});
 				});
 
@@ -313,7 +313,7 @@ describe('Data integrity', () => {
 
 					it('should only take 8 bytes', () => {
 						let val = [2147483648];
-						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 8);
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 10);
 					});
 				});
 
@@ -325,7 +325,7 @@ describe('Data integrity', () => {
 
 					it('should take the minimum byte allocation possible', () => {
 						let val = [0.1, 1, 1111, 111111];
-						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 18);
+						expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + 20);
 					});
 				});
 			});
@@ -369,7 +369,7 @@ describe('Data integrity', () => {
 
 				it('should only take 1 byte per character', () => {
 					let val = ['This is a string', 'This is another string'];
-					let len = val[0].length + val[1].length + 1;
+					let len = val[0].length + val[1].length + val.length + 1;
 					expect(Compactr.encode(T,{t:val}).length).to.be.eql(KEY_OVERHEAD + len);
 				});
 			});

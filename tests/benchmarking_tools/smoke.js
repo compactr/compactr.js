@@ -1,4 +1,4 @@
-const Compactr = require('../');
+const Compactr = require('../../');
 
 let Point = {
 	x: 'number',
@@ -66,7 +66,7 @@ console.log('Compactr decode:', (Date.now() - time) - encodeTime);
 
 console.log('Compactr size:', packed.length);
 console.log(unpacked);
-/*
+
 time = Date.now();
 
 for(let i = 0; i<mult*mult; i++) {
@@ -86,4 +86,3 @@ for(let i = 0; i<mult*mult; i++) {
 console.log('JSON decode:', (Date.now() - time) - encodeTime);
 
 console.log('JSON size:', packed.length);
-*/

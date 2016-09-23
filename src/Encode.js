@@ -12,21 +12,23 @@ const Types = require('./Types');
 
 /* Local variables -----------------------------------------------------------*/
 
-// Number ranges and byte sizes
-// Reserving 5 characters for separations
-const MIN_INT8 = 0;
-const MAX_INT8 = 250;
+const MIN_INT8 = -128;
+const MAX_INT8 = 127;
+const INT16_SIZE = 2;
 const MIN_INT16 = -32768;
 const MAX_INT16 = 32767;
+const INT32_SIZE = 4;
 const MIN_INT32 = -2147483648;
 const MAX_INT32 = 2147483647;
-
-const ARRAY_SEP_CODE = 253;
-const SEP_CODE = 255;
-const SCHEMA_SEP_CODE = 254;
+const DOUBLE_SIZE = 8;
 
 const ZERO = 0;
 const ONE = 1;
+const HEX_COMP = 0xff;
+const HEX_LARGE = 0xffffffff;
+const SHIFT_8 = 8;
+const SHIFT_16 = 16;
+const SHIFT_24 = 24;
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -45,48 +47,58 @@ function Encode(schema, payload, nested) {
 
 	let result = [];
 
-	for (let i = len - ONE; i >= ZERO; i--) {
+	for (let i = ZERO; i < len; i++) {
 		let key = keys[i];
 
 		if (payload[key] !== undefined && payload[key] !== null) {
-			let type = Types.resolve(schema[key]);
-			append_index(result, i);
-			if (type === Types.BOOLEAN) append_boolean(result, payload[key]);
-			else if (type === Types.NUMBER) append_number(result, payload[key]);
-			else if (type === Types.STRING) append_string(result, payload[key]);
-			else if (type === Types.SCHEMA) {
-				if (!nested) {
-					append_schema(
-						result, 
-						payload[key], 
-						Types.get_schema(schema[key])
-					);
-				}
-				else throw new Error('Cannot embed schemas at this depth');
-			}
-			else if (type === Types.BOOLEAN_ARRAY) {
-				append_boolean_array(result, payload[key]);
-			}
-			else if (type === Types.NUMBER_ARRAY) {
-				append_number_array(result, payload[key]);
-			}
-			else if (type === Types.STRING_ARRAY){
-				append_string_array(result, payload[key]);
-			}
-			else if (type === Types.SCHEMA_ARRAY){
-				if (!nested) {
-					append_schema_array(
-						result, 
-						payload[key], 
-						Types.get_schema(schema[key])
-					);
-				}
-				else throw new Error('Cannot embed schemas at this depth');
-			}
+			result[result.length] = i;
+
+			append_binary(
+				result, 
+				Types.resolve(schema[key]), 
+				payload[key], 
+				schema, 
+				key
+			);
 		}
 	}
-	 
+	
+	if (nested) return result;
 	return array_to_buffer(result);
+}
+
+function append_size16(buffer, value) {
+	buffer[buffer.length] = (value >>> SHIFT_8);
+    buffer[buffer.length] = (value & HEX_COMP);
+}
+
+/**
+ * Returns an array of bytes - binary conversion
+ * @param {integer} type The data type
+ * @param {?} data The data to convert to binary
+ * @param {object} schema The schema used to serialize
+ * @param {string} key The schema key being encoded
+ * @returns {array} The array of bytes
+ */
+function append_binary(result, type, data, schema, key) {
+	if (type === Types.BOOLEAN) from_boolean(result, data);
+	else if (type === Types.NUMBER) from_number(result, data);
+	else if (type === Types.STRING) from_string(result, data);
+	else if (type === Types.SCHEMA) {
+		from_schema(result, data, Types.get_schema(schema[key]));
+	}
+	else if (type === Types.BOOLEAN_ARRAY) {
+		from_boolean_array(result, data);
+	}
+	else if (type === Types.NUMBER_ARRAY) {
+		from_number_array(result, data);
+	}
+	else if (type === Types.STRING_ARRAY) {
+		from_string_array(result, data);
+	}
+	else if (type === Types.SCHEMA_ARRAY){
+		from_schema_array(result, data, Types.get_schema(schema[key]));
+	}
 }
 
 /**
@@ -107,27 +119,22 @@ function array_to_buffer(data) {
 }
 
 /**
- * Appends a Number type value to the Buffer
- * @param {Buffer} buffer The Buffer to append to
+ * Reads a number as a binary
  * @param {number} data The data to append
- * @returns {integer} The number of bytes written
+ * @returns {array} The binary representation
  */
-function append_number(buffer, data) {
+function from_number(buffer, data) {
 	if (isInt(data)) {
-		if (data <= MAX_INT8 && data >= MIN_INT8) {
-			append_int8(buffer, data);
-		}
+		if (data <= MAX_INT8 && data >= MIN_INT8) from_int8(buffer, data);
 		else if (data <= MAX_INT16 && data >= MIN_INT16) {
-			append_int16(buffer, data);
+			from_int16(buffer, data);
 		}
 		else if (data <= MAX_INT32 && data >= MIN_INT32) {
-			append_int32(buffer, data);
+			from_int32(buffer, data);
 		}
-		else {
-			append_double(buffer, data);
-		}
+		else from_double(buffer, data);
 	}
-	else append_double(buffer, data);
+	else from_double(buffer, data);
 }
 
 /**
@@ -142,165 +149,186 @@ function isInt(value) {
 }
 
 /**
- * Appends an Array of Number type values to the Buffer
- * @param {Buffer} buffer The Buffer to append to
+ * Reads a number array as a binary
  * @param {array} data The data to append
+ * @returns {array} The binary representation
  */
-function append_number_array(buffer, data) {
+function from_number_array(buffer, data) {
 	const len = data.length;
+	let caret = buffer.length;
+	let diff = ZERO;
+
+	// Reserve the counting bytes
+	buffer[caret] = ZERO;
+	buffer[caret + ONE] = ZERO;
 	for (let i = ZERO; i < len; i++) {
 		if (data[i] !== undefined && data[i] !== null) {
-			append_number(buffer, data[i]);
-			if (i < len - ONE) append_array_separator(buffer);
+			from_number(buffer, data[i]);
+		}
+	}
+
+	diff = buffer.length - caret - INT16_SIZE;
+	buffer[caret] = (diff >>> SHIFT_8);
+	buffer[caret + ONE] = (diff & HEX_COMP);
+}
+
+/**
+ * Reads a boolean array as a binary
+ * @param {array} data The data to append
+ * @returns {array} The binary representation
+ */
+function from_boolean_array(buffer, data) {
+	const len = data.length;
+	let caret = buffer.length;
+
+	buffer[caret] = len;
+	for (let i = ZERO; i < len; i++) {
+		if (data[i] !== undefined && data[i] !== null) {
+			buffer[buffer.length] = data[i] ? ONE : ZERO;
 		}
 	}
 }
 
 /**
- * Appends an Array of Boolean type values to the Buffer
- * @param {Buffer} buffer The Buffer to append to
+ * Reads a string array as a binary
  * @param {array} data The data to append
+ * @returns {array} The binary representation
  */
-function append_boolean_array(buffer, data) {
+function from_string_array(buffer, data) {
 	const len = data.length;
+	let caret = buffer.length;
+	let diff = ZERO;
+
+	// Reserve the counting bytes
+	buffer[caret] = ZERO;
+	buffer[caret + ONE] = ZERO;
 	for (let i = ZERO; i < len; i++) {
 		if (data[i] !== undefined && data[i] !== null) {
-			append_boolean(buffer, data[i]);
+			from_string(buffer, data[i]);
 		}
 	}
+
+	diff = buffer.length - caret - INT16_SIZE;
+	buffer[caret] = (diff >>> SHIFT_8);
+	buffer[caret + ONE] = (diff & HEX_COMP);
 }
 
 /**
- * Appends an Array of String type values to the Buffer
- * @param {Buffer} buffer The Buffer to append to
- * @param {array} data The data to append
+ * Reads an object as a binary
+ * @param {object} data The data to append
+ * @returns {array} The binary representation
  */
-function append_string_array(buffer, data) {
-	const len = data.length;
-	for (let i = ZERO; i < len; i++) {
-		if (data[i] !== undefined && data[i] !== null) {
-			append_string(buffer, data[i]);
-			if (i < len - ONE) append_array_separator(buffer);
-		}
-	}
-}
-
-/**
- * Appends a Schema type value to the Buffer
- * @param {Buffer} buffer The Buffer to append to
- * @param {array} data The data to append
- * @param {object} schema The child Schema to use
- */
-function append_schema(buffer, data, schema) {
+function from_schema(buffer, data, schema) {
 	let res = Encode(schema, data, true);
-	let len = res.length;
+	const len = res.length;
 
-	buffer[buffer.length] = SCHEMA_SEP_CODE;
+	append_size16(buffer, len);
+	let caret = buffer.length;
 
 	for (let i = ZERO; i < len; i++) {
-		buffer[buffer.length] = res[i];
+		buffer[caret + i] = res[i];
 	}
-	buffer[buffer.length] = SCHEMA_SEP_CODE;
 }
 
 /**
- * Appends an Array of Schema type values to the Buffer
- * @param {Buffer} buffer The Buffer to append to
+ * Reads an object as a binary
  * @param {array} data The data to append
- * @param {object} schema The child Schema to use
+ * @returns {array} The binary representation
  */
-function append_schema_array(buffer, data, schema) {
-	let len = data.length;
-	for (let i = 0; i < len; i++) {
+function from_schema_array(buffer, data, schema) {
+	const len = data.length;
+	let caret = buffer.length;
+	let diff = ZERO;
+
+	// Reserve the counting bytes
+	buffer[caret] = ZERO;
+	buffer[caret + ONE] = ZERO;
+
+	for (let i = ZERO; i < len; i++) {
 		if (data[i] !== undefined && data[i] !== null) {
-			append_schema(buffer, data[i], schema);
+			from_schema(buffer, data[i], schema);
 		}
 	}
+
+	diff = buffer.length - caret - INT16_SIZE;
+	buffer[caret] = (diff >>> SHIFT_8);
+	buffer[caret + ONE] = (diff & HEX_COMP);
 }
 
 /**
- * Appends an Array separator charcter to the Buffer
- * @param {Buffer} buffer The Buffer to append to
+ * Reads a boolean as a binary
+ * @param {boolean} data The data to append
+ * @returns {array} The binary representation
  */
-function append_array_separator(buffer) {
-	buffer[buffer.length] = ARRAY_SEP_CODE;
-}
-
-/**
- * Appends a Boolean type value to the Buffer
- * @param {Buffer} buffer The Buffer to append to
- * @param {number} data The data to append
- */
-function append_boolean(buffer, data) {
+function from_boolean(buffer, data) {
+	buffer[buffer.length] = ONE;
 	buffer[buffer.length] = data ? ONE : ZERO;
 }
 
 /**
- * Appends a signed INT8 type value to the Buffer
- * @param {Buffer} buffer The Buffer to append to
- * @param {number} data The data to append
+ * Reads an int8 number as a binary
+ * @param {boolean} data The data to append
+ * @returns {array} The binary representation
  */
-function append_int8(buffer, data) {
-	/*if (data < 0) data = 0xff + data + 1;
-	buffer[buffer.length] = (data & 0xff);*/
-	buffer[buffer.length] = data;
+function from_int8(buffer, data) {
+	if (data < ZERO) data = HEX_COMP + data + ONE;
+	buffer[buffer.length] = ONE;
+	buffer[buffer.length] = (data & HEX_COMP);
 }
 
 /**
- * Appends a signed INT16 type value to the Buffer
- * @param {Buffer} buffer The Buffer to append to
- * @param {number} data The data to append
+ * Reads an int16 number as a binary
+ * @param {boolean} data The data to append
+ * @returns {array} The binary representation
  */
-function append_int16(buffer, data) {
-	buffer[buffer.length] = (data >>> 8);
-	buffer[buffer.length] = (data & 0xff);
+function from_int16(buffer, data) {
+	let caret = buffer.length;
+	buffer[caret] = INT16_SIZE;
+	buffer[caret + ONE] = (data >>> SHIFT_8);
+	buffer[caret + INT16_SIZE] = (data & HEX_COMP);
 }
 
 /**
- * Appends a signed INT32 type value to the Buffer
- * @param {Buffer} buffer The Buffer to append to
- * @param {number} data The data to append
+ * Reads an int32 number as a binary
+ * @param {boolean} data The data to append
+ * @returns {array} The binary representation
  */
-function append_int32(buffer, data) {
-	if (data < 0) data = 0xffffffff + data + 1;
-	buffer[buffer.length] = (data >>> 24);
-	buffer[buffer.length] = (data >>> 16);
-	buffer[buffer.length] = (data >>> 8);
-	buffer[buffer.length] = (data & 0xff);
+function from_int32(buffer, data) {
+	if (data < ZERO) data = HEX_LARGE + data + ONE;
+
+	let caret = buffer.length;
+	buffer[caret] = INT32_SIZE;
+	buffer[caret + ONE] = (data >>> SHIFT_24);
+	buffer[caret + INT16_SIZE] = (data >>> SHIFT_16);
+	buffer[caret + 3] = (data >>> SHIFT_8);
+	buffer[caret + INT32_SIZE] = (data & HEX_COMP);
 }
 
 /**
- * Appends a double type value to the Buffer
- * @param {Buffer} buffer The Buffer to append to
- * @param {number} data The data to append
+ * Reads a double number as a binary
+ * @param {boolean} data The data to append
+ * @returns {array} The binary representation
  */
-function append_double(buffer, data) {
-	ieee754.write(buffer, data, buffer.length, false, 52, 8);
+function from_double(buffer, data) {
+	buffer[buffer.length] = DOUBLE_SIZE;
+	ieee754.write(buffer, data, buffer.length, false, 52, DOUBLE_SIZE);
 }
 
 /**
- * Appends a String type value to the Buffer
- * @param {Buffer} buffer The Buffer to append to
- * @param {number} data The data to append
+ * Reads a string as a binary
+ * @param {boolean} data The data to append
+ * @returns {array} The binary representation
  */
-function append_string(buffer, data) {
+function from_string(buffer, data) {
 	data = String(data);
+
 	let len = data.length;
+	let caret = buffer.length;
 
+	buffer[caret] = len;
 	for (let i = ZERO; i < len; i++) {
-		buffer[buffer.length] = data.codePointAt(i);
+		buffer[caret + ONE + i] = data.codePointAt(i);
 	}
-}
-
-/**
- * Appends an index type value to the Buffer [255, x]
- * @param {Buffer} buffer The Buffer to append to
- * @param {number} data The data to append
- */
-function append_index(buffer, data) {
-	buffer[buffer.length] = SEP_CODE;
-	// Unsigned Int
-	buffer[buffer.length] = data;
 }
 
 /* Exports -------------------------------------------------------------------*/

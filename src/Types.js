@@ -14,7 +14,7 @@ const NUMBER_ARRAY = 5;
 const STRING_ARRAY = 6;
 const SCHEMA = 7;
 const SCHEMA_ARRAY = 8;
-const EMBEDDED_JSON = 9;
+const BINARY = 9;
 const INDEX = 16;
 
 const BOOLEAN_STR = 'boolean';
@@ -22,6 +22,7 @@ const NUMBER_STR = 'number';
 const STRING_STR = 'string';
 const OBJECT_STR = 'json';
 const OBJECT_TYPE = 'object';
+const BINARY_STR = 'buffer';
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -43,6 +44,7 @@ function resolve(type) {
 			else if (typeof type.items === OBJECT_TYPE) res = SCHEMA_ARRAY;
 			else if (type.schema) res = SCHEMA;
 		}
+		else if (name === BINARY_STR) res = BINARY;
 	}
 	else {
 		if (name === Number) res = NUMBER;
@@ -54,6 +56,7 @@ function resolve(type) {
 			else if (typeof type.items === Object) res = SCHEMA_ARRAY;
 			else if (type.schema) res = SCHEMA;
 		}
+		else if (name === Buffer) res = BINARY;
 		// TODO: Full Mongoose schema support
 	}
 	

@@ -12,19 +12,15 @@ const Types = require('./Types');
 
 /* Local variables -----------------------------------------------------------*/
 
-const READ_SKIP = 2;
-
 const INT8_SIZE = 1;
 const INT16_SIZE = 2;
 const INT32_SIZE = 4;
 const DOUBLE_SIZE = 8;
 
-const SEP_CODE = 255;
-const SCHEMA_SEP_CODE = 254;
-const ARRAY_SEP_CODE = 253;
-
 const ZERO = 0;
 const ONE = 1;
+
+const READAHEAD = 2;
 
 const CPR = Object.create(null);
 
@@ -39,64 +35,44 @@ const CPR = Object.create(null);
  */
 function Decode(schema, data, nested) {
 	schema = schema.attributes || schema;	// Waterline Model
+
 	const keys = Object.keys(schema);
 	const len = data.length;
 
 	let result = {};
-	let _caret = len;
-	let prev = null;
 
-	let hold = [];
-	let in_schema = false;
+	for (let i = ZERO; i < len; i++) {
+		let sub_schema;
+		let size = data[i + ONE];
+		let name = keys[data[i]];
+		let type = Types.resolve(schema[name]);
+		let skip = ONE;
+		let pad = READAHEAD
 
-	for (let i = len - ONE; i >= ZERO; i--) {
-		let curr = data[i];
-		if (curr === SEP_CODE && in_schema === false) {
-			let _propName = keys[prev];
-			let sub_schema;
-			if (_propName !== undefined && schema[_propName] !== undefined) {
-				let _propType = Types.resolve(schema[_propName]);
-				if (
-					_propType === Types.SCHEMA_ARRAY || 
-					_propType === Types.SCHEMA
-				) {
-					sub_schema = Types.get_schema(schema[_propName]);
-				}
-
-				result[_propName] = read(
-					data, 
-					_propType, 
-					i + READ_SKIP, 
-					_caret, 
-					sub_schema
-				);
-
-				if (i === ZERO) break;
-
-				_caret = i;
-				prev = data[i];
-			}
+		if (type === Types.SCHEMA_ARRAY || type === Types.SCHEMA) {
+			sub_schema = Types.get_schema(schema[name]);
 		}
-		else if (curr === SCHEMA_SEP_CODE) {
-			if (in_schema === false) {
-				if (
-					prev === SEP_CODE || 
-					prev === null || 
-					prev === SCHEMA_SEP_CODE
-				) {
-					in_schema = true;
-				}
-			}
-			else {
-				if (data[i - 2] === SEP_CODE && prev === SEP_CODE) {
-					in_schema = false;
-				}
-			} 
+
+		if (
+			type === Types.STRING_ARRAY || 
+			type === Types.NUMBER_ARRAY || 
+			type === Types.SCHEMA || 
+			type === Types.SCHEMA_ARRAY) {
+			size = read_size16(size, data[i + READAHEAD]);
+			pad = READAHEAD + ONE;
+			skip = READAHEAD;
 		}
-		else prev = curr;
+
+		result[name] = read(data, type, i + pad, i + size + pad, sub_schema);
+
+		i=(i + skip + size);
 	}
 
 	return result;
+}
+
+function read_size16(first, next) {
+	return (first << DOUBLE_SIZE) | next;
 }
 
 /**
@@ -117,9 +93,8 @@ function read_boolean(buffer, index) {
  * @returns {integer} The INT8 value
  */
 function read_int8(buffer, from, to) {
-	/*if (!(buffer[from] & 0x80)) return (buffer[from]);
-	return ((0xff - buffer[from] + 1) * -1);*/
-	return buffer[from];
+	if (!(buffer[from] & 0x80)) return (buffer[from]);
+	return ((0xff - buffer[from] + 1) * -1);
 }
 
 /**
@@ -156,11 +131,13 @@ function read_int32(buffer, from, to) {
  * @returns {integer} The String value
  */
 function read_string(buffer, from, to) {
-	let acc = [];
+	let res = [];
 	for (let i = from; i < to; i++) {
-		acc.push(buffer[i]);
+		if (buffer[i] !== null && buffer[i] !== undefined) {
+			res.push(buffer[i]);
+		}
 	}
-	return String.fromCodePoint.apply(CPR, acc);
+	return String.fromCodePoint.apply(CPR, res);
 }
 
 /**
@@ -173,14 +150,21 @@ function read_string(buffer, from, to) {
 function read_string_array(buffer, from, to) {
 	let acc = [];
 	let res = [];
-	for (let i = from; i < to; i++) {
-		if (buffer[i] !== ARRAY_SEP_CODE) acc.push(buffer[i]);
-		else {
+	let check = buffer[from] + from;
+
+	// Read size16
+	for (let i = from + ONE; i < to; i++) {
+		if (i === check + ONE) {
 			res.push(String.fromCodePoint.apply(CPR, acc));
 			acc.length = ZERO;
+			check = buffer[i] + i;
+		}
+		else {
+			acc.push(buffer[i]);
 		}
 	}
 	res.push(String.fromCodePoint.apply(CPR, acc));
+
 	return res;
 }
 
@@ -207,16 +191,14 @@ function read_boolean_array(buffer, from, to) {
  * @returns {array} The Array value
  */
 function read_number_array(buffer, from, to) {
-	let acc = from;
 	let res = [];
-	for (let i = from + ONE; i < to; i++) {
-		if (buffer[i] === ARRAY_SEP_CODE) {
-			res.push(read_number(buffer, acc, i));
-			acc = i + ONE;
-			i++;
-		}
+
+	// Read size16
+	for (let i = from; i < to; i++) {
+		let size = buffer[i];
+		res.push(read_number(buffer, i + ONE, i + size + ONE));
+		i+= size;
 	}
-	res.push(read_number(buffer, acc, to));
 	return res;
 }
 
@@ -240,7 +222,9 @@ function read_double(buffer, from, to) {
  */
 function read_schema(buffer, from, to, schema) {
 	let bytes = [];
-	for (let i = from + ONE; i < to - ONE; i++) {
+
+	// Read size16
+	for (let i = from; i < to; i++) {
 		bytes[bytes.length] = buffer[i];
 	}
 
@@ -255,14 +239,13 @@ function read_schema(buffer, from, to, schema) {
  * @returns {array} The Schema array value
  */
 function read_schema_array(buffer, from, to, schema) {
-	let caret = from;
 	let res = [];
-	for (let i = caret + ONE; i < to; i++) {
-		if (buffer[i] === SCHEMA_SEP_CODE) {
-			res[res.length] = read_schema(buffer, caret, i + ONE, schema);
-			caret = i;
-			i++;
-		}
+
+	// Read size16
+	for (let i = from; i < to; i++) {
+		let size = read_size16(buffer[i], buffer[i + ONE]);
+		res.push(read_schema(buffer, i + READAHEAD, i + size + READAHEAD, schema));
+		i+= (size + ONE);
 	}
 
 	return res;
