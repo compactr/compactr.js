@@ -4,7 +4,6 @@
 [![Compactr](https://img.shields.io/npm/v/compactr.svg)](https://www.npmjs.com/package/compactr)
 [![Build Status](https://travis-ci.org/fed135/compactr.svg?branch=master)](https://travis-ci.org/fed135/compactr)
 [![Dependencies Status](https://david-dm.org/fed135/compactr.svg)](https://www.npmjs.com/package/compactr)
-[![Code Climate](https://codeclimate.com/github/fed135/compactr/badges/gpa.svg)](https://codeclimate.com/github/fed135/compactr)
 [![Gitter](https://img.shields.io/gitter/room/fed135/compactr.svg)](https://gitter.im/fed135/compactr)
 
 ---
@@ -39,9 +38,11 @@ Protocol Buffers are awesome. Having schemas to deflate and inflate data while m
 
 For example, if you have a DB schema for users, you can use that directly as a schema for Compactr.
 
-| **Waterline** | **Mongoose** |
-| --- | --- | --- |
-| `{` <br> `  id: {` <br> `    type: 'integer',`  <br> `   required: true`  <br> `  },`  <br> `  name: 'string'`  <br>  `}` | `{` <br> `  id: {` <br> `    type: Number,`  <br> `   required: true`  <br> `  },`  <br> `  name: String`  <br>  `}` |
+**Waterline**
+
+```
+{ id: { type: 'integer', required: true }, name: 'string' }
+```
 
 
 ```
