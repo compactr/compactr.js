@@ -10,327 +10,359 @@ const ieee754 = require('ieee754');
 
 const Types = require('./Types');
 
-/* Local variables -----------------------------------------------------------*/
+/* Constants -----------------------------------------------------------------*/
 
-const MIN_INT8 = -128;
-const MAX_INT8 = 127;
-const INT16_SIZE = 2;
-const MIN_INT16 = -32768;
-const MAX_INT16 = 32767;
-const INT32_SIZE = 4;
-const MIN_INT32 = -2147483648;
-const MAX_INT32 = 2147483647;
-const DOUBLE_SIZE = 8;
-
-const ZERO = 0;
-const ONE = 1;
-const HEX_COMP = 0xff;
-const HEX_LARGE = 0xffffffff;
-const SHIFT_8 = 8;
-const SHIFT_16 = 16;
-const SHIFT_24 = 24;
+const PREALLOC_DEPTH = 4;
 
 /* Methods -------------------------------------------------------------------*/
 
-/**
- * Encodes a JS object into a Buffer using a Schema
- * @param {object} schema The Schema to use for encoding
- * @param {object} payload The payload to encode
- * @param {boolean} nested Wether this was called for a nested schema
- * @returns {Buffer} The encoded Buffer
- */
-function Encode(schema, payload, nested) {
-	schema = schema.attributes || schema;	// Waterline Model
+class Encoder {
 
-	const keys = Object.keys(schema);
-	const len = keys.length;
+	/**
+	 * Encodes a JS object into a Buffer using a Schema
+	 * @param {object} schema The Schema to use for encoding
+	 */
+	constructor() {
+		this.keys = [];
 
-	let result = [];
+		this.result = [];
+		this.caret = 0;
+		this.schema = {};
+	}
 
-	for (let i = ZERO; i < len; i++) {
-		let key = keys[i];
+	/**
+	 * Processes a payload and returns the buffer representation
+	 * @param {object} payload The payload to encode
+	 * @param {boolean} nested Wether the encoding is for a nested object
+	 * @param {Buffer|array} The result of the encoding
+	 */
+	init(schema, payload, nested) {
+		this.keys = Object.keys(schema);
 
-		if (payload[key] !== undefined && payload[key] !== null) {
-			result[result.length] = i;
+		this.caret = 0;
+		this.schema = schema.attributes || schema;
+		this.nesting = nested;
 
-			append_binary(
-				result, 
-				Types.resolve(schema[key]), 
-				payload[key], 
-				schema, 
-				key
-			);
+		const len = this.keys.length;
+
+		for (let i = 0; i < len; i++) {
+			let key = this.keys[i];
+
+			if (payload[key] !== undefined && payload[key] !== null) {
+				this.result[this.caret] = i;
+				this.caret++;
+
+				this.append_binary(
+					Types.resolve(this.schema[key]), 
+					payload[key],  
+					key
+				);
+			}
 		}
-	}
-	
-	if (nested) return result;
-	return array_to_buffer(result);
-}
-
-function append_size16(buffer, value) {
-	buffer[buffer.length] = (value >>> SHIFT_8);
-    buffer[buffer.length] = (value & HEX_COMP);
-}
-
-/**
- * Returns an array of bytes - binary conversion
- * @param {integer} type The data type
- * @param {?} data The data to convert to binary
- * @param {object} schema The schema used to serialize
- * @param {string} key The schema key being encoded
- * @returns {array} The array of bytes
- */
-function append_binary(result, type, data, schema, key) {
-	if (type === Types.BOOLEAN) from_boolean(result, data);
-	else if (type === Types.NUMBER) from_number(result, data);
-	else if (type === Types.STRING) from_string(result, data);
-	else if (type === Types.SCHEMA) {
-		from_schema(result, data, Types.get_schema(schema[key]));
-	}
-	else if (type === Types.BOOLEAN_ARRAY) {
-		from_boolean_array(result, data);
-	}
-	else if (type === Types.NUMBER_ARRAY) {
-		from_number_array(result, data);
-	}
-	else if (type === Types.STRING_ARRAY) {
-		from_string_array(result, data);
-	}
-	else if (type === Types.SCHEMA_ARRAY){
-		from_schema_array(result, data, Types.get_schema(schema[key]));
-	}
-}
-
-/**
- * Turns an array of UINT8 into a Buffer
- * Faster than Buffer.from because it skips a lot of checks
- * @param {array} data An array of UINT8
- * @returns {Buffer} The resulting Buffer 
- */
-function array_to_buffer(data) {
-	let len = data.length;
-	let res = Buffer.allocUnsafe(len);
-
-	for (let i = ZERO; i < len; i++) {
-		res[i] = data[i];
+		
+		this.result.length = this.caret; // Clip results - unsafe alloc
+		if (nested > 0) return this.result;
+		return this.array_to_buffer(this.result);
 	}
 
-	return res;
-}
+	/**
+	 * Appends a UINT16 value to the result
+	 * @param {number} value The size of an object to add to the result
+	 */
+	append_size16(value) {
+		this.result[this.caret] = (value >>> 8);
+	    this.result[this.caret + 1] = (value & 0xff);
 
-/**
- * Reads a number as a binary
- * @param {number} data The data to append
- * @returns {array} The binary representation
- */
-function from_number(buffer, data) {
-	if (isInt(data)) {
-		if (data <= MAX_INT8 && data >= MIN_INT8) from_int8(buffer, data);
-		else if (data <= MAX_INT16 && data >= MIN_INT16) {
-			from_int16(buffer, data);
+	    this.caret = this.caret + 2;
+	}
+
+	/**
+	 * Returns an array of bytes - binary conversion
+	 * @param {integer} type The data type
+	 * @param {?} data The data to convert to binary
+	 * @param {string} key The schema key being encoded
+	 */
+	append_binary(type, data, key) {
+		if (type === Types.BOOLEAN) return this.from_boolean(data);
+		else if (type === Types.NUMBER) return this.from_number(data);
+		else if (type === Types.STRING) return this.from_string(data);
+		else if (type === Types.SCHEMA) {
+			return this.from_schema(data, Types.get_schema(this.schema[key]));
 		}
-		else if (data <= MAX_INT32 && data >= MIN_INT32) {
-			from_int32(buffer, data);
+		else if (type === Types.BOOLEAN_ARRAY) {
+			return this.from_boolean_array(data);
 		}
-		else from_double(buffer, data);
-	}
-	else from_double(buffer, data);
-}
-
-/**
- * Super weak bitwise check if a number is an integer. Will not check for
- * variable type or is it's NaN. It would have thrown later down the line anyway
- * and this is way faster.
- * @param {number} value The number to check
- * @returns {boolean} Wether the number is an Integer or a float
- */
-function isInt(value) {
- 	return (value | ZERO) === value;
-}
-
-/**
- * Reads a number array as a binary
- * @param {array} data The data to append
- * @returns {array} The binary representation
- */
-function from_number_array(buffer, data) {
-	const len = data.length;
-	let caret = buffer.length;
-	let diff = ZERO;
-
-	// Reserve the counting bytes
-	buffer[caret] = ZERO;
-	buffer[caret + ONE] = ZERO;
-	for (let i = ZERO; i < len; i++) {
-		if (data[i] !== undefined && data[i] !== null) {
-			from_number(buffer, data[i]);
+		else if (type === Types.NUMBER_ARRAY) {
+			return this.from_number_array(data);
+		}
+		else if (type === Types.STRING_ARRAY) {
+			return this.from_string_array(data);
+		}
+		else if (type === Types.SCHEMA_ARRAY){
+			return this.from_schema_array(data, Types.get_schema(this.schema[key]));
+		}
+		else if (type === Types.BINARY) {
+			return this.from_binary(data);
 		}
 	}
 
-	diff = buffer.length - caret - INT16_SIZE;
-	buffer[caret] = (diff >>> SHIFT_8);
-	buffer[caret + ONE] = (diff & HEX_COMP);
-}
+	/**
+	 * Turns the result array of UINT8 into a Buffer
+	 * Faster than Buffer.from because it skips a lot of checks
+	 * @returns {Buffer} The resulting Buffer 
+	 */
+	array_to_buffer() {
+		let res = Buffer.allocUnsafe(this.caret);
 
-/**
- * Reads a boolean array as a binary
- * @param {array} data The data to append
- * @returns {array} The binary representation
- */
-function from_boolean_array(buffer, data) {
-	const len = data.length;
-	let caret = buffer.length;
-
-	buffer[caret] = len;
-	for (let i = ZERO; i < len; i++) {
-		if (data[i] !== undefined && data[i] !== null) {
-			buffer[buffer.length] = data[i] ? ONE : ZERO;
+		for (let i = 0; i < this.caret; i++) {
+			res[i] = this.result[i];
 		}
+
+		return res;
 	}
-}
 
-/**
- * Reads a string array as a binary
- * @param {array} data The data to append
- * @returns {array} The binary representation
- */
-function from_string_array(buffer, data) {
-	const len = data.length;
-	let caret = buffer.length;
-	let diff = ZERO;
-
-	// Reserve the counting bytes
-	buffer[caret] = ZERO;
-	buffer[caret + ONE] = ZERO;
-	for (let i = ZERO; i < len; i++) {
-		if (data[i] !== undefined && data[i] !== null) {
-			from_string(buffer, data[i]);
+	/**
+	 * Reads a number as a binary
+	 * @param {number} data The data to append
+	 */
+	from_number(data) {
+		if (this.isInt(data)) {
+			if (data <= 127 && data >= -128) this.from_int8(data);
+			else if (data <= 32767 && data >= -32768) this.from_int16(data);
+			else if (data <= 2147483647 && data >= -2147483648) this.from_int32(data);
+			else this.from_double(data);
 		}
+		else this.from_double(data);
 	}
 
-	diff = buffer.length - caret - INT16_SIZE;
-	buffer[caret] = (diff >>> SHIFT_8);
-	buffer[caret + ONE] = (diff & HEX_COMP);
-}
-
-/**
- * Reads an object as a binary
- * @param {object} data The data to append
- * @returns {array} The binary representation
- */
-function from_schema(buffer, data, schema) {
-	let res = Encode(schema, data, true);
-	const len = res.length;
-
-	append_size16(buffer, len);
-	let caret = buffer.length;
-
-	for (let i = ZERO; i < len; i++) {
-		buffer[caret + i] = res[i];
+	/**
+	 * Super weak bitwise check if a number is an integer. Will not check for
+	 * variable type or is it's NaN. It would have thrown later down the line anyway
+	 * and this is way faster.
+	 * @param {number} value The number to check
+	 * @returns {boolean} Wether the number is an Integer or a float
+	 */
+	isInt(value) {
+	 	return (value | 0) === value;
 	}
-}
 
-/**
- * Reads an object as a binary
- * @param {array} data The data to append
- * @returns {array} The binary representation
- */
-function from_schema_array(buffer, data, schema) {
-	const len = data.length;
-	let caret = buffer.length;
-	let diff = ZERO;
+	/**
+	 * Reads a number array as a binary
+	 * @param {array} data The data to append
+	 */
+	from_number_array(data) {
+		const len = data.length;
+		let curr = this.caret;
+		let diff = 0;
 
-	// Reserve the counting bytes
-	buffer[caret] = ZERO;
-	buffer[caret + ONE] = ZERO;
-
-	for (let i = ZERO; i < len; i++) {
-		if (data[i] !== undefined && data[i] !== null) {
-			from_schema(buffer, data[i], schema);
+		// Reserve the counting bytes
+		this.result[this.caret] = 0;
+		this.result[this.caret + 1] = 0;
+		this.caret = this.caret + 2;
+		for (let i = 0; i < len; i++) {
+			if (data[i] !== undefined && data[i] !== null) {
+				this.from_number(data[i]);
+			}
 		}
+
+		diff = this.caret - curr - 2;
+		this.result[curr] = (diff >>> 8);
+		this.result[curr + 1] = (diff & 0xff);
 	}
 
-	diff = buffer.length - caret - INT16_SIZE;
-	buffer[caret] = (diff >>> SHIFT_8);
-	buffer[caret + ONE] = (diff & HEX_COMP);
-}
+	/**
+	 * Reads a boolean array as a binary
+	 * @param {array} data The data to append
+	 */
+	from_boolean_array(data) {
+		const len = data.length;
 
-/**
- * Reads a boolean as a binary
- * @param {boolean} data The data to append
- * @returns {array} The binary representation
- */
-function from_boolean(buffer, data) {
-	buffer[buffer.length] = ONE;
-	buffer[buffer.length] = data ? ONE : ZERO;
-}
-
-/**
- * Reads an int8 number as a binary
- * @param {boolean} data The data to append
- * @returns {array} The binary representation
- */
-function from_int8(buffer, data) {
-	if (data < ZERO) data = HEX_COMP + data + ONE;
-	buffer[buffer.length] = ONE;
-	buffer[buffer.length] = (data & HEX_COMP);
-}
-
-/**
- * Reads an int16 number as a binary
- * @param {boolean} data The data to append
- * @returns {array} The binary representation
- */
-function from_int16(buffer, data) {
-	let caret = buffer.length;
-	buffer[caret] = INT16_SIZE;
-	buffer[caret + ONE] = (data >>> SHIFT_8);
-	buffer[caret + INT16_SIZE] = (data & HEX_COMP);
-}
-
-/**
- * Reads an int32 number as a binary
- * @param {boolean} data The data to append
- * @returns {array} The binary representation
- */
-function from_int32(buffer, data) {
-	if (data < ZERO) data = HEX_LARGE + data + ONE;
-
-	let caret = buffer.length;
-	buffer[caret] = INT32_SIZE;
-	buffer[caret + ONE] = (data >>> SHIFT_24);
-	buffer[caret + INT16_SIZE] = (data >>> SHIFT_16);
-	buffer[caret + 3] = (data >>> SHIFT_8);
-	buffer[caret + INT32_SIZE] = (data & HEX_COMP);
-}
-
-/**
- * Reads a double number as a binary
- * @param {boolean} data The data to append
- * @returns {array} The binary representation
- */
-function from_double(buffer, data) {
-	buffer[buffer.length] = DOUBLE_SIZE;
-	ieee754.write(buffer, data, buffer.length, false, 52, DOUBLE_SIZE);
-}
-
-/**
- * Reads a string as a binary
- * @param {boolean} data The data to append
- * @returns {array} The binary representation
- */
-function from_string(buffer, data) {
-	data = String(data);
-
-	let len = data.length;
-	let caret = buffer.length;
-
-	buffer[caret] = len;
-	for (let i = ZERO; i < len; i++) {
-		buffer[caret + ONE + i] = data.codePointAt(i);
+		this.result[this.caret] = len;
+		for (let i = 0; i < len; i++) {
+			if (data[i] !== undefined && data[i] !== null) {
+				this.result[this.caret + i + 1] = data[i] ? 1 : 0;
+			}
+		}
+		this.caret = this.caret + len + 1;
 	}
+
+	/**
+	 * Reads a string array as a binary
+	 * @param {array} data The data to append
+	 */
+	from_string_array(data) {
+		const len = data.length;
+		let curr = this.caret;
+		let diff = 0;
+
+		// Reserve the counting bytes
+		this.result[this.caret] = 0;
+		this.result[this.caret + 1] = 0;
+		this.caret = this.caret + 2;
+		for (let i = 0; i < len; i++) {
+			if (data[i] !== undefined && data[i] !== null) {
+				this.from_string(data[i]);
+			}
+		}
+
+		diff = this.caret - curr - 2;
+		this.result[curr] = (diff >>> 8);
+		this.result[curr + 1] = (diff & 0xff);
+	}
+
+	/**
+	 * Reads an object as a binary
+	 * @param {object} data The data to append
+	 */
+	from_schema(data, schema) {
+		let res = encode(schema, data, this.nesting + 1);
+		const len = res.length;
+
+		this.append_size16(len);
+
+		for (let i = 0; i < len; i++) {
+			this.result[this.caret + i] = res[i];
+		}
+		this.caret = this.caret + len;
+	}
+
+	/**
+	 * Reads a binary
+	 * @param {object} data The data to append
+	 */
+	from_binary(data) {
+		const len = data.length;
+
+		this.append_size16(len);
+
+		for (let i = 0; i < len; i++) {
+			this.result[this.caret + i] = data[i];
+		}
+		this.caret = this.caret + len;
+	}
+
+	/**
+	 * Reads an object as a binary
+	 * @param {array} data The data to append
+	 */
+	from_schema_array(data, schema) {
+		const len = data.length;
+		let curr = this.caret;
+		let diff = 0;
+
+		// Reserve the counting bytes
+		this.result[this.caret] = 0;
+		this.result[this.caret + 1] = 0;
+		this.caret = this.caret + 2;
+		for (let i = 0; i < len; i++) {
+			if (data[i] !== undefined && data[i] !== null) {
+				this.from_schema(data[i], schema);
+			}
+		}
+
+		diff = this.caret - curr - 2;
+		this.result[curr] = (diff >>> 8);
+		this.result[curr + 1] = (diff & 0xff);
+	}
+
+	/**
+	 * Reads a boolean as a binary
+	 * @param {boolean} data The data to append
+	 */
+	from_boolean(data) {
+		this.result[this.caret] = 1;
+		this.result[this.caret + 1] = data ? 1 : 0;
+		this.caret = this.caret + 2;
+	}
+
+	/**
+	 * Reads an int8 number as a binary
+	 * @param {boolean} data The data to append
+	 */
+	from_int8(data) {
+		if (data < 0) data = 0xff + data + 1;
+		this.result[this.caret] = 1;
+		this.result[this.caret + 1] = (data & 0xff);
+		this.caret = this.caret + 2;
+	}
+
+	/**
+	 * Reads an int16 number as a binary
+	 * @param {boolean} data The data to append
+	 */
+	from_int16(data) {
+		this.result[this.caret] = 2;
+		this.result[this.caret + 1] = (data >>> 8);
+		this.result[this.caret + 2] = (data & 0xff);
+		this.caret = this.caret + 3;
+	}
+
+	/**
+	 * Reads an int32 number as a binary
+	 * @param {boolean} data The data to append
+	 */
+	from_int32(data) {
+		if (data < 0) data = 0xffffffff + data + 1;
+
+		this.result[this.caret] = 4;
+		this.result[this.caret + 1] = (data >>> 24);
+		this.result[this.caret + 2] = (data >>> 16);
+		this.result[this.caret + 3] = (data >>> 8);
+		this.result[this.caret + 4] = (data & 0xff);
+		this.caret = this.caret + 5;
+	}
+
+	/**
+	 * Reads a double number as a binary
+	 * @param {boolean} data The data to append
+	 * @returns {array} The binary representation
+	 */
+	from_double(data) {
+		this.result[this.caret] = 8;
+		ieee754.write(this.result, data, this.caret + 1, false, 52, 8);
+		this.caret = this.caret + 9;
+	}
+
+	/**
+	 * Reads a string as a binary
+	 * @param {boolean} data The data to append
+	 * @returns {array} The binary representation
+	 */
+	from_string(data) {
+		data = '' + data;
+
+		let len = data.length;
+
+		this.result[this.caret] = len;
+		for (let i = 0; i < len; i++) {
+			this.result[this.caret + 1 + i] = data.codePointAt(i);
+		}
+		this.caret = this.caret + len + 1;
+	}
+}
+
+/* In-memory -----------------------------------------------------------------*/
+
+const _encoders_pool = [];
+
+// Pre-populate with 4 levels of nested encoders
+// These will live in memory, a small cost for added speed
+for (let i = 0; i < PREALLOC_DEPTH; i++) {
+	_encoders_pool[i] = new Encoder();
+}
+
+/**
+ * Encoder class wrapper
+ */
+function encode(schema, payload, nested = 0) {
+	let _encoder;
+
+	if (nested < PREALLOC_DEPTH) _encoder = _encoders_pool[nested];
+	else _encoder = new Encoder();
+
+	return _encoder.init(schema, payload, nested);
 }
 
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = Encode;
+module.exports = encode;

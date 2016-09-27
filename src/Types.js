@@ -24,6 +24,12 @@ const OBJECT_STR = 'json';
 const OBJECT_TYPE = 'object';
 const BINARY_STR = 'buffer';
 
+// Small and easy check of data type by first letter (most common ones)
+const B_STR = 'b';
+const N_STR = 'n';
+const S_STR = 's';
+const O_STR = 'j';
+
 /* Methods -------------------------------------------------------------------*/
 
 /**
@@ -33,34 +39,34 @@ const BINARY_STR = 'buffer';
  */
 function resolve(type) {
 	let name = type.type || type;
-	let res = BOOLEAN;
-	if (typeof name === STRING_STR) {
-		if (name === NUMBER_STR) res = NUMBER;
-		else if (name === STRING_STR) res = STRING;
-		else if (name === OBJECT_STR) {
-			if (type.items === BOOLEAN_STR) res = BOOLEAN_ARRAY;
-			else if (type.items === NUMBER_STR) res = NUMBER_ARRAY;
-			else if (type.items === STRING_STR) res = STRING_ARRAY;
-			else if (typeof type.items === OBJECT_TYPE) res = SCHEMA_ARRAY;
-			else if (type.schema) res = SCHEMA;
-		}
-		else if (name === BINARY_STR) res = BINARY;
+	let n = name[0];
+
+	// String type checks
+	if (n === B_STR) return BOOLEAN;
+	if (n === N_STR) return NUMBER;
+	if (n === S_STR) return STRING;
+	if (n === O_STR) {
+		if (type.items === BOOLEAN_STR) return BOOLEAN_ARRAY;
+		if (type.items === NUMBER_STR) return NUMBER_ARRAY;
+		if (type.items === STRING_STR) return STRING_ARRAY;
+		if (typeof type.items === OBJECT_TYPE) return SCHEMA_ARRAY;
+		if (type.schema) return SCHEMA;
 	}
-	else {
-		if (name === Number) res = NUMBER;
-		else if (name === String) res = STRING;
-		else if (name === Array) {
-			if (type.items === Boolean) res = BOOLEAN_ARRAY;
-			else if (type.items === Number) res = NUMBER_ARRAY;
-			else if (type.items === String) res = STRING_ARRAY;
-			else if (typeof type.items === Object) res = SCHEMA_ARRAY;
-			else if (type.schema) res = SCHEMA;
-		}
-		else if (name === Buffer) res = BINARY;
-		// TODO: Full Mongoose schema support
-	}
+	if (name === BINARY_STR) return BINARY;
 	
-	return res;
+	// Function type checks
+	if (name === Boolean) return BOOLEAN;
+	if (name === Number) return NUMBER;
+	if (name === String) return STRING;
+	if (name === Array) {
+		if (type.items === Boolean) return BOOLEAN_ARRAY;
+		if (type.items === Number) return NUMBER_ARRAY;
+		if (type.items === String) return STRING_ARRAY;
+		if (typeof type.items === Object) return SCHEMA_ARRAY;
+		if (type.schema) return SCHEMA;
+	}
+	if (name === Buffer) return BINARY;
+	// TODO: Full Mongoose schema support
 }
 
 function get_schema(type) {
@@ -78,6 +84,7 @@ module.exports = {
 	STRING_ARRAY,
 	SCHEMA,
 	SCHEMA_ARRAY,
+	BINARY,
 	INDEX,
 	resolve,
 	get_schema
