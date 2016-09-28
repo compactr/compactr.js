@@ -410,4 +410,33 @@ describe('Data integrity', () => {
 			});
 		});
 	});
+
+	describe('Binary', () => {
+		describe('String types', () => {
+			const T = {t:'buffer'};
+
+			it('should preserve buffer constructor', () => {
+				let val = Buffer.from(['a', 'b', 'c']);
+				let res = Compactr.encode(T,{t:val});
+				expect(res.length).to.equal(6); //Schema key, Size index, buffer value
+				expect(Compactr.decode(T, res).t).to.be.instanceof(Buffer);
+			});
+		});
+	});
+});
+
+describe('Data validation', () => {
+	const T = {
+		a: 'boolean',
+		b: 'string',
+		c: 'number'
+	};
+
+	it('should return [] on good data', () => {
+		expect(Compactr.validate(T, {a: true, b: 'true', c:1}).length).to.equal(0);
+	});
+
+	it('should return warnings on bad data', () => {
+		expect(Compactr.validate(T, {a: 'john', b: NaN, c:'smith'}).length).to.equal(3);
+	});
 });

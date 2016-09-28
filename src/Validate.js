@@ -12,9 +12,9 @@ const Types = require('./Types');
 
 function validate(schema, payload) {
 	let keys = Object.keys(schema);
-	let schema = schema.attributes || schema;
+	schema = schema.attributes || schema;
 	
-	const len = this.keys.length;
+	const len = keys.length;
 
 	let warnings = [];
 
@@ -26,11 +26,12 @@ function validate(schema, payload) {
 			is_valid(
 				warnings, 
 				key, 
-				Types.resolve(this.schema[key]), 
+				Types.resolve(schema[key]), 
 				payload[key]
 			);
 		}
 	}
+
 	return warnings;
 }
 

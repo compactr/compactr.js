@@ -4,7 +4,7 @@
   "description": "A compression library for the modern web",
   "main": "index.js",
   "scripts": {
-    "test": "mocha tests/index.js",
+    "test": "mocha tests/index.js && node tests/benchmarking_tools/smoke.js",
     "build": "webpack  -p -d -j --define process.env.NODE_ENV='\"browser\"' --config ./webpack.config"
   },
   "repository": {

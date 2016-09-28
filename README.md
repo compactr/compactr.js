@@ -40,12 +40,18 @@ For example, if you have a DB schema for users, you can use that directly as a s
 
 **Waterline**
 
-```
-{ id: { type: 'integer', required: true }, name: 'string' }
+```json
+{ 
+  id: {
+    type: 'integer',
+    required: true
+  },
+  name: 'string'
+}
 ```
 
 
-```
+```node
 /* User compessing in a controller */
 
 const Compactr = require('compactr');
@@ -56,7 +62,7 @@ User.create({ id: 0, name: 'Bruce' })
 
 ```
 
-```
+```node
 /* Decoding the User data */
 
 let user = Compactr.decode(User, deflated);
@@ -87,17 +93,17 @@ You need Node 6.0.0 and up
 **Speed**
 (Lower is better)
 
-<img src="http://i231.photobucket.com/albums/ee109/FeD135/speed.png">
+<img src="http://i231.photobucket.com/albums/ee109/FeD135/speed_v2.png">
 
 **Size**
 (Lower is better)
 
-<img src="http://i231.photobucket.com/albums/ee109/FeD135/size.png">
+<img src="http://i231.photobucket.com/albums/ee109/FeD135/size_v2.png">
 
 **Score**
 (Efficiency vs JSON 50% Speed, 50% Size - Higher is better)
 
-<img src="http://i231.photobucket.com/albums/ee109/FeD135/score.png">
+<img src="http://i231.photobucket.com/albums/ee109/FeD135/score_v2.png">
 
 ## Alright, what about features?
 
@@ -106,11 +112,8 @@ Right now, Compactr allows you to
 - [x] Use Waterline schemas
 - [x] Use Mongoose schemas
 - [x] Synchronously encode/decode
-- [x] Encode nested objects/Arrays
-
-And in the near future
-
-- [ ] Run validation checks on payloads
+- [x] Encode deeply nested objects/Arrays
+- [x] Run validation checks on payloads
 
 ## Alright, I'm convinced! How can I help?
 

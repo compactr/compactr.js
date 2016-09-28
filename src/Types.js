@@ -24,11 +24,12 @@ const OBJECT_STR = 'json';
 const OBJECT_TYPE = 'object';
 const BINARY_STR = 'buffer';
 
-// Small and easy check of data type by first letter (most common ones)
-const B_STR = 'b';
-const N_STR = 'n';
-const S_STR = 's';
-const O_STR = 'j';
+// Small and easy check of data type by third letter (most common ones)
+const B_STR = 'l';
+const N_STR = 'b';
+const S_STR = 'i';
+const O_STR = 'n';
+const BU_STR = 'f';
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -39,7 +40,7 @@ const O_STR = 'j';
  */
 function resolve(type) {
 	let name = type.type || type;
-	let n = name[0];
+	let n = name[3];
 
 	// String type checks
 	if (n === B_STR) return BOOLEAN;
@@ -52,7 +53,7 @@ function resolve(type) {
 		if (typeof type.items === OBJECT_TYPE) return SCHEMA_ARRAY;
 		if (type.schema) return SCHEMA;
 	}
-	if (name === BINARY_STR) return BINARY;
+	if (n === BU_STR) return BINARY;
 	
 	// Function type checks
 	if (name === Boolean) return BOOLEAN;
