@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha tests/index.js && node tests/benchmarking_tools/smoke.js",
-    "build": "webpack  -p -d -j --define process.env.NODE_ENV='\"browser\"' --config ./webpack.config"
+    "build": "webpack  -p -d -j --config ./webpack.config"
   },
   "repository": {
     "type": "git",
@@ -27,7 +27,7 @@
     "data"
   ],
   "author": "frederic charette <fredericcharette@gmail.com>",
-  "license": "GPL-3.0",
+  "license": "Apache 2.0",
   "bugs": {
     "url": "https://github.com/fed135/compactr/issues"
   },

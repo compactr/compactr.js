@@ -24,7 +24,7 @@ const OBJECT_STR = 'json';
 const OBJECT_TYPE = 'object';
 const BINARY_STR = 'buffer';
 
-// Small and easy check of data type by third letter (most common ones)
+// Small and easy/dirty check of data type by third letter (most common ones)
 const B_STR = 'l';
 const N_STR = 'b';
 const S_STR = 'i';
