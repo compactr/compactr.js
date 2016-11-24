@@ -10,30 +10,18 @@ let User = {
 	user_id: 'number', 
 	user_name: 'string', 
 	x: 'number', 
-	y: { 
-		type: 'number', 
-		defaultsTo: 0
-	}, 
+	y: 'number', 
 	z: 'number', 
 	alive: 'boolean', 
-	coords: { 
-		type: 'json', 
-		items: 'number' 
-	}, 
-	friends: { 
-		type: 'json', 
-		items: 'string' 
-	},
-	moods: {
-		type: 'json',
-		items: 'boolean'
-	},
+	coords: 'number_array', 
+	friends: 'string_array',
+	moods: 'boolean_array',
 	last_point: {
-		type: 'json',
+		type: 'schema',
 		schema: Point
 	},
 	last_steps: {
-		type: 'json',
+		type: 'schema_array',
 		items: Point
 	}
 };
@@ -42,7 +30,7 @@ let packed;
 let unpacked;
 let encodeTime;
 let time;
-let mult = 512;
+let mult = 1;
 
 time = Date.now();
 
@@ -53,7 +41,7 @@ for(let i = 0; i<mult*mult; i++) {
 encodeTime = Date.now() - time;
 
 console.log('Compactr encode:', encodeTime);
-// console.log(Array.prototype.slice.apply(packed));
+console.log(Array.prototype.slice.apply(packed));
 
 time = Date.now();
 
