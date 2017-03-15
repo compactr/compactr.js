@@ -24,7 +24,7 @@ Protocol Buffers are awesome. Having schemas to deflate and inflate data while m
 
 ## Projected implementation
 
-```
+```node
 const Compactr = require('compactr');
 
 // Defining a schema
@@ -60,12 +60,12 @@ Compactr (partial): `<Buffer 7b 4a 6f 68 6e>`: 5 bytes
 
 ## Protocol details
 
-[https://github.com/compactr/protocol](Compactr Protocol)
+[Compactr Protocol](https://github.com/compactr/protocol)
 
 
-## Projected features
+## Projected key features
 
-- Synchronous encode/decode interface
+- Synchronous encode/decode interface (as fast or faster than JSON)
 - Encode deeply nested objects/Arrays
 - Run validation checks on payloads
 
