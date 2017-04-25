@@ -1,13 +1,11 @@
-/**
- * Entry point
- */
+/** Entry point */
 
 'use strict';
 
 /* Requires ------------------------------------------------------------------*/
 
-const Compactr = require('./src');
+const schema = require('./src/Schema');
 
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = Compactr;
+module.exports = { schema };

@@ -47,6 +47,22 @@ function size16(first, next) {
 	return (first << 8) | next;
 }
 
+const length_byte_size = {
+	binary: 2
+	boolean: 0,
+	boolean_array: 1,
+	int8:1,
+	int16:1,
+	int32:1,
+	double:1,
+	number:1,
+	number_array:2,
+	string:1,
+	string_array:2,
+	schema:2,
+	schema_array: 2
+};
+
 const transforms = {
 	/**
 	 * Returns a Boolean value - 1 byte - (0<->1)

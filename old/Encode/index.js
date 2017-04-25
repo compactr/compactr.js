@@ -178,21 +178,6 @@ const transforms = {
 	},
 
 	/**
-	 * Reads a binary
-	 * @param {object} data The data to append
-	 */
-	binary: (job, data) => {
-		const len = data.length;
-
-		append_size16(job, len);
-
-		for (let i = 0; i < len; i++) {
-			job.result[job.caret + i] = data[i];
-		}
-		job.caret = job.caret + len;
-	},
-
-	/**
 	 * Reads an object as a binary
 	 * @param {array} data The data to append
 	 */
