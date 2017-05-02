@@ -1,5 +1,8 @@
 function Decoder(scope) {
 	
+	const pow = Math.pow;
+	const fromChar = String.fromCharCode;
+
 	function boolean(bytes) {
 		return !!bytes[0];
 	}
@@ -14,11 +17,11 @@ function Decoder(scope) {
 	}
 
 	function string(encoding, bytes) {
-		let res = '';
+		let res = [];
 		for (let i = 0; i < bytes.length; i += encoding) {
-			res += String.fromCharCode(number(bytes.slice(i, i + encoding)));
+			res.push(number(bytes.slice(i, i + encoding)));
 		}
-		return res;
+		return fromChar.apply(null, res);
 	}
 
 	function array(map, bytes) {
@@ -29,8 +32,22 @@ function Decoder(scope) {
 		return {};
 	}
 
-	function double() {
-
+	function double(bytes) {
+		let s = bytes[0];
+		let e = (s & 2047) * 256 + bytes[1];
+		let m = e & 15;
+		s >>= 7;
+		e >>= 4;
+		for (let i = 2; i <= 7; i++) {
+			m = m * 256 + bytes[i];
+		}
+		if (e === 0) e = 1024;
+		else if (e === 2047) return NaN;
+		else {
+			m += 4503599627370496;
+			e -= 1023;
+		}
+		return (s ? -1 : 1) * m * pow(2, e - 52);
 	}
 
 	return { 

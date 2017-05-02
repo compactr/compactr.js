@@ -26,12 +26,13 @@
     "data"
   ],
   "author": "frederic charette <fredericcharette@gmail.com>",
-  "license": "Apache 2.0",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/compactr/compactr.js/issues"
   },
   "homepage": "https://github.com/compactr/compactr.js#readme",
   "devDependencies": {
+    "benchmark": "^2.1.4",
     "chai": "^3.5.0",
     "mocha": "^3.1.0"
   },

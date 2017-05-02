@@ -11,22 +11,33 @@ function Writer(scope) {
 	function load(data) {
 		clear();
 
-		Object.keys(data)
-			.filter(key => key in scope.schema)
-			.forEach((key, i, arr) => {
-				console.log(key, i, arr);
-				if (i === 0) scope.mapBytes[0] = [arr.length];
-				const encoded = scope.indices[key].transformIn(data[key]);
-				scope.mapBytes = scope.mapBytes.concat([scope.indices[key].index], encoded[0]);
-				scope.dataBytes = scope.dataBytes.concat(encoded[1]);
-			});
+		const keys = filterKeys(data);
+		scope.mapBytes[0] = keys.length;
+		for (let i = 0; i < keys.length; i++) {
+			const encoded = scope.indices[keys[i]].transformIn(data[keys[i]]);
+			splitBytes(encoded, keys[i]);
+		}
 
 		return this;
+	}
+
+	function splitBytes(encoded, key) {
+		scope.mapBytes.push(scope.indices[key].index);
+		scope.mapBytes.push.apply(scope.mapBytes, scope.indices[key].getSize(encoded.length));
+		scope.dataBytes.push.apply(scope.dataBytes, encoded);
 	}
 
 	function clear() {
 		scope.mapBytes = [];
 		scope.dataBytes = [];
+	}
+
+	function filterKeys(data) {
+		const res = [];
+		for (let key in data) {
+			if (scope.items.indexOf(key) !== -1) res.push(key);
+		}
+		return res;
 	}
 
 	function mapBuffer() {

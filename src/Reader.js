@@ -10,49 +10,48 @@ const Decoder = require('./Decoder')();
 
 function Reader(scope) {
 	function read(bytes) {
-		const ret = {};
 		readMap(bytes);
-		readData(bytes);
-
-		scope.map.forEach((prop, i) => ret[prop.key.name] = scope.data[i]);
-		return ret;
+		return readData(bytes);
 	}
 
 	function readMap(bytes) {
 		scope.map = [];
-		let i = 0;
 		let caret = 1;
-		while(i < bytes[0]) {
-			const key = getSchemaDef(bytes[caret]);
-			caret++;
-
-			scope.map.push({
-				key,
-				size: Decoder.number(bytes.slice(caret, caret + key.count))
-			});
-			caret += key.count;
-			i++;
+		const keys = bytes[0];
+		for (let i = 0; i < keys; i++) {
+			caret = readKey(bytes, caret);
 		}
 		scope.map.dataBegins = caret;
-		console.log(scope.map);
 
 		return this;
 	}
 
+	function readKey(bytes, caret) {
+		const key = getSchemaDef(bytes[caret]);
+		caret++;
+
+		scope.map.push({
+			key,
+			size: key.size || Decoder.number(bytes.slice(caret, caret + key.count))
+		});
+		return caret + key.count;
+	}
+
 	function getSchemaDef(index) {
-		return scope.indices[Object.keys(scope.indices)[index]];
+		return scope.indices[scope.items[index]];
 	}
 
 	function readData(bytes) {
 		let caret = scope.map.dataBegins;
-		scope.data = [];
+		const ret = {};
 		scope.map.forEach(prop => {
-			scope.data.push(prop.key.transformOut(bytes.slice(caret, caret + prop.size)));
+			ret[prop.key.name] = prop.key.transformOut(bytes.slice(caret, caret + prop.size));
 			caret += prop.size;
 		});
+		return ret;
 	}
 
-	return { read };
+	return { read, readMap, readData };
 }
 
 /* Exports -------------------------------------------------------------------*/

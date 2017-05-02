@@ -19,10 +19,10 @@ const types = {
 	int16: 1,
 	int32: 1,
 	double: 1,
-	string: 2,
-	char8: 2,
-	char16: 2,
-	char32: 2,
+	string: 1,
+	char8: 1,
+	char16: 1,
+	char32: 1,
 	array: 2,
 	schema: 2
 };
@@ -34,6 +34,7 @@ function Schema(schema) {
 	const scope = {
 		schema,
 		indices: null,
+		items: Object.keys(schema),
 		bytes: [],
 		map: [],
 		data: []
@@ -48,13 +49,15 @@ function Schema(schema) {
 		const ret = {};
 		Object.keys(schema)
 			.forEach((key, index) => {
+				const count = schema[key].count || types[schema[key].type];
 				ret[key] = {
 					name: key,
 					index,
 					transformIn: encoder[schema[key].type],
 					transformOut: decoder[schema[key].type],
+					getSize: encoder.getSize.bind(null, count),
 					size: schema[key].size || null,
-					count: schema[key].count || types[schema[key].type]
+					count
 				};
 			});
 
