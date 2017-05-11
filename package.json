@@ -4,7 +4,8 @@
   "description": "Schema based serialization made easy",
   "main": "index.js",
   "scripts": {
-    "test": "mocha tests/index.js && node tests/benchmarking_tools/smoke.js"
+    "test": "mocha tests/index.js",
+    "bench": "node benchmarks/array.js && node benchmarks/boolean.js && node benchmarks/double.js && node benchmarks/integer.js && node benchmarks/object.js && node benchmarks/string.js"
   },
   "repository": {
     "type": "git",
@@ -35,8 +36,5 @@
     "benchmark": "^2.1.4",
     "chai": "^3.5.0",
     "mocha": "^3.1.0"
-  },
-  "dependencies": {
-    "ieee754": "^1.1.0"
   }
 }

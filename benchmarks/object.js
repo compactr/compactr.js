@@ -12,34 +12,35 @@ const Compactr = require('../');
 
 let User = Compactr.schema({ 
   id: { type: 'int32', size: 4 }, 
-  bool: { type: 'boolean' }
+  obj: { type: 'object', schema: { str: { type: 'string' } } }, 
 });
 
 const mult = 32;
 
-const boolSuite = new Benchmark.Suite();
+const objectSuite = new Benchmark.Suite();
 
 /* Float suite ---------------------------------------------------------------*/
 
-boolSuite.add('[Boolean] JSON', boolJSON)
-.add('[Boolean] Compactr', boolCompactr)
+objectSuite.add('[Object] JSON', objJSON)
+.add('[Object] Compactr', objCompactr)
 .on('cycle', e => console.log(String(e.target)))
 .run({ 'async': true });
 
-function boolJSON() {
+
+function objJSON() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = new Buffer(JSON.stringify({ id: i, bool: !!Math.random() }));
+    packed = new Buffer(JSON.stringify({ id: i, obj: { str: '' + (Math.random()*0xffffff) } }));
     unpacked = JSON.parse(packed.toString());
   }
 }
 
-function boolCompactr() {
+function objCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, bool: !!Math.random() }).array();
+    packed = User.write({ id: i, obj: { str: '' + (Math.random()*0xffffff) } }).array();
     unpacked = User.read(packed);
   }
 }
