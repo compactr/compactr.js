@@ -1,8 +1,4 @@
 language: node_js
 node_js:
-<<<<<<< HEAD
-  - "7"
-=======
-  - "6.6"
->>>>>>> 90af4b69801c95a0d6be9ed55c11dab4b56487e2
+  - "6.10"
 script: "npm run-script test"
