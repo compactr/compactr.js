@@ -1,15 +1,15 @@
 {
   "name": "compactr",
-  "version": "1.0.2",
-  "description": "A compression library for the modern web",
+  "version": "2.0.0",
+  "description": "Schema based serialization made easy",
   "main": "index.js",
   "scripts": {
-    "test": "mocha tests/index.js && node tests/benchmarking_tools/smoke.js",
-    "build": "webpack  -p -d -j --define process.env.NODE_ENV='\"browser\"' --config ./webpack.config"
+    "test": "mocha tests/index.js",
+    "bench": "node benchmarks/array.js && node benchmarks/boolean.js && node benchmarks/double.js && node benchmarks/integer.js && node benchmarks/object.js && node benchmarks/string.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fed135/compactr.git"
+    "url": "git+https://github.com/compactr/compactr-js.git"
   },
   "keywords": [
     "socket",
@@ -29,14 +29,12 @@
   "author": "frederic charette <fredericcharette@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/fed135/compactr/issues"
+    "url": "https://github.com/compactr/compactr.js/issues"
   },
-  "homepage": "https://github.com/fed135/compactr#readme",
+  "homepage": "https://github.com/compactr/compactr.js#readme",
   "devDependencies": {
-    "chai": "3.5.x",
-    "mocha": "2.5.x"
-  },
-  "dependencies": {
-    "ieee754": "1.1.x"
+    "benchmark": "^2.1.4",
+    "chai": "^3.5.0",
+    "mocha": "^3.1.0"
   }
 }
