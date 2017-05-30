@@ -1,6 +1,6 @@
 <h1 align="center">
   <a title="Schema based serialization made easy" href="http://compactr.js.org">
-    <img alt="Compactr" width="320px" src="http://res.cloudinary.com/compactr/image/upload/v1487202241/compactr_header.png" />
+    <img alt="Compactr" width="320px" src="http://res.cloudinary.com/kalm/image/upload/v1494589244/compactr_header_rev1.png" />
     <br/><br/>
   </a>
   Compactr

@@ -1,4 +1,4 @@
-/** Data writer component */
+/** Data reader component */
 
 'use strict';
 
