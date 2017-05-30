@@ -60,10 +60,10 @@ const buffer = userSchema.bytes();
 
 
 // Decoding (full)
-const content = userSchema.decode(buffer);
+const content = userSchema.read(buffer);
 
 // Decoding (partial)
-const content = userSchema.decode(header, partial);
+const content = userSchema.readContent(partial);
 ```
 
 

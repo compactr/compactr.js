@@ -24,7 +24,11 @@ function Schema(schema) {
     contentBegins: 0
   };
 
+  const writer = Writer(scope);
+  const reader = Reader(scope);
+
   scope.indices = preformat(schema);
+  reader.readHeader(writer.blank()); // Pre-load header for easy streaming
 
   function preformat(schema) {
     const ret = {};
@@ -46,6 +50,8 @@ function Schema(schema) {
           count
         };
       });
+
+
 
     return ret;
   }
@@ -73,7 +79,7 @@ function Schema(schema) {
     return childSchema;
   }
 
-  return Object.assign({}, Writer(scope), Reader(scope));
+  return Object.assign({}, writer, reader);
 }
 
 /* Exports -------------------------------------------------------------------*/

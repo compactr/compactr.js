@@ -11,11 +11,11 @@ const Decoder = require('./decoder');
 function Reader(scope) {
 
   function read(bytes) {
-    readMap(bytes);
-    return readData(bytes);
+    readHeader(bytes);
+    return readContent(bytes);
   }
 
-  function readMap(bytes) {
+  function readHeader(bytes) {
     scope.header.length = 0;
     let caret = 1;
     const keys = bytes[0];
@@ -43,7 +43,7 @@ function Reader(scope) {
     }
   }
 
-  function readData(bytes) {
+  function readContent(bytes) {
     let caret = scope.contentBegins;
     const ret = {};
     for (let i = 0; i < scope.header.length; i++) {
@@ -53,7 +53,7 @@ function Reader(scope) {
     return ret;
   }
 
-  return { read, readMap, readData };
+  return { read, readHeader, readContent };
 }
 
 /* Exports -------------------------------------------------------------------*/
