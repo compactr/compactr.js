@@ -70,29 +70,27 @@ const content = userSchema.readContent(partial);
 ## Performances
 
 ```
-[Array] JSON x 84.04 ops/sec ±0.77% (64 runs sampled)
-[Array] Compactr x 88.12 ops/sec ±0.99% (66 runs sampled)
+[Array] JSON x 138 ops/sec ±8.72% (57 runs sampled)
+[Array] Compactr x 112 ops/sec ±9.39% (46 runs sampled)
 
-[Boolean] JSON x 99.29 ops/sec ±0.88% (64 runs sampled)
-[Boolean] Compactr x 190 ops/sec ±1.17% (75 runs sampled)
+[Boolean] JSON x 223 ops/sec ±6.41% (69 runs sampled)
+[Boolean] Compactr x 357 ops/sec ±6.14% (71 runs sampled)
 
-[Float] JSON x 66.76 ops/sec ±1.10% (61 runs sampled)
-[Float] Compactr x 112 ops/sec ±1.67% (70 runs sampled)
+[Float] JSON x 151 ops/sec ±3.15% (75 runs sampled)
+[Float] Compactr x 253 ops/sec ±2.85% (71 runs sampled)
 
-[Integer] JSON x 103 ops/sec ±1.41% (66 runs sampled)
-[Integer] Compactr x 202 ops/sec ±1.74% (74 runs sampled)
+[Integer] JSON x 216 ops/sec ±3.75% (71 runs sampled)
+[Integer] JSON (negative) x 204 ops/sec ±5.35% (65 runs sampled)
+[Integer] Compactr x 401 ops/sec ±5.21% (69 runs sampled)
+[Integer] Compactr (negative) x 406 ops/sec ±3.26% (74 runs sampled)
 
-[Integer (negative)] JSON  x 109 ops/sec ±1.24% (69 runs sampled)
-[Integer (negative)] Compactr  x 203 ops/sec ±1.55% (74 runs sampled)
+[Object] JSON x 123 ops/sec ±4.30% (69 runs sampled)
+[Object] Compactr x 96.77 ops/sec ±2.12% (67 runs sampled)
 
-[Object] JSON x 61.91 ops/sec ±1.32% (58 runs sampled)
-[Object] Compactr x 44.78 ops/sec ±2.19% (54 runs sampled)
-
-[String] JSON x 68.89 ops/sec ±1.48% (63 runs sampled)
-[String] Compactr x 79.16 ops/sec ±2.04% (61 runs sampled)
-
-[String (special characters)] JSON x 71.65 ops/sec ±1.15% (65 runs sampled)
-[String (special characters)] Compactr x 144 ops/sec ±1.37% (71 runs sampled)
+[String] JSON x 136 ops/sec ±4.70% (68 runs sampled)
+[String] JSON special characters x 180 ops/sec ±1.04% (77 runs sampled)
+[String] Compactr x 176 ops/sec ±2.03% (76 runs sampled)
+[String] Compactr special characters x 360 ops/sec ±1.59% (84 runs sampled)
 ```
 
 
