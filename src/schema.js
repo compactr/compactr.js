@@ -13,7 +13,25 @@ const Converter = require('./converter');
 /* Methods -------------------------------------------------------------------*/
 
 function Schema(schema) {
-  
+  const sizeRef = {
+    boolean: 1,
+    number: 8,
+    int8: 1,
+    int16: 2,
+    int32: 4,
+    double: 8,
+    string: 2,
+    char8: 1,
+    char16: 2,
+    char32: 4,
+    array: 2,
+    object: 1,
+    unsigned: 8,
+    unsigned8: 1,
+    unsigned16: 2,
+    unsigned32: 4
+  };
+
   const scope = {
     schema,
     indices: {},
@@ -23,12 +41,11 @@ function Schema(schema) {
     header: [],
     contentBegins: 0
   };
-
+  scope.indices = preformat(schema);
   const writer = Writer(scope);
   const reader = Reader(scope);
 
-  scope.indices = preformat(schema);
-  reader.readHeader(writer.blank()); // Pre-load header for easy streaming
+  applyBlank(); // Pre-load header for easy streaming
 
   function preformat(schema) {
     const ret = {};
@@ -42,18 +59,27 @@ function Schema(schema) {
         ret[key] = {
           name: key,
           index,
+          type: keyType,
           transformIn: (childSchema !== undefined) ? Encoder[keyType].bind(null, childSchema) : Encoder[keyType],
           transformOut: (childSchema !== undefined) ? Decoder[keyType].bind(null, childSchema) : Decoder[keyType],
           coerse: Converter[keyType],
           getSize: Encoder.getSize.bind(null, count),
           size: schema[key].size || null,
-          count
+          count,
+          nested: childSchema
         };
       });
 
-
-
     return ret;
+  }
+
+  function applyBlank() {
+    for (let key in scope.schema) {
+      scope.header.push({
+        key: scope.indices[key],
+        size: scope.indices[key].size || sizeRef[scope.indices[key].type]
+      });
+    }
   }
 
   function computeNested(schema, key) {

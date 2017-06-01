@@ -12,7 +12,7 @@ const Compactr = require('../');
 
 let User = Compactr.schema({
   id: { type: 'int32', size: 4 },
-  arr: { type: 'array', items: { type: 'char8' }}
+  arr: { type: 'array', size: 6, items: { type: 'char8', size: 1 }}
 });
 
 const mult = 32;
@@ -39,7 +39,7 @@ function arrCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).array();
-    unpacked = User.read(packed);
+    packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).contentArray();
+    unpacked = User.readContent(packed);
   }
 }

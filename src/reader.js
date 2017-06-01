@@ -12,11 +12,11 @@ function Reader(scope) {
 
   function read(bytes) {
     readHeader(bytes);
-    return readContent(bytes);
+    return readContent(bytes, scope.contentBegins);
   }
 
   function readHeader(bytes) {
-    scope.header.length = 0;
+    scope.header = [];
     let caret = 1;
     const keys = bytes[0];
     for (let i = 0; i < keys; i++) {
@@ -43,8 +43,8 @@ function Reader(scope) {
     }
   }
 
-  function readContent(bytes) {
-    let caret = scope.contentBegins;
+  function readContent(bytes, caret) {
+    caret = caret || 0;
     const ret = {};
     for (let i = 0; i < scope.header.length; i++) {
       ret[scope.header[i].key.name] = scope.header[i].key.transformOut(bytes.slice(caret, caret + scope.header[i].size));

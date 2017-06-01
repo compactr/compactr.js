@@ -38,6 +38,19 @@ function Writer(scope) {
     scope.contentBytes = [];
   }
 
+  function sizes(data) {
+    const s = {};
+    for (let key in data) {
+      if (data[key] instanceof Object) {
+        s[key] = scope.indices[key].nested.sizes(data[key]);
+        s.size = scope.indices[key].transformIn(data[key]).length;
+      }
+      else s[key] = scope.indices[key].transformIn(data[key]).length;
+    }
+
+    return s;
+  }
+
   function filterKeys(data) {
     const res = [];
     for (let key in data) {
@@ -51,16 +64,6 @@ function Writer(scope) {
     res.push.apply(res, header);
     res.push.apply(res, content);
     return res;
-  }
-
-  function blank() {
-    const b = {};
-    for (let i in scope.schema) {
-      b[i] = 1;
-    }
-    write(b, { coerse: true });
-
-    return this;
   }
 
   function headerBuffer() {
@@ -87,7 +90,7 @@ function Writer(scope) {
     return concat(scope.headerBytes, scope.contentBytes);
   }
 
-  return { write, headerBuffer, headerArray, contentBuffer, contentArray, buffer, array, blank };
+  return { write, headerBuffer, headerArray, contentBuffer, contentArray, buffer, array, sizes };
 }
 
 /* Exports -------------------------------------------------------------------*/
