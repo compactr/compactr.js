@@ -70,27 +70,23 @@ const content = userSchema.readContent(partial);
 ## Performances
 
 ```
-[Array] JSON x 138 ops/sec ±8.72% (57 runs sampled)
-[Array] Compactr x 112 ops/sec ±9.39% (46 runs sampled)
+[Array] JSON x 188 ops/sec ±2.47% (73 runs sampled)
+[Array] Compactr x 248 ops/sec ±3.16% (72 runs sampled)
 
-[Boolean] JSON x 223 ops/sec ±6.41% (69 runs sampled)
-[Boolean] Compactr x 357 ops/sec ±6.14% (71 runs sampled)
+[Boolean] JSON x 220 ops/sec ±5.04% (71 runs sampled)
+[Boolean] Compactr x 731 ops/sec ±7.57% (74 runs sampled)
 
-[Float] JSON x 151 ops/sec ±3.15% (75 runs sampled)
-[Float] Compactr x 253 ops/sec ±2.85% (71 runs sampled)
+[Float] JSON x 159 ops/sec ±3.41% (70 runs sampled)
+[Float] Compactr x 476 ops/sec ±1.58% (85 runs sampled)
 
-[Integer] JSON x 216 ops/sec ±3.75% (71 runs sampled)
-[Integer] JSON (negative) x 204 ops/sec ±5.35% (65 runs sampled)
-[Integer] Compactr x 401 ops/sec ±5.21% (69 runs sampled)
-[Integer] Compactr (negative) x 406 ops/sec ±3.26% (74 runs sampled)
+[Integer] JSON x 264 ops/sec ±1.79% (79 runs sampled)
+[Integer] Compactr x 885 ops/sec ±1.36% (84 runs sampled)
 
-[Object] JSON x 123 ops/sec ±4.30% (69 runs sampled)
-[Object] Compactr x 96.77 ops/sec ±2.12% (67 runs sampled)
+[Object] JSON x 139 ops/sec ±1.89% (76 runs sampled)
+[Object] Compactr x 169 ops/sec ±1.52% (80 runs sampled)
 
-[String] JSON x 136 ops/sec ±4.70% (68 runs sampled)
-[String] JSON special characters x 180 ops/sec ±1.04% (77 runs sampled)
-[String] Compactr x 176 ops/sec ±2.03% (76 runs sampled)
-[String] Compactr special characters x 360 ops/sec ±1.59% (84 runs sampled)
+[String] JSON x 107 ops/sec ±6.86% (64 runs sampled)
+[String] Compactr x 167 ops/sec ±4.86% (72 runs sampled)
 ```
 
 
