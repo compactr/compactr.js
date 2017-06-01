@@ -12,7 +12,6 @@ const Compactr = require('../');
 
 let User = Compactr.schema({ 
   id: { type: 'int32', size: 4 }, 
-  str: { type: 'char8', size: 6 }, 
   int: { type: 'double', size: 8 }
 });
 
@@ -40,7 +39,7 @@ function floatCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, int: Math.random() }).array();
-    unpacked = User.read(packed);
+    packed = User.write({ id: i, int: Math.random() }).contentArray();
+    unpacked = User.readContent(packed);
   }
 }

@@ -39,7 +39,7 @@ function boolCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, bool: !!Math.random() }).array();
-    unpacked = User.read(packed);
+    packed = User.write({ id: i, bool: !!Math.random() }).contentArray();
+    unpacked = User.readContent(packed);
   }
 }

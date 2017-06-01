@@ -34,8 +34,21 @@ function Writer(scope) {
   }
 
   function clear() {
-    scope.headerBytes.length = 0;
-    scope.contentBytes.length = 0;
+    scope.headerBytes = [0];
+    scope.contentBytes = [];
+  }
+
+  function sizes(data) {
+    const s = {};
+    for (let key in data) {
+      if (data[key] instanceof Object) {
+        s[key] = scope.indices[key].nested.sizes(data[key]);
+        s.size = scope.indices[key].transformIn(data[key]).length;
+      }
+      else s[key] = scope.indices[key].transformIn(data[key]).length;
+    }
+
+    return s;
   }
 
   function filterKeys(data) {
@@ -51,7 +64,7 @@ function Writer(scope) {
     res.push.apply(res, header);
     res.push.apply(res, content);
     return res;
-  } 
+  }
 
   function headerBuffer() {
     return Buffer.from(scope.headerBytes);
@@ -77,7 +90,7 @@ function Writer(scope) {
     return concat(scope.headerBytes, scope.contentBytes);
   }
 
-  return { write, headerBuffer, headerArray, contentBuffer, contentArray, buffer, array };
+  return { write, headerBuffer, headerArray, contentBuffer, contentArray, buffer, array, sizes };
 }
 
 /* Exports -------------------------------------------------------------------*/
