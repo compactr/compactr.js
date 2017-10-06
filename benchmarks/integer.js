@@ -30,7 +30,7 @@ function intJSON() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = new Buffer(JSON.stringify({ id: i, int: Math.round(Math.random() * 1000000) }));
+    packed = Buffer.from(JSON.stringify({ id: i, int: Math.round(Math.random() * 1000000) }));
     unpacked = JSON.parse(packed.toString());
   }
 }
@@ -39,7 +39,7 @@ function intCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, int: Math.round(Math.random() * 1000000) }).contentArray();
+    packed = User.write({ id: i, int: Math.round(Math.random() * 1000000) }).contentBuffer();
     unpacked = User.readContent(packed);
   }
 }

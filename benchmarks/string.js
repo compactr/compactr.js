@@ -32,7 +32,7 @@ function strJSON() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = new Buffer(JSON.stringify({ id: i, str: '' + (Math.random()*0xffffff), special: String.fromCharCode(Math.random()*0xffff) }));
+    packed = Buffer.from(JSON.stringify({ id: i, str: '' + (Math.random()*0xffffff), special: String.fromCharCode(Math.random()*0xffff) }));
     unpacked = JSON.parse(packed.toString());
   }
 }
@@ -41,7 +41,7 @@ function strCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, str: '' + (Math.random()*0xffffff), special: String.fromCharCode(Math.random()*0xffff) }).contentArray();
+    packed = User.write({ id: i, str: '' + (Math.random()*0xffffff), special: String.fromCharCode(Math.random()*0xffff) }).contentBuffer();
     unpacked = User.readContent(packed);
   }
 }

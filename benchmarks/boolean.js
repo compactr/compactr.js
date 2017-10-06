@@ -30,7 +30,7 @@ function boolJSON() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = new Buffer(JSON.stringify({ id: i, bool: !!Math.random() }));
+    packed = Buffer.from(JSON.stringify({ id: i, bool: !!Math.random() }));
     unpacked = JSON.parse(packed.toString());
   }
 }
@@ -39,7 +39,7 @@ function boolCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, bool: !!Math.random() }).contentArray();
+    packed = User.write({ id: i, bool: !!Math.random() }).contentBuffer();
     unpacked = User.readContent(packed);
   }
 }

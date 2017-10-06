@@ -13,6 +13,7 @@ const floor = Math.floor;
 const bias = pow(2, 52);
 const eIn = pow(2, -1022);
 const eOut = pow(2, 1022) * bias;
+const fastPush = Array.prototype.push;
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -41,7 +42,7 @@ function unsigned32(val) { return [val >> 24, val >> 16, val >> 8, val & 0xff]; 
 function string(encoding, val) {
   const chars = [];
   for (let i = 0; i < val.length; i++) {
-    chars.push.apply(chars, encoding(val.charCodeAt(i)));
+    fastPush.apply(chars, encoding(val.charCodeAt(i)));
   }
 
   return chars;
@@ -51,14 +52,14 @@ function array(schema, val) {
   const ret = [];
   for (let i = 0; i < val.length; i++) {
     let encoded = schema.transformIn(val[i]);
-    ret.push.apply(ret, schema.getSize(encoded.length));
-    ret.push.apply(ret, encoded);
+    fastPush.apply(ret, schema.getSize(encoded.length));
+    fastPush.apply(ret, encoded);
   }
   return ret;
 }
 
 function object(schema, val) {
-  return schema.write(val).array();
+  return schema.write(val).buffer();
 }
 
 /** Credit to @feross' ieee754 module */

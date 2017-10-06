@@ -2,12 +2,17 @@
 
 'use strict';
 
+/* Local variables -----------------------------------------------------------*/
+
+const fastPush = Array.prototype.push;
+
 /* Methods -------------------------------------------------------------------*/
 
 function Writer(scope) {
 
   function write(data, options) {
-    clear();
+    scope.headerBytes = [0];
+    scope.contentBytes = [];
 
     const keys = filterKeys(data);
     scope.headerBytes[0] = keys.length;
@@ -29,13 +34,20 @@ function Writer(scope) {
 
   function splitBytes(encoded, key) {
     scope.headerBytes.push(scope.indices[key].index);
-    scope.headerBytes.push.apply(scope.headerBytes, scope.indices[key].getSize(encoded.length));
-    scope.contentBytes.push.apply(scope.contentBytes, encoded);
-  }
-
-  function clear() {
-    scope.headerBytes = [0];
-    scope.contentBytes = [];
+    fastPush.apply(scope.headerBytes, scope.indices[key].getSize(encoded.length));
+    let res = encoded;
+    if (scope.indices[key].size !== null) {
+      if (scope.indices[key].size !== encoded.length) {
+        if(scope.indices[key].size > encoded.length) {
+          res = new Array(scope.indices[key].size).fill(0);
+          res.splice(0, encoded.length, ...encoded);
+        }
+        else {
+          res = encoded.slice(0, scope.indices[key].size);
+        }
+      }
+    }
+    fastPush.apply(scope.contentBytes, res);
   }
 
   function sizes(data) {
@@ -60,9 +72,10 @@ function Writer(scope) {
   }
 
   function concat(header, content) {
+    // return [...header, ...content];
     const res = [];
-    res.push.apply(res, header);
-    res.push.apply(res, content);
+    fastPush.apply(res, header);
+    fastPush.apply(res, content);
     return res;
   }
 
@@ -78,19 +91,7 @@ function Writer(scope) {
     return Buffer.from(concat(scope.headerBytes, scope.contentBytes));
   }
 
-  function headerArray() {
-    return scope.headerBytes;
-  }
-
-  function contentArray() {
-    return scope.contentBytes;
-  }
-
-  function array() {
-    return concat(scope.headerBytes, scope.contentBytes);
-  }
-
-  return { write, headerBuffer, headerArray, contentBuffer, contentArray, buffer, array, sizes };
+  return { write, headerBuffer, contentBuffer, buffer, sizes };
 }
 
 /* Exports -------------------------------------------------------------------*/

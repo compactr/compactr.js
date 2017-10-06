@@ -30,7 +30,7 @@ function arrJSON() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = new Buffer(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
+    packed = Buffer.from(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
     unpacked = JSON.parse(packed.toString());
   }
 }
@@ -39,7 +39,7 @@ function arrCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).contentArray();
+    packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).contentBuffer();
     unpacked = User.readContent(packed);
   }
 }

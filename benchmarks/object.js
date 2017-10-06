@@ -31,7 +31,7 @@ function objJSON() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = new Buffer(JSON.stringify({ id: i, obj: { str: '' + (Math.random()*0xffffff) } }));
+    packed = Buffer.from(JSON.stringify({ id: i, obj: { str: '' + (Math.random()*0xffffff) } }));
     unpacked = JSON.parse(packed.toString());
   }
 }
@@ -40,7 +40,7 @@ function objCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, obj: { str: '' + (Math.random()*0xffffff) } }).contentArray();
+    packed = User.write({ id: i, obj: { str: '' + (Math.random()*0xffffff) } }).contentBuffer();
     unpacked = User.readContent(packed);
   }
 }

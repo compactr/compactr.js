@@ -8,7 +8,7 @@ let User = Compactr.schema({
 		int: { type: 'double' }}
 	},
 	arr: { type: 'array', items: { type: 'string' }}
-});
+}, { keyOrder: true });
 
 const str_test = 'abcdef';
 const int_test = 97.5;
@@ -43,7 +43,7 @@ function strJSON() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = new Buffer(JSON.stringify({ id: i, str: str_test }));
+		packed = Buffer.from(JSON.stringify({ id: i, str: str_test }));
 	}
 
 	encodeTime = Date.now() - time;
@@ -52,7 +52,7 @@ function strJSON() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = new Buffer(JSON.stringify({ id: i, str: str_test }));
+		packed = Buffer.from(JSON.stringify({ id: i, str: str_test }));
 		unpacked = JSON.parse(packed.toString());
 	}
 
@@ -64,7 +64,7 @@ function strCompactr() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = User.write({ id: i, str: str_test }, { coerse }).array();
+		packed = User.write({ id: i, str: str_test }, { coerse }).buffer();
 	}
 
 	encodeTime = Date.now() - time;
@@ -73,7 +73,7 @@ function strCompactr() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = User.write({ id: i, str: str_test }, { coerse }).array();
+		packed = User.write({ str: str_test, id: i }, { coerse }).buffer();
 		unpacked = User.read(packed);
 	}
 
@@ -97,7 +97,7 @@ function intJSON() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = new Buffer(JSON.stringify({ id: i, int: int_test }));
+		packed = Buffer.from(JSON.stringify({ id: i, int: int_test }));
 		unpacked = JSON.parse(packed.toString());
 	}
 
@@ -109,7 +109,7 @@ function intCompactr() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = User.write({ id: i, int: int_test }, { coerse }).array();
+		packed = User.write({ id: i, int: int_test }, { coerse }).buffer();
 	}
 
 	encodeTime = Date.now() - time;
@@ -118,7 +118,7 @@ function intCompactr() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = User.write({ id: i, int: int_test }, { coerse }).array();
+		packed = User.write({ int: int_test, id: i }, { coerse }).buffer();
 		unpacked = User.read(packed);
 	}
 
@@ -130,15 +130,15 @@ function intCompactr() {
 }
 
 //strJSON();
-//strCompactr();
+strCompactr();
 //intJSON();
-//intCompactr();
+intCompactr();
 
 function objJSON() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = new Buffer(JSON.stringify({ id: i, obj: { int: int_test } }));
+		packed = Buffer.from(JSON.stringify({ id: i, obj: { int: int_test } }));
 	}
 
 	encodeTime = Date.now() - time;
@@ -147,7 +147,7 @@ function objJSON() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = new Buffer(JSON.stringify({ id: i, obj: { int: int_test } }));
+		packed = Buffer.from(JSON.stringify({ id: i, obj: { int: int_test } }));
 		unpacked = JSON.parse(packed.toString());
 	}
 
@@ -159,7 +159,7 @@ function objCompactr() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = User.write({ id: i, obj: { int: int_test } }).array();
+		packed = User.write({ id: i, obj: { int: int_test } }).buffer();
 	}
 
 	encodeTime = Date.now() - time;
@@ -168,7 +168,7 @@ function objCompactr() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = User.write({ id: i, obj: { int: int_test } }).array();
+		packed = User.write({ id: i, obj: { int: int_test } }).buffer();
 		unpacked = User.read(packed);
 	}
 
@@ -179,14 +179,14 @@ function objCompactr() {
 	console.log('obj size:', packed.length);
 }
 
-objJSON()
+//objJSON()
 objCompactr();
 
 function arrJSON() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = new Buffer(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
+		packed = Buffer.from(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
 	}
 
 	encodeTime = Date.now() - time;
@@ -195,7 +195,7 @@ function arrJSON() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = new Buffer(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
+		packed = Buffer.from(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
 		unpacked = JSON.parse(packed.toString());
 	}
 
@@ -207,7 +207,7 @@ function arrCompactr() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).array();
+		packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).buffer();
 	}
 
 	encodeTime = Date.now() - time;
@@ -216,7 +216,7 @@ function arrCompactr() {
 	time = Date.now();
 
 	for(let i = 0; i<mult*mult; i++) {
-		packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).array();
+		packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).buffer();
 		unpacked = User.read(packed);
 	}
 
@@ -227,6 +227,6 @@ function arrCompactr() {
 	console.log('arr size:', packed.length);
 }
 
-arrJSON()
+//arrJSON()
 arrCompactr();
 //schemaTest()
