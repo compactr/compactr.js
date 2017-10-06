@@ -21,4 +21,7 @@ Compactr supports as much nesting as you need. Object-in-object-in-array-in-obje
 Dynamic schemas, encoding options like explicit type coersion, schema validation and garanties over key ordering makes Compactr.js a great foundation for any RPC protocol.
 
 **All sizes are equal**
-Count and size values make it possible to encode data of any size, as long as it fits in ram, we don't have streaming...yet. 
+Count and size values make it possible to encode data of any size, as long as it fits in ram, we don't have streaming...yet.
+
+**No dependencies**
+It's very important (to me at least) to keep things light and manageable. This will be the fastest `npm install` you'll ever do.
