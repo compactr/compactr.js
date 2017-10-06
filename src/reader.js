@@ -20,20 +20,20 @@ function Reader(scope) {
     let caret = 1;
     const keys = bytes[0];
     for (let i = 0; i < keys; i++) {
-      caret = readKey(bytes, caret);
+      caret = readKey(bytes, caret, i);
     }
     scope.contentBegins = caret;
 
     return this;
   }
 
-  function readKey(bytes, caret) {
+  function readKey(bytes, caret, index) {
     const key = getSchemaDef(bytes[caret]);
 
-    scope.header.push({
+    scope.header[index] = {
       key,
-      size: key.size || Decoder.unsigned(bytes.slice(caret + 1, caret + key.count + 1))
-    });
+      size: key.size || Decoder.unsigned(bytes.subarray(caret + 1, caret + key.count + 1))
+    };
     return caret + key.count + 1;
   }
 
@@ -46,8 +46,13 @@ function Reader(scope) {
   function readContent(bytes, caret) {
     caret = caret || 0;
     const ret = {};
+    if (scope.options.keyOrder === true) {
+      for (let i = 0; i < scope.items.length; i++) {
+        ret[scope.items[i]] = undefined;
+      }
+    }
     for (let i = 0; i < scope.header.length; i++) {
-      ret[scope.header[i].key.name] = scope.header[i].key.transformOut(bytes.slice(caret, caret + scope.header[i].size));
+      ret[scope.header[i].key.name] = scope.header[i].key.transformOut(bytes.subarray(caret, caret + scope.header[i].size));
       caret += scope.header[i].size;
     }
     return ret;

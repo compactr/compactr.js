@@ -12,7 +12,7 @@ const Converter = require('./converter');
 
 /* Methods -------------------------------------------------------------------*/
 
-function Schema(schema) {
+function Schema(schema, options = { keyOrder: false }) {
   const sizeRef = {
     boolean: 1,
     number: 8,
@@ -36,10 +36,11 @@ function Schema(schema) {
     schema,
     indices: {},
     items: Object.keys(schema),
-    headerBytes: [],
-    contentBytes: [],
+    headerBytes: [0],
+    contentBytes: [0],
     header: [],
-    contentBegins: 0
+    contentBegins: 0,
+    options
   };
   scope.indices = preformat(schema);
   const writer = Writer(scope);

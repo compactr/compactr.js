@@ -28,10 +28,26 @@ function unsigned(bytes) {
   return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | (bytes[3]);
 }
 
-function string(encoding, bytes) {
+function string(bytes) {
   let res = [];
-  for (let i = 0; i < bytes.length; i += encoding) {
-    res.push(unsigned(bytes.slice(i, i + encoding)));
+  for (let i = 0; i < bytes.length; i += 2) {
+    res.push(unsigned(bytes.subarray(i, i + 2)));
+  }
+  return fromChar.apply(null, res);
+}
+
+function char8(bytes) {
+  let res = [];
+  for (let i = 0; i < bytes.length; i += 1) {
+    res.push(unsigned(bytes.subarray(i, i + 1)));
+  }
+  return fromChar.apply(null, res);
+}
+
+function char32(bytes) {
+  let res = [];
+  for (let i = 0; i < bytes.length; i += 4) {
+    res.push(unsigned(bytes.subarray(i, i + 4)));
   }
   return fromChar.apply(null, res);
 }
@@ -39,9 +55,9 @@ function string(encoding, bytes) {
 function array(schema, bytes) {
   const ret = [];
   for (let i = 0; i < bytes.length;) {
-    const size = unsigned(bytes.slice(i, i + schema.count));
+    const size = unsigned(bytes.subarray(i, i + schema.count));
     i = (i + schema.count);
-    ret.push(schema.transformOut(bytes.slice(i, i + size)));
+    ret.push(schema.transformOut(bytes.subarray(i, i + size)));
     i = (i + size);
   }
 
@@ -81,10 +97,10 @@ module.exports = {
   int16: number,
   int32: number,
   double,
-  string: string.bind(null, 2),
-  char8: string.bind(null, 1),
-  char16: string.bind(null, 2),
-  char32: string.bind(null, 4),
+  string,
+  char8,
+  char16: string,
+  char32,
   array, 
   object,
   unsigned,

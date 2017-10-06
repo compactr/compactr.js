@@ -30,7 +30,7 @@ function floatJSON() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = new Buffer(JSON.stringify({ id: i, int: Math.random() }));
+    packed = Buffer.from(JSON.stringify({ id: i, int: Math.random() }));
     unpacked = JSON.parse(packed.toString());
   }
 }
@@ -39,7 +39,7 @@ function floatCompactr() {
   let packed, unpacked;
 
   for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, int: Math.random() }).contentArray();
+    packed = User.write({ id: i, int: Math.random() }).contentBuffer();
     unpacked = User.readContent(packed);
   }
 }
