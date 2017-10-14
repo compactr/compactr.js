@@ -50,13 +50,13 @@ const userSchema = Compactr.schema({
 userSchema.write({ id: 123, name: 'John' });
 
 // Get the header bytes
-const header = userSchema.headerBytes();
+const header = userSchema.headerBuffer();
 
 // Get the content bytes 
-const partial = userSchema.contentBytes();
+const partial = userSchema.contentBuffer();
 
 // Get the full payload (header + content bytes)
-const buffer = userSchema.bytes();
+const buffer = userSchema.buffer();
 
 
 
