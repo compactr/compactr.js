@@ -10,11 +10,20 @@ const Decoder = require('./decoder');
 
 function Reader(scope) {
 
+  /**
+   * Decodes an encoded buffer. Requires header bytes.
+   * @param {Buffer} bytes
+   * @returns {Object} The decoded buffer
+   */
   function read(bytes) {
     readHeader(bytes);
     return readContent(bytes, scope.contentBegins);
   }
 
+  /**
+   * Reads only the header of an encoded buffer
+   * @param {*} bytes 
+   */
   function readHeader(bytes) {
     scope.header = [];
     let caret = 1;
@@ -27,6 +36,7 @@ function Reader(scope) {
     return this;
   }
 
+  /** @private */
   function readKey(bytes, caret, index) {
     const key = getSchemaDef(bytes[caret]);
 
@@ -37,12 +47,19 @@ function Reader(scope) {
     return caret + key.count + 1;
   }
 
+  /** @private */
   function getSchemaDef(index) {
     for (let i = 0; i < scope.items.length; i++) {
       if (scope.indices[scope.items[i]].index === index) return scope.indices[scope.items[i]];
     }
   }
 
+  /**
+   * Reads only a content buffer and returns an object with the decoded values 
+   * @param {Buffer} bytes The content buffer 
+   * @param {Integer} caret The content bytes offset, if the bytes also include an header
+   * @returns {Object} An object with the decoded values
+   */
   function readContent(bytes, caret) {
     caret = caret || 0;
     const ret = {};

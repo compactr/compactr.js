@@ -50,13 +50,13 @@ const userSchema = Compactr.schema({
 userSchema.write({ id: 123, name: 'John' });
 
 // Get the header bytes
-const header = userSchema.headerBytes();
+const header = userSchema.headerBuffer();
 
 // Get the content bytes 
-const partial = userSchema.contentBytes();
+const partial = userSchema.contentBuffer();
 
 // Get the full payload (header + content bytes)
-const buffer = userSchema.bytes();
+const buffer = userSchema.buffer();
 
 
 
@@ -90,7 +90,30 @@ Compactr (partial): `<Buffer 7b 4a 6f 68 6e>`: 5 bytes
 
 ## Protocol details
 
-[Compactr Protocol](https://github.com/compactr/protocol)
+### Data types
+
+Type | Count bytes | Byte size
+--- | --- | ---
+boolean | 0 | 1
+number | 0 | 8
+int8 | 0 | 1
+int16 | 0 | 2
+int32 | 0 | 4
+double | 0 | 8
+string | 1 | 2/char
+char8 | 1 | 1/char
+char16 | 1 | 2/char
+char32 | 1 | 4/char 
+array | 1 | (x)/entry
+object | 1 | (x)
+unsigned | 0 | 8
+unsigned8 | 0 | 1 
+unsigned16 | 0 | 2
+unsigned32 | 0 | 4
+
+* Count bytes range can be specified per-item in the schema*
+
+See the full [Compactr protocol](https://github.com/compactr/protocol)
 
 
 ## Want to help ?
