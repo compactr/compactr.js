@@ -17,28 +17,44 @@ const fastPush = Array.prototype.push;
 
 /* Methods -------------------------------------------------------------------*/
 
+/** @private */
 function boolean(val) {
   return [val ? 1 : 0];
 }
 
+/** @private */
 function int8(val) {
   return [(val < 0) ? 256 + val : val];
 }
 
+/** @private */
 function int16(val) {
   if (val < 0) val = 0xffff + val + 1;
   return [val >> 8, val & 0xff];
 }
 
+/** @private */
 function int32(val) {
   if (val < 0) val = 0xffffffff + val + 1;
   return [val >> 24, val >> 16, val >> 8, val & 0xff];
 }
 
-function unsigned8(val) { return [val & 0xff]; }
-function unsigned16(val) { return [val >> 8, val & 0xff]; }
-function unsigned32(val) { return [val >> 24, val >> 16, val >> 8, val & 0xff]; }
+/** @private */
+function unsigned8(val) {
+  return [val & 0xff];
+}
 
+/** @private */
+function unsigned16(val) {
+  return [val >> 8, val & 0xff];
+}
+
+/** @private */
+function unsigned32(val) {
+  return [val >> 24, val >> 16, val >> 8, val & 0xff];
+}
+
+/** @private */
 function string(encoding, val) {
   const chars = [];
   for (let i = 0; i < val.length; i++) {
@@ -48,6 +64,7 @@ function string(encoding, val) {
   return chars;
 }
 
+/** @private */
 function array(schema, val) {
   const ret = [];
   for (let i = 0; i < val.length; i++) {
@@ -58,11 +75,15 @@ function array(schema, val) {
   return ret;
 }
 
+/** @private */
 function object(schema, val) {
   return schema.write(val).buffer();
 }
 
-/** Credit to @feross' ieee754 module */
+/** 
+ * Credit to @feross' ieee754 module 
+ * @private
+ */
 function double(val) {
   var buffer = [];
   var e, m, c;
@@ -120,6 +141,7 @@ function double(val) {
   return buffer;
 }
 
+/** @private */
 function getSize(count, byteLength) {
   return intMap[count](byteLength);
 }

@@ -12,6 +12,11 @@ const Converter = require('./converter');
 
 /* Methods -------------------------------------------------------------------*/
 
+/**
+ * Creates a new schema definition, with a reader and writer attached
+ * @param {*} schema The schema to use
+ * @param {Object (keyOrder: {boolean})} options The options for the schema
+ */
 function Schema(schema, options = { keyOrder: false }) {
   const sizeRef = {
     boolean: 1,
@@ -48,6 +53,7 @@ function Schema(schema, options = { keyOrder: false }) {
 
   applyBlank(); // Pre-load header for easy streaming
 
+  /** @private */
   function preformat(schema) {
     const ret = {};
     Object.keys(schema)
@@ -74,6 +80,7 @@ function Schema(schema, options = { keyOrder: false }) {
     return ret;
   }
 
+  /** @private */
   function applyBlank() {
     for (let key in scope.schema) {
       scope.header.push({
@@ -83,6 +90,7 @@ function Schema(schema, options = { keyOrder: false }) {
     }
   }
 
+  /** @private */
   function computeNested(schema, key) {
     const keyType = schema[key].type;
     const isObject = (keyType === 'object');

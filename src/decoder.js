@@ -9,10 +9,12 @@ const fromChar = String.fromCharCode;
 
 /* Methods -------------------------------------------------------------------*/
 
+/** @private */
 function boolean(bytes) {
   return !!bytes[0];
 }
 
+/** @private */
 function number(bytes) {
   if (bytes.length === 1) return (!(bytes[0] & 0x80))?bytes[0]:((0xff - bytes[0] + 1) * -1);
   if (bytes.length === 2) {
@@ -22,12 +24,14 @@ function number(bytes) {
   return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | (bytes[3]);
 }
 
+/** @private */
 function unsigned(bytes) {
   if (bytes.length === 1) return bytes[0];
   if (bytes.length === 2) return bytes[0] << 8 | bytes[1];
   return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | (bytes[3]);
 }
 
+/** @private */
 function string(bytes) {
   let res = [];
   for (let i = 0; i < bytes.length; i += 2) {
@@ -36,6 +40,7 @@ function string(bytes) {
   return fromChar.apply(null, res);
 }
 
+/** @private */
 function char8(bytes) {
   let res = [];
   for (let i = 0; i < bytes.length; i += 1) {
@@ -44,6 +49,7 @@ function char8(bytes) {
   return fromChar.apply(null, res);
 }
 
+/** @private */
 function char32(bytes) {
   let res = [];
   for (let i = 0; i < bytes.length; i += 4) {
@@ -52,6 +58,7 @@ function char32(bytes) {
   return fromChar.apply(null, res);
 }
 
+/** @private */
 function array(schema, bytes) {
   const ret = [];
   for (let i = 0; i < bytes.length;) {
@@ -64,11 +71,15 @@ function array(schema, bytes) {
   return ret;
 }
 
+/** @private */
 function object(schema, bytes) {
   return schema.read(bytes);
 }
 
-/** Credit to @feross' ieee754 module */
+/**
+ * Credit to @feross' ieee754 module
+ * @private
+ */
 function double(bytes) {
   let s = bytes[0];
   let e = (s & 127);

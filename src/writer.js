@@ -10,6 +10,12 @@ const fastPush = Array.prototype.push;
 
 function Writer(scope) {
 
+  /**
+   * Start writing some data against a schema
+   * @param {*} data The data to be encoded
+   * @param {Object (coerce: {boolean}, validate: {boolean})} options The options for the encoding
+   * @returns {Writer} Self reference
+   */
   function write(data, options) {
     scope.headerBytes = [0];
     scope.contentBytes = [];
@@ -32,6 +38,7 @@ function Writer(scope) {
     return this;
   }
 
+  /** @private */
   function splitBytes(encoded, key) {
     scope.headerBytes.push(scope.indices[key].index);
     fastPush.apply(scope.headerBytes, scope.indices[key].getSize(encoded.length));
@@ -50,6 +57,11 @@ function Writer(scope) {
     fastPush.apply(scope.contentBytes, res);
   }
 
+  /**
+   * Returns the byte sizes of a data object, for insight or troubleshooting
+   * @param {*} data The data to extract size information of
+   * @returns {Object} The detailed sizes information
+   */
   function sizes(data) {
     const s = {};
     for (let key in data) {
@@ -63,6 +75,7 @@ function Writer(scope) {
     return s;
   }
 
+  /** @private */
   function filterKeys(data) {
     const res = [];
     for (let key in data) {
@@ -71,22 +84,35 @@ function Writer(scope) {
     return res;
   }
 
+  /** @private */
   function concat(header, content) {
-    // return [...header, ...content];
     const res = [];
     fastPush.apply(res, header);
     fastPush.apply(res, content);
     return res;
   }
 
+  /**
+   * Returns the bytes from the header of the encoded data buffer.
+   * A fresh schema with no written data will return a blank, usable for partial encodings.
+   * @returns {Buffer} The header buffer
+   */
   function headerBuffer() {
     return Buffer.from(scope.headerBytes);
   }
 
+  /**
+   * Returns the bytes from the content of the encoded data buffer.
+   * @returns {Buffer} The content buffer
+   */
   function contentBuffer() {
     return Buffer.from(scope.contentBytes);
   }
 
+  /**
+   * Returns the bytes from the header AND content of the encoded data buffer.
+   * @returns {Buffer} The data buffer
+   */
   function buffer() {
     return Buffer.from(concat(scope.headerBytes, scope.contentBytes));
   }
