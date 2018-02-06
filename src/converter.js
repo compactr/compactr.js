@@ -1,6 +1,6 @@
 /** Type Coersion utilities */
 
-'use strict';
+'use asm';
 
 /* Methods -------------------------------------------------------------------*/
 

@@ -1,6 +1,6 @@
 /** Encoding utilities */
 
-'use strict';
+'use asm';
 
 /* Local variables -----------------------------------------------------------*/
 

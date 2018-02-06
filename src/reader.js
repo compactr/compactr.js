@@ -1,6 +1,6 @@
 /** Data reader component */
 
-'use strict';
+'use asm';
 
 /* Requires ------------------------------------------------------------------*/
 
