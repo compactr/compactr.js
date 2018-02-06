@@ -1,6 +1,6 @@
 /** Schema parsing component */
 
-'use strict';
+'use asm';
 
 /* Requires ------------------------------------------------------------------*/
 

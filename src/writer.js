@@ -1,6 +1,6 @@
 /** Data writer component */
 
-'use strict';
+'use asm';
 
 /* Local variables -----------------------------------------------------------*/
 
