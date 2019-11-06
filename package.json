@@ -7,6 +7,10 @@
     "test": "mocha tests/index.js --exit",
     "bench": "node benchmarks/array.js && node benchmarks/boolean.js && node benchmarks/double.js && node benchmarks/integer.js && node benchmarks/object.js && node benchmarks/string.js"
   },
+  "funding": {
+    "type": "Open Collective",
+    "url": "https://opencollective.com/fredericcharette"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/compactr/compactr-js.git"
