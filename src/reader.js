@@ -1,7 +1,5 @@
 /** Data reader component */
 
-'use asm';
-
 /* Requires ------------------------------------------------------------------*/
 
 const Decoder = require('./decoder');
@@ -42,7 +40,7 @@ function Reader(scope) {
 
     scope.header[index] = {
       key,
-      size: key.size || Decoder.unsigned(bytes.subarray(caret + 1, caret + key.count + 1))
+      size: key.size || Decoder.unsigned(bytes.subarray(caret + 1, caret + key.count + 1)),
     };
     return caret + key.count + 1;
   }

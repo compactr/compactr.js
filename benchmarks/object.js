@@ -22,9 +22,9 @@ const objectSuite = new Benchmark.Suite();
 /* Float suite ---------------------------------------------------------------*/
 
 objectSuite.add('[Object] JSON', objJSON)
-.add('[Object] Compactr', objCompactr)
-.on('cycle', e => console.log(String(e.target)))
-.run({ 'async': true });
+  .add('[Object] Compactr', objCompactr)
+  .on('cycle', e => console.log(String(e.target)))
+  .run({ 'async': true });
 
 
 function objJSON() {

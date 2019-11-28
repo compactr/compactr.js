@@ -1,7 +1,5 @@
 /** Type Coersion utilities */
 
-'use asm';
-
 /* Methods -------------------------------------------------------------------*/
 
 /** @private */
@@ -59,5 +57,5 @@ module.exports = {
   char32: string,
   boolean,
   array,
-  object
+  object,
 };

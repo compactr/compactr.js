@@ -12,7 +12,7 @@ const Compactr = require('../');
 
 let User = Compactr.schema({ 
   id: { type: 'int32', size: 4 }, 
-  bool: { type: 'boolean' }
+  bool: { type: 'boolean' },
 });
 
 const mult = 32;
@@ -22,9 +22,9 @@ const boolSuite = new Benchmark.Suite();
 /* Float suite ---------------------------------------------------------------*/
 
 boolSuite.add('[Boolean] JSON', boolJSON)
-.add('[Boolean] Compactr', boolCompactr)
-.on('cycle', e => console.log(String(e.target)))
-.run({ 'async': true });
+  .add('[Boolean] Compactr', boolCompactr)
+  .on('cycle', e => console.log(String(e.target)))
+  .run({ 'async': true });
 
 function boolJSON() {
   let packed, unpacked;

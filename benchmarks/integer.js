@@ -12,7 +12,7 @@ const Compactr = require('../');
 
 let User = Compactr.schema({ 
   id: { type: 'int32', size: 4 }, 
-  int: { type: 'int32', size: 8 }
+  int: { type: 'int32', size: 8 },
 });
 
 const mult = 32;
@@ -22,9 +22,9 @@ const intSuite = new Benchmark.Suite();
 /* Float suite ---------------------------------------------------------------*/
 
 intSuite.add('[Integer] JSON', intJSON)
-.add('[Integer] Compactr', intCompactr)
-.on('cycle', e => console.log(String(e.target)))
-.run({ 'async': true });
+  .add('[Integer] Compactr', intCompactr)
+  .on('cycle', e => console.log(String(e.target)))
+  .run({ 'async': true });
 
 function intJSON() {
   let packed, unpacked;

@@ -123,4 +123,4 @@ You are awesome! Open an issue on this project, identifying the feature that you
 
 ## License 
 
-[Apache 2.0](LICENSE) (c) 2017 Frederic Charette
+[Apache 2.0](LICENSE) (c) 2019 Frederic Charette

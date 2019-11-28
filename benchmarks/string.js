@@ -13,8 +13,29 @@ const Compactr = require('../');
 let User = Compactr.schema({ 
   id: { type: 'int32', size: 4 }, 
   str: { type: 'char8', size: 6 }, 
-  special: { type: 'char32', size: 4 }
+  special: { type: 'char32', size: 4 },
 });
+
+/*let protoSchema = protobuf.Root.fromJSON({
+  "nested": {
+    "StringBenchTest": {
+      "fields": {
+        "id": {
+          "type": "string",
+          "id": 1
+        },
+        "str": {
+          "type": "string",
+          "id": 1
+        },
+        "special": {
+          "type": "string",
+          "id": 1
+        }
+      }
+    }
+  }
+})*/
 
 const mult = 32;
 
@@ -23,9 +44,9 @@ const stringSuite = new Benchmark.Suite();
 /* Float suite ---------------------------------------------------------------*/
 
 stringSuite.add('[String] JSON', strJSON)
-.add('[String] Compactr', strCompactr)
-.on('cycle', e => console.log(String(e.target)))
-.run({ 'async': true });
+  .add('[String] Compactr', strCompactr)
+  .on('cycle', e => console.log(String(e.target)))
+  .run({ 'async': true });
 
 
 function strJSON() {

@@ -1,11 +1,5 @@
 /** Data writer component */
 
-'use asm';
-
-/* Local variables -----------------------------------------------------------*/
-
-const fastPush = Array.prototype.push;
-
 /* Methods -------------------------------------------------------------------*/
 
 function Writer(scope) {
@@ -40,8 +34,7 @@ function Writer(scope) {
 
   /** @private */
   function splitBytes(encoded, key) {
-    scope.headerBytes.push(scope.indices[key].index);
-    fastPush.apply(scope.headerBytes, scope.indices[key].getSize(encoded.length));
+    scope.headerBytes.push(scope.indices[key].index, ...scope.indices[key].getSize(encoded.length));
     let res = encoded;
     if (scope.indices[key].size !== null) {
       if (scope.indices[key].size !== encoded.length) {
@@ -54,7 +47,7 @@ function Writer(scope) {
         }
       }
     }
-    fastPush.apply(scope.contentBytes, res);
+    scope.contentBytes.push(...res);
   }
 
   /**
@@ -86,10 +79,7 @@ function Writer(scope) {
 
   /** @private */
   function concat(header, content) {
-    const res = [];
-    fastPush.apply(res, header);
-    fastPush.apply(res, content);
-    return res;
+    return [...header, ...content];
   }
 
   /**
