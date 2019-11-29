@@ -36,3 +36,6 @@ api_docs
 /stacks.out
 /out
 /benchmarks/compare.js
+yarn.lock
+package-lock.json
+.clinic

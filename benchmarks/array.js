@@ -1,7 +1,5 @@
 /** Benchmarks */
 
-'use strict';
-
 /* Requires ------------------------------------------------------------------*/
 
 const Benchmark = require('benchmark');
@@ -12,19 +10,21 @@ const Compactr = require('../');
 
 let User = Compactr.schema({
   id: { type: 'int32', size: 4 },
-  arr: { type: 'array', size: 6, items: { type: 'char8', size: 1 }}
+  arr: { type: 'array', size: 6, items: { type: 'char8', size: 1 }},
 });
 
 const mult = 32;
+const sizes = { json: 0, compactr: 0 };
+
 const arraySuite = new Benchmark.Suite();
 
 /* Float suite ---------------------------------------------------------------*/
 
 arraySuite.add('[Array] JSON', arrJSON)
-.add('[Array] Compactr', arrCompactr)
-.on('cycle', e => console.log(String(e.target)))
-.run({ 'async': true });
-
+  .add('[Array] Compactr', arrCompactr)
+  .on('cycle', e => console.log(String(e.target)))
+  .run({ 'async': true })
+  .on('complete', _ => console.log(sizes));
 
 function arrJSON() {
   let packed, unpacked;
@@ -32,6 +32,7 @@ function arrJSON() {
   for(let i = 0; i<mult*mult; i++) {
     packed = Buffer.from(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
     unpacked = JSON.parse(packed.toString());
+    if (packed.length > sizes.json) sizes.json = packed.length;
   }
 }
 
@@ -41,5 +42,6 @@ function arrCompactr() {
   for(let i = 0; i<mult*mult; i++) {
     packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).contentBuffer();
     unpacked = User.readContent(packed);
+    if (packed.length > sizes.compactr) sizes.compactr = packed.length;
   }
 }

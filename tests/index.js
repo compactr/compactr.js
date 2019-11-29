@@ -2,8 +2,6 @@
  * Unit test suite
  */
 
-'use strict';
-
 /* Requires ------------------------------------------------------------------*/
 
 const expect = require('chai').expect;
@@ -118,7 +116,7 @@ describe('Data integrity - multi mixed', () => {
       num: { type: 'number' },
       str: { type: 'string' },
       arr: { type: 'array', items: { type: 'string' } },
-      obj: { type: 'object', schema: { sub: { type: 'string' } } }
+      obj: { type: 'object', schema: { sub: { type: 'string' } } },
     });
 
     it('should preserve values and types', () => {
@@ -236,7 +234,7 @@ describe('Data integrity - partial - multi mixed', () => {
       num: { type: 'number' },
       str: { type: 'string', size: 22 },
       arr: { type: 'array', items: { type: 'string' }, size: 9 },
-      obj: { type: 'object', size: 9, schema: { sub: { type: 'string' } } }
+      obj: { type: 'object', size: 9, schema: { sub: { type: 'string' } } },
     });
 
     it('should preserve values and types', () => {

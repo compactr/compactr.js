@@ -1,7 +1,5 @@
 /** Encoding utilities */
 
-'use asm';
-
 /* Local variables -----------------------------------------------------------*/
 
 const intMap = [null, unsigned8, unsigned16, null, unsigned32];
@@ -13,7 +11,6 @@ const floor = Math.floor;
 const bias = pow(2, 52);
 const eIn = pow(2, -1022);
 const eOut = pow(2, 1022) * bias;
-const fastPush = Array.prototype.push;
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -55,10 +52,20 @@ function unsigned32(val) {
 }
 
 /** @private */
+function char8(val) {
+  const chars = [];
+  for (let i = 0; i < val.length; i++) {
+    chars.push(val.charCodeAt(i) % 0xff);
+  }
+
+  return chars;
+}
+
+/** @private */
 function string(encoding, val) {
   const chars = [];
   for (let i = 0; i < val.length; i++) {
-    fastPush.apply(chars, encoding(val.charCodeAt(i)));
+    chars.push(...encoding(val.charCodeAt(i)));
   }
 
   return chars;
@@ -69,8 +76,7 @@ function array(schema, val) {
   const ret = [];
   for (let i = 0; i < val.length; i++) {
     let encoded = schema.transformIn(val[i]);
-    fastPush.apply(ret, schema.getSize(encoded.length));
-    fastPush.apply(ret, encoded);
+    ret.push(...schema.getSize(encoded.length), ...encoded);
   }
   return ret;
 }
@@ -85,17 +91,14 @@ function object(schema, val) {
  * @private
  */
 function double(val) {
-  var buffer = [];
-  var e, m, c;
-  var mLen = 52;
-  var nBytes = 8;
-  var eLen = 11;
-  var eMax = 2047;
-  var eBias = 1023;
-  var rt = 0;
-  var i = 7;
-  var d = -1;
-  var s = val <= 0 ? 1 : 0;
+  let buffer = [];
+  let e, m, c;
+  let eMax = 2047;
+  let eBias = 1023;
+  let rt = 0;
+  let i = 7;
+  let d = -1;
+  let s = val <= 0 ? 1 : 0;
   val = abs(val);
   e = floor(log(val) / ln2);
   c = pow(2, -e);
@@ -156,7 +159,7 @@ module.exports = {
   int32,
   double,
   string: string.bind(null, unsigned16),
-  char8: string.bind(null, unsigned8),
+  char8,
   char16: string.bind(null, unsigned16),
   char32: string.bind(null, unsigned32),
   array,
@@ -164,5 +167,5 @@ module.exports = {
   getSize,
   unsigned8,
   unsigned16,
-  unsigned32
+  unsigned32,
 };

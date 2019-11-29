@@ -6,22 +6,14 @@
 
 The Compactr protocol is mainly geared to empower high-debit realtime applications such as online games. That said, there's no reason why you couldn't use this in any type of application where serialization occurs like web servers transactions, database gossipping or even data storage.  
 
-### Key selling points
+### How does this compare?
 
-**Programatic schemas** 
-Reduce repetition by allowing you to build schemas for your data directly in your scripting language or store them as JSON. This creates the most portable and dynamic schema management experience possible.
+Compactr is designed for easier integration with Javascript/Typescript applications. It's performances are very much similar to those of JSON serialization, but the output compares in size with Protobuf.
 
-**Partial payloads**
-Redundancy, separators and checksums are a waste of bytes for fire-and-forget events. For extremely predictable payloads, like character coordinates, can easily be decoded without the help of the header, which can help increase decoding speed and reduce payload sizes.
+It would be possible for compactr to be closer in speed to protobuf if we manage to implement codegen on schema initialization, like protobufjs does.
 
-**Unlimited nesting**
-Compactr supports as much nesting as you need. Object-in-object-in-array-in-object... it handles it!
+Though the area where compactr really shines is in it's ability to handle nested objects and object collections.
 
-**RPC ready**
-Dynamic schemas, encoding options like explicit type coersion, schema validation and garanties over key ordering makes Compactr.js a great foundation for any RPC protocol.
+You can store information of any size or with no penalty.
 
-**All sizes are equal**
-Count and size values make it possible to encode data of any size, as long as it fits in ram, we don't have streaming...yet.
-
-**No dependencies**
-It's very important (to me at least) to keep things light and manageable. This will be the fastest `npm install` you'll ever do.
+It is also extremely light in terms of package size, has zero dependencies, goes easy on the CPU and RAM. 

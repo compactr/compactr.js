@@ -1,7 +1,5 @@
 /** Schema parsing component */
 
-'use asm';
-
 /* Requires ------------------------------------------------------------------*/
 
 const Encoder = require('./encoder');
@@ -34,7 +32,7 @@ function Schema(schema, options = { keyOrder: false }) {
     unsigned: 8,
     unsigned8: 1,
     unsigned16: 2,
-    unsigned32: 4
+    unsigned32: 4,
   };
 
   const scope = {
@@ -45,7 +43,7 @@ function Schema(schema, options = { keyOrder: false }) {
     contentBytes: [0],
     header: [],
     contentBegins: 0,
-    options
+    options,
   };
   scope.indices = preformat(schema);
   const writer = Writer(scope);
@@ -73,7 +71,7 @@ function Schema(schema, options = { keyOrder: false }) {
           getSize: Encoder.getSize.bind(null, count),
           size: schema[key].size || null,
           count,
-          nested: childSchema
+          nested: childSchema,
         };
       });
 
@@ -85,7 +83,7 @@ function Schema(schema, options = { keyOrder: false }) {
     for (let key in scope.schema) {
       scope.header.push({
         key: scope.indices[key],
-        size: scope.indices[key].size || sizeRef[scope.indices[key].type]
+        size: scope.indices[key].size || sizeRef[scope.indices[key].type],
       });
     }
   }

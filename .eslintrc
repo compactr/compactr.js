@@ -1,0 +1,67 @@
+{
+  "parserOptions": {
+    "ecmaVersion": 9
+  },
+  "rules": {
+    "arrow-body-style": "off",
+    "camelcase": "off",
+    "class-methods-use-this": "off",
+    "comma-dangle": [
+      "error",
+      {
+        "arrays": "always-multiline",
+        "objects": "always-multiline",
+        "imports": "always-multiline",
+        "exports": "always-multiline",
+        "functions": "never"
+      }
+    ],
+    "default-case": "off",
+    "consistent-return": "off",
+    "func-names": "off",
+    "import/extensions": "off",
+    "import/first": "off",
+    "import/newline-after-import": "off",
+    "import/no-named-as-default": "off",
+    "import/no-named-as-default-member": "off",
+    "import/prefer-default-export": "off",
+    "indent": ["error", 2],
+    "max-len": "off",
+    "no-mixed-operators": "off",
+    "no-param-reassign": "off",
+    "no-plusplus": "off",
+    "no-prototype-builtins": "off",
+    "no-restricted-syntax": "off",
+    "no-underscore-dangle": "off",
+    "no-useless-escape": "off",
+    "no-use-before-define": [
+      "error",
+      {
+        "functions": false,
+        "classes": true,
+        "variables": true
+      }
+    ],
+    "no-var": "off",
+    "object-property-newline": "off",
+    "operator-assignment": "off",
+    "prefer-arrow-callback": "off",
+    "prefer-rest-params": "off",
+    "prefer-spread": "off",
+    "prefer-template": "off",
+    "object-curly-newline": "off",
+    "prefer-destructuring": "off",
+    "no-restricted-globals": "off",
+    "radix": "off",
+    "space-before-function-paren": [
+      "error",
+      {
+        "anonymous": "never",
+        "named": "never"
+      }
+    ],
+    "linebreak-style": "off",
+    "no-lonely-if": "off"
+  }
+}
+  
