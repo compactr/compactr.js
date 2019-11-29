@@ -68,18 +68,7 @@ const content = userSchema.read(buffer);
 const content = userSchema.readContent(partial);
 ```
 
-
-## Speed comparison
-
-![Speed](http://res.cloudinary.com/kalm/image/upload/v1507323565/compactr_speed_adhlsk.png)
-
-*Measured against plain JSON serialization + convertion to buffer. Compactr serialization is performed with default settings via the partial (content only) load method*
-
-
-
 ## Size comparison
-
-![Size](http://res.cloudinary.com/kalm/image/upload/v1507323565/compactr_bytes_cbjxka.png)
 
 JSON: `{"id":123,"name":"John"}`: 24 bytes 
 
@@ -115,6 +104,31 @@ unsigned32 | 0 | 4
 
 See the full [Compactr protocol](https://github.com/compactr/protocol)
 
+## Benchmarks
+
+[Array] JSON x 651 ops/sec ±0.91% (92 runs sampled)
+[Array] Compactr x 464 ops/sec ±1.49% (87 runs sampled)
+{ json: 0, compactr: 10 }
+[Boolean] JSON x 844 ops/sec ±0.95% (92 runs sampled)
+[Boolean] Compactr x 991 ops/sec ±1.36% (82 runs sampled)
+[Boolean] Protobuf x 2,940 ops/sec ±1.41% (87 runs sampled)
+{ json: 23, compactr: 5, protobuf: 5 }
+[Float] JSON x 560 ops/sec ±1.00% (84 runs sampled)
+[Float] Compactr x 823 ops/sec ±1.46% (85 runs sampled)
+[Float] Protobuf x 2,433 ops/sec ±2.19% (82 runs sampled)
+{ json: 41, compactr: 12, protobuf: 12 }
+[Integer] JSON x 792 ops/sec ±1.56% (83 runs sampled)
+[Integer] Compactr x 736 ops/sec ±1.31% (82 runs sampled)
+[Integer] Protobuf x 2,960 ops/sec ±1.41% (90 runs sampled)
+{ json: 24, compactr: 12, protobuf: 7 }
+[Object] JSON x 370 ops/sec ±1.25% (82 runs sampled)
+[Object] Compactr x 308 ops/sec ±0.93% (82 runs sampled)
+[Object] Protobuf x 824 ops/sec ±2.45% (86 runs sampled)
+{ json: 46, compactr: 13, protobuf: 25 }
+[String] JSON x 274 ops/sec ±1.96% (79 runs sampled)
+[String] Compactr x 400 ops/sec ±0.92% (83 runs sampled)
+[String] Protobuf x 716 ops/sec ±0.98% (86 runs sampled)
+{ json: 57, compactr: 14, protobuf: 28 }
 
 ## Want to help ?
 

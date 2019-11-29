@@ -2,8 +2,6 @@
  * Unit test suite
  */
 
-'use strict';
-
 /* Requires ------------------------------------------------------------------*/
 
 const expect = require('chai').expect;
