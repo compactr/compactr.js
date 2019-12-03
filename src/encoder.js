@@ -83,7 +83,7 @@ function array(schema, val) {
 
 /** @private */
 function object(schema, val) {
-  return schema.write(val).buffer();
+  return schema.write(val).typedArray();
 }
 
 /** 

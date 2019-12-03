@@ -73,8 +73,8 @@ function Writer(scope) {
   }
 
   /** @private */
-  function concat(header, content) {
-    return [...header, ...content];
+  function typedArray() {
+    return [...scope.headerBytes, ...scope.contentBytes];
   }
 
   /**
@@ -99,10 +99,10 @@ function Writer(scope) {
    * @returns {Buffer} The data buffer
    */
   function buffer() {
-    return Buffer.from(concat(scope.headerBytes, scope.contentBytes));
+    return Buffer.from(typedArray);
   }
 
-  return { write, headerBuffer, contentBuffer, buffer, sizes };
+  return { write, headerBuffer, contentBuffer, buffer, typedArray, sizes };
 }
 
 /* Exports -------------------------------------------------------------------*/

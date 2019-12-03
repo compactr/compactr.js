@@ -110,7 +110,7 @@ function Schema(schema, options = { keyOrder: false }) {
     let childSchema;
 
     if (isObject === true || isArray === true) {
-      if (isObject === true) childSchema = Schema(schema[key].schema);
+      if (isObject === true) childSchema = Schema(schema[key].schema, options);
       if (isArray === true) {
         const itemChildSchema = computeNested(schema[key], 'items');
 
