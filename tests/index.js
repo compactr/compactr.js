@@ -14,7 +14,6 @@ describe('Data integrity - simple', () => {
     const Schema = Compactr.schema({ test: { type: 'boolean' } });
 
     it('should preserve boolean value and type - true', () => {
-      console.log(Schema.write({ test: true }).buffer())
       expect(Schema.read(Schema.write({ test: true }).buffer())).to.deep.equal({ test: true });
     });
 
