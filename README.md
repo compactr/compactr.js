@@ -123,10 +123,10 @@ See the full [Compactr protocol](https://github.com/compactr/protocol)
 [Integer] JSON x 954 ops/sec ±0.77% (93 runs sampled)
 [Integer] Compactr x 1,520 ops/sec ±1.21% (89 runs sampled)
 [Integer] Protobuf x 2,676 ops/sec ±1.22% (90 runs sampled)
-[Integer] size: { json: 24, compactr: 12, protobuf: 7 }
+[Integer] size: { json: 24, compactr: 8, protobuf: 7 }
 
 [Object] JSON x 512 ops/sec ±0.62% (90 runs sampled)
-[Object] Compactr x 406 ops/sec ±1.46% (81 runs sampled)
+[Object] Compactr x 412 ops/sec ±1.46% (81 runs sampled)
 [Object] Protobuf x 898 ops/sec ±0.92% (93 runs sampled)
 [Object] size: { json: 46, compactr: 13, protobuf: 25 }
 

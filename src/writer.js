@@ -99,7 +99,7 @@ function Writer(scope) {
    * @returns {Buffer} The data buffer
    */
   function buffer() {
-    return Buffer.from(typedArray);
+    return Buffer.from(typedArray());
   }
 
   return { write, headerBuffer, contentBuffer, buffer, typedArray, sizes };
