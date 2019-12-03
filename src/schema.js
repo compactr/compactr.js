@@ -35,6 +35,19 @@ function Schema(schema, options = { keyOrder: false }) {
     unsigned32: 4,
   };
 
+  const defaultSizes = {
+    boolean: 1,
+    number: 8,
+    int8: 1,
+    int16: 2,
+    int32: 4,
+    double: 8,
+    unsigned: 8,
+    unsigned8: 1,
+    unsigned16: 2,
+    unsigned32: 4,
+  };
+
   const scope = {
     schema,
     indices: {},
@@ -69,7 +82,8 @@ function Schema(schema, options = { keyOrder: false }) {
           transformOut: (childSchema !== undefined) ? Decoder[keyType].bind(null, childSchema) : Decoder[keyType],
           coerse: Converter[keyType],
           getSize: Encoder.getSize.bind(null, count),
-          size: schema[key].size || null,
+          fixedSize: defaultSizes[keyType] && Encoder.getSize(count, defaultSizes[keyType]) || null,
+          size: schema[key].size || defaultSizes[keyType] || null,
           count,
           nested: childSchema,
         };
@@ -96,7 +110,7 @@ function Schema(schema, options = { keyOrder: false }) {
     let childSchema;
 
     if (isObject === true || isArray === true) {
-      if (isObject === true) childSchema = Schema(schema[key].schema);
+      if (isObject === true) childSchema = Schema(schema[key].schema, options);
       if (isArray === true) {
         const itemChildSchema = computeNested(schema[key], 'items');
 

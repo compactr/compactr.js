@@ -18,14 +18,10 @@ function Writer(scope) {
     scope.headerBytes[0] = keys.length;
     for (let i = 0; i < keys.length; i++) {
       let keyData = data[keys[i]];
-      if (keyData === null || keyData === undefined) {
-        scope.headerBytes[0] -= 1;
-        continue;
-      }
       if (options !== undefined) {
         if (options.coerse === true) keyData = scope.indices[keys[i]].coerse(keyData);
         if (options.validate === true) scope.indices[keys[i]].validate(keyData);
-      } 
+      }
       splitBytes(scope.indices[keys[i]].transformIn(keyData), keys[i]);
     }
 
@@ -34,20 +30,19 @@ function Writer(scope) {
 
   /** @private */
   function splitBytes(encoded, key) {
-    scope.headerBytes.push(scope.indices[key].index, ...scope.indices[key].getSize(encoded.length));
-    let res = encoded;
-    if (scope.indices[key].size !== null) {
-      if (scope.indices[key].size !== encoded.length) {
-        if(scope.indices[key].size > encoded.length) {
-          res = new Array(scope.indices[key].size).fill(0);
-          res.splice(0, encoded.length, ...encoded);
-        }
-        else {
-          res = encoded.slice(0, scope.indices[key].size);
-        }
+    if (scope.indices[key].fixedSize !== null) {
+      scope.headerBytes.push(scope.indices[key].index, ...scope.indices[key].fixedSize);
+    }
+    else {
+      scope.headerBytes.push(scope.indices[key].index, ...scope.indices[key].getSize(encoded.length));
+      if(scope.indices[key].size !== encoded.length && scope.indices[key].size !== null) {
+        let fixedSize = new Array(scope.indices[key].size).fill(0);
+        let smallestSize = Math.min(encoded.length, fixedSize.length);
+        fixedSize.splice(0, smallestSize, ...encoded.slice(0, smallestSize));
+        return scope.contentBytes.push(...fixedSize);
       }
     }
-    scope.contentBytes.push(...res);
+    scope.contentBytes.push(...encoded);
   }
 
   /**
@@ -72,14 +67,14 @@ function Writer(scope) {
   function filterKeys(data) {
     const res = [];
     for (let key in data) {
-      if (scope.items.indexOf(key) !== -1) res.push(key);
+      if (scope.items.indexOf(key) !== -1 && data[key] !== null && data[key] !== undefined) res.push(key);
     }
     return res;
   }
 
   /** @private */
-  function concat(header, content) {
-    return [...header, ...content];
+  function typedArray() {
+    return [...scope.headerBytes, ...scope.contentBytes];
   }
 
   /**
@@ -104,10 +99,10 @@ function Writer(scope) {
    * @returns {Buffer} The data buffer
    */
   function buffer() {
-    return Buffer.from(concat(scope.headerBytes, scope.contentBytes));
+    return Buffer.from(typedArray());
   }
 
-  return { write, headerBuffer, contentBuffer, buffer, sizes };
+  return { write, headerBuffer, contentBuffer, buffer, typedArray, sizes };
 }
 
 /* Exports -------------------------------------------------------------------*/

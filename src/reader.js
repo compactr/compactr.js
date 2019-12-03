@@ -40,7 +40,7 @@ function Reader(scope) {
 
     scope.header[index] = {
       key,
-      size: key.size || Decoder.unsigned(bytes.subarray(caret + 1, caret + key.count + 1)),
+      size: key.size || Decoder.unsigned(bytes.slice(caret + 1, caret + key.count + 1)),
     };
     return caret + key.count + 1;
   }
@@ -67,7 +67,7 @@ function Reader(scope) {
       }
     }
     for (let i = 0; i < scope.header.length; i++) {
-      ret[scope.header[i].key.name] = scope.header[i].key.transformOut(bytes.subarray(caret, caret + scope.header[i].size));
+      ret[scope.header[i].key.name] = scope.header[i].key.transformOut(bytes.slice(caret, caret + scope.header[i].size));
       caret += scope.header[i].size;
     }
     return ret;
