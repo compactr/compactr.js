@@ -1,6 +1,6 @@
 {
   "name": "compactr",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "description": "Schema based serialization made easy",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,7 @@
     "decode",
     "decoding",
     "compress",
-    "data"
+    "serialize"
   ],
   "husky": {
     "hooks": {
