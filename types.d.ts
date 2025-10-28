@@ -56,7 +56,7 @@ declare module 'compactr' {
   }
 
   export interface SchemaFieldDefinition {
-    type: 'boolean' | 'integer' | 'number' | 'string' | 'char8' | 'char16' | 'char32' | 'array' | 'object'
+    type: 'boolean' | 'integer' | 'number' | 'string' | 'array' | 'object'
     format?: 'int32' | 'int64' | 'float' | 'double'
     count?: number
     size?: number

@@ -105,6 +105,14 @@ describe('Data integrity - simple', () => {
     it('should preserve string value and type', () => {
       expect(Schema.read(Schema.write({ test: 'hello world' }).buffer())).toEqual({ test: 'hello world' });
     });
+
+    it('should support special characters', () => {
+      expect(Schema.read(Schema.write({ test: '한자' }).buffer())).toEqual({ test: '한자' });
+    });
+
+    it('should support emojis', () => {
+      expect(Schema.read(Schema.write({ test: '🚀' }).buffer())).toEqual({ test: '🚀' });
+    });
   });
 
   describe('Array', () => {

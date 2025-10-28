@@ -9,8 +9,8 @@ const Compactr = require('../');
 
 
 let User = Compactr.schema({
-  id: { type: 'int32', size: 4 },
-  arr: { type: 'array', size: 6, items: { type: 'char8', size: 1 }},
+  id: { type: 'integer', format: 'int32', size: 4 },
+  arr: { type: 'array', size: 6, items: { type: 'string', size: 1 }},
 });
 
 const mult = 32;

@@ -33,20 +33,11 @@ function unsigned32(val) {
 }
 
 /** @private */
-function char8(val) {
+function string(val) {
   const chars = [];
   for (let i = 0; i < val.length; i++) {
-    chars.push(val.charCodeAt(i) % 0xff);
-  }
-
-  return chars;
-}
-
-/** @private */
-function string(encoding, val) {
-  const chars = [];
-  for (let i = 0; i < val.length; i++) {
-    chars.push(...encoding(val.charCodeAt(i)));
+    const code = val.charCodeAt(i);
+    chars.push(code >> 8, code & 0xff);
   }
 
   return chars;
@@ -98,7 +89,7 @@ function double(val) {
   // Return bytes in big-endian order
   return [
     byteArray[7], byteArray[6], byteArray[5], byteArray[4],
-    byteArray[3], byteArray[2], byteArray[1], byteArray[0]
+    byteArray[3], byteArray[2], byteArray[1], byteArray[0],
   ];
 }
 
@@ -124,10 +115,7 @@ export default {
   int64,
   float,
   double,
-  string: string.bind(null, unsigned16),
-  char8,
-  char16: string.bind(null, unsigned16),
-  char32: string.bind(null, unsigned32),
+  string,
   array,
   object,
   getSize,

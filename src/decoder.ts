@@ -35,21 +35,8 @@ function unsigned(bytes) {
 function string(bytes) {
   const res = [];
   for (let i = 0; i < bytes.length; i += 2) {
-    res.push(unsigned([bytes[i], bytes[i + 1]]));
-  }
-  return fromChar(...res);
-}
-
-/** @private */
-function char8(bytes) {
-  return fromChar(...bytes);
-}
-
-/** @private */
-function char32(bytes) {
-  const res = [];
-  for (let i = 0; i < bytes.length; i += 4) {
-    res.push(int32([bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]]));
+    const code = (bytes[i] << 8) | bytes[i + 1];
+    res.push(code);
   }
   return fromChar(...res);
 }
@@ -94,7 +81,7 @@ function double(bytes) {
   // Bytes come in big-endian order, convert to little-endian for typed array
   const byteArray = new Uint8Array([
     bytes[7], bytes[6], bytes[5], bytes[4],
-    bytes[3], bytes[2], bytes[1], bytes[0]
+    bytes[3], bytes[2], bytes[1], bytes[0],
   ]);
   const doubleArray = new Float64Array(byteArray.buffer);
 
@@ -118,9 +105,6 @@ export default {
   float,
   double,
   string,
-  char8,
-  char16: string,
-  char32,
   array,
   object,
   unsigned,

@@ -36,9 +36,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
     float: 4,
     double: 8,
     string: 2,
-    char8: 1,
-    char16: 2,
-    char32: 4,
     array: 2,
     object: 1,
   };

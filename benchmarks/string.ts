@@ -9,10 +9,10 @@ const protobuf = require('protobufjs');
 /* Local variables -----------------------------------------------------------*/
 
 
-let User = Compactr.schema({ 
-  id: { type: 'int32', size: 4 }, 
-  str: { type: 'char8', size: 6 }, 
-  special: { type: 'char32', size: 4 },
+let User = Compactr.schema({
+  id: { type: 'integer', format: 'int32', size: 4 },
+  str: { type: 'string', size: 6 },
+  special: { type: 'string', size: 4 },
 });
 
 let root = protobuf.Root.fromJSON({
