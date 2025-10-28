@@ -56,8 +56,8 @@ declare module 'compactr' {
   }
 
   export interface SchemaFieldDefinition {
-    type: 'boolean' | 'integer' | 'number' | 'string' | 'array' | 'object'
-    format?: 'int32' | 'int64' | 'float' | 'double' | 'uuid' | 'ipv4' | 'ipv6' | 'date' | 'date-time'
+    type?: 'boolean' | 'integer' | 'number' | 'string' | 'array' | 'object'
+    format?: 'int32' | 'int64' | 'float' | 'double' | 'uuid' | 'ipv4' | 'ipv6' | 'date' | 'date-time' | 'binary'
     nullable?: boolean
     count?: number
     size?: number
@@ -68,6 +68,8 @@ declare module 'compactr' {
       count?: number
       schema?: SchemaDefinition
     }
+    oneOf?: SchemaFieldDefinition[]
+    anyOf?: SchemaFieldDefinition[]
   }
 
   export interface SchemaDefinition {

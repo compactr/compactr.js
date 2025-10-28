@@ -4,9 +4,9 @@
 
 const fromChar = String.fromCharCode;
 
-// Presence indicators for nullable fields
+// Discriminator byte for nullable/oneOf/anyOf fields
 export const NULL_INDICATOR = 0x00; // Field is null
-export const PRESENT_INDICATOR = 0x01; // Field is present (not null)
+export const VARIANT_BASE = 0x01; // First variant (or present for simple nullable)
 
 /* Methods ------------------------------------------------------------------- */
 
@@ -204,6 +204,17 @@ function dateTime(bytes) {
   return dateObj.toISOString();
 }
 
+/**
+ * Binary decoder - converts raw bytes to base64 string
+ * Binary format: raw bytes
+ * Base64 format: "SGVsbG8gV29ybGQ="
+ * @private
+ */
+function binary(bytes) {
+  const buffer = Buffer.from(bytes);
+  return buffer.toString('base64');
+}
+
 /** @private */
 function array(schema, bytes) {
   const ret = [];
@@ -273,6 +284,7 @@ export default {
   ipv6,
   date,
   'date-time': dateTime,
+  binary,
   array,
   object,
   unsigned,

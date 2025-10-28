@@ -4,9 +4,9 @@
 
 const intMap = [null, unsigned8, unsigned16, null, unsigned32];
 
-// Presence indicators for nullable fields
+// Discriminator byte for nullable/oneOf/anyOf fields
 export const NULL_INDICATOR = 0x00; // Field is null
-export const PRESENT_INDICATOR = 0x01; // Field is present (not null)
+export const VARIANT_BASE = 0x01; // First variant (or present for simple nullable)
 
 /* Methods ------------------------------------------------------------------- */
 
@@ -168,6 +168,32 @@ function dateTime(val) {
   return double(parsed.getTime());
 }
 
+/**
+ * Binary encoder - converts base64 string or Buffer to raw bytes
+ * Base64 format: "SGVsbG8gV29ybGQ=" (4 chars per 3 bytes)
+ * Binary format: raw bytes (1 byte per byte)
+ * Saves ~33% compared to storing base64 as string (2 bytes per char)
+ * @private
+ */
+function binary(val) {
+  // Accept Buffer, Uint8Array, or base64 string
+  if (Buffer.isBuffer(val)) {
+    return Array.from(val);
+  }
+
+  if (val instanceof Uint8Array) {
+    return Array.from(val);
+  }
+
+  // Assume base64 encoded string
+  if (typeof val === 'string') {
+    const buffer = Buffer.from(val, 'base64');
+    return Array.from(buffer);
+  }
+
+  throw new Error('Binary format requires Buffer, Uint8Array, or base64 string');
+}
+
 /** @private */
 function array(schema, val) {
   const ret = [];
@@ -246,6 +272,7 @@ export default {
   ipv6,
   date,
   'date-time': dateTime,
+  binary,
   array,
   object,
   getSize,

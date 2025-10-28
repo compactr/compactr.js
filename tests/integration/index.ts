@@ -273,6 +273,51 @@ describe('Data integrity - simple', () => {
     });
   });
 
+  describe('Binary', () => {
+    const Schema = schema({ test: { type: 'string', format: 'binary' } });
+
+    it('should preserve binary data via base64', () => {
+      const base64 = 'SGVsbG8gV29ybGQh'; // "Hello World!"
+      expect(Schema.read(Schema.write({ test: base64 }).buffer())).toEqual({ test: base64 });
+    });
+
+    it('should compress binary data efficiently', () => {
+      const base64 = 'SGVsbG8gV29ybGQh'; // 16 chars = 32 bytes as string
+      const buffer = Schema.write({ test: base64 }).buffer();
+      // Header: 1 byte (field count) + 1 byte (field index) + 4 bytes (size) = 6 bytes
+      // Content: 12 bytes (raw binary data decoded from base64)
+      // Total: 18 bytes (vs 35 bytes for string encoding)
+      expect(buffer.length).toBe(18);
+    });
+
+    it('should handle Buffer input', () => {
+      const data = Buffer.from('Hello World!', 'utf8');
+      const result = Schema.read(Schema.write({ test: data }).buffer());
+      expect(result.test).toBe('SGVsbG8gV29ybGQh');
+    });
+
+    it('should handle Uint8Array input', () => {
+      const data = new Uint8Array([72, 101, 108, 108, 111]);
+      const result = Schema.read(Schema.write({ test: data }).buffer());
+      expect(result.test).toBe('SGVsbG8='); // "Hello" in base64
+    });
+
+    it('should handle empty binary data', () => {
+      const base64 = ''; // Empty
+      expect(Schema.read(Schema.write({ test: base64 }).buffer())).toEqual({ test: base64 });
+    });
+
+    it('should handle large binary data', () => {
+      // Create 256 bytes of data
+      const bytes = new Uint8Array(256);
+      for (let i = 0; i < 256; i++) {
+        bytes[i] = i;
+      }
+      const base64 = Buffer.from(bytes).toString('base64');
+      expect(Schema.read(Schema.write({ test: base64 }).buffer())).toEqual({ test: base64 });
+    });
+  });
+
   describe('Array', () => {
     const Schema = schema({ test: { type: 'array', items: { type: 'string' } } });
 
@@ -286,6 +331,130 @@ describe('Data integrity - simple', () => {
 
     it('should preserve object values and types', () => {
       expect(Schema.read(Schema.write({ test: { test: 23.23 } }).buffer())).toEqual({ test: { test: 23.23 } });
+    });
+  });
+
+  describe('OneOf', () => {
+    const Schema = schema({
+      value: {
+        oneOf: [
+          { type: 'string' },
+          { type: 'integer', format: 'int32' },
+          { type: 'boolean' },
+        ],
+      },
+    });
+
+    it('should handle string variant (first)', () => {
+      const data = { value: 'hello' };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle integer variant (second)', () => {
+      const data = { value: 42 };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle boolean variant (third)', () => {
+      const data = { value: true };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should use correct discriminator for each variant', () => {
+      // String (first variant) should have discriminator 0x01
+      const stringBuffer = Schema.write({ value: 'test' }).buffer();
+      expect(stringBuffer[2]).toBe(0x01); // discriminator byte
+
+      // Integer (second variant) should have discriminator 0x02
+      const intBuffer = Schema.write({ value: 42 }).buffer();
+      expect(intBuffer[2]).toBe(0x02); // discriminator byte
+
+      // Boolean (third variant) should have discriminator 0x03
+      const boolBuffer = Schema.write({ value: true }).buffer();
+      expect(boolBuffer[2]).toBe(0x03); // discriminator byte
+    });
+  });
+
+  describe('AnyOf', () => {
+    const Schema = schema({
+      data: {
+        anyOf: [
+          { type: 'number', format: 'double' },
+          { type: 'string' },
+        ],
+      },
+    });
+
+    it('should handle number variant', () => {
+      const data = { data: 3.14 };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle string variant', () => {
+      const data = { data: 'hello' };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('OneOf with nullable', () => {
+    const Schema = schema({
+      value: {
+        nullable: true,
+        oneOf: [
+          { type: 'string' },
+          { type: 'integer', format: 'int32' },
+        ],
+      },
+    });
+
+    it('should handle null value', () => {
+      const data = { value: null };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle string variant when not null', () => {
+      const data = { value: 'test' };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle integer variant when not null', () => {
+      const data = { value: 123 };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should use 0x00 for null, 0x01+ for variants', () => {
+      // Null should use 0x00
+      const nullBuffer = Schema.write({ value: null }).buffer();
+      expect(nullBuffer[2]).toBe(0x00);
+
+      // String variant should use 0x01
+      const stringBuffer = Schema.write({ value: 'test' }).buffer();
+      expect(stringBuffer[2]).toBe(0x01);
+
+      // Integer variant should use 0x02
+      const intBuffer = Schema.write({ value: 42 }).buffer();
+      expect(intBuffer[2]).toBe(0x02);
+    });
+  });
+
+  describe('OneOf with complex types', () => {
+    const Schema = schema({
+      item: {
+        oneOf: [
+          { type: 'array', items: { type: 'string' } },
+          { type: 'object', schema: { x: { type: 'integer', format: 'int32' }, y: { type: 'integer', format: 'int32' } } },
+        ],
+      },
+    });
+
+    it('should handle array variant', () => {
+      const data = { item: ['a', 'b', 'c'] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle object variant', () => {
+      const data = { item: { x: 10, y: 20 } };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
     });
   });
 });

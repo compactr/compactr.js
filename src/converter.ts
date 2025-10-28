@@ -100,6 +100,27 @@ function dateTime(value) {
 }
 
 /** @private */
+function binary(value) {
+  // Accept Buffer, Uint8Array, or base64 string
+  if (Buffer.isBuffer(value)) {
+    return value.toString('base64');
+  }
+
+  if (value instanceof Uint8Array) {
+    return Buffer.from(value).toString('base64');
+  }
+
+  // Validate base64 string
+  if (typeof value === 'string') {
+    // Try to decode and re-encode to validate
+    const buffer = Buffer.from(value, 'base64');
+    return buffer.toString('base64');
+  }
+
+  throw new Error('Invalid binary format: expected Buffer, Uint8Array, or base64 string');
+}
+
+/** @private */
 function boolean(value) {
   return !!value;
 }
@@ -127,6 +148,7 @@ export default {
   ipv6,
   date,
   'date-time': dateTime,
+  binary,
   boolean,
   array,
   object,

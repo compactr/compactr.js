@@ -31,6 +31,7 @@ function resolveType(type, format) {
     if (format === 'ipv6') return 'ipv6';
     if (format === 'date') return 'date';
     if (format === 'date-time') return 'date-time';
+    if (format === 'binary') return 'binary';
   }
 
   return type;
@@ -49,6 +50,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
     'ipv6': 1,
     'date': 1,
     'date-time': 1,
+    'binary': 4,
     'array': 2,
     'object': 1,
   };
@@ -88,10 +90,49 @@ export default function Schema(schema, options = { keyOrder: false }) {
     Object.keys(schema)
       .sort()
       .forEach((key, index) => {
+        // Handle oneOf/anyOf fields
+        if (schema[key].oneOf || schema[key].anyOf) {
+          const variantDefs = schema[key].oneOf || schema[key].anyOf;
+          const variants = variantDefs.map((variantDef) => {
+            const variantType = variantDef.type;
+            const variantFormat = variantDef.format;
+            const variantInternalType = resolveType(variantType, variantFormat);
+            // Binary fields need 4-byte counter by default to support large data
+            const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : 1);
+            const variantChildSchema = computeNestedVariant(variantDef);
+
+            return {
+              type: variantInternalType,
+              transformIn: (variantChildSchema !== undefined)
+                ? Encoder[variantInternalType].bind(null, variantChildSchema)
+                : Encoder[variantInternalType],
+              transformOut: (variantChildSchema !== undefined)
+                ? Decoder[variantInternalType].bind(null, variantChildSchema)
+                : Decoder[variantInternalType],
+              coerse: Converter[variantInternalType],
+              getSize: Encoder.getSize.bind(null, variantCount),
+              fixedSize: (defaultSizes[variantInternalType] && Encoder.getSize(variantCount, defaultSizes[variantInternalType])) || null,
+              size: variantDef.size || defaultSizes[variantInternalType] || null,
+              count: variantCount,
+              nested: variantChildSchema,
+            };
+          });
+
+          ret[key] = {
+            name: key,
+            index,
+            nullable: schema[key].nullable || false,
+            variants,
+          };
+          return;
+        }
+
+        // Handle regular fields
         const fieldType = schema[key].type;
         const fieldFormat = schema[key].format;
         const internalType = resolveType(fieldType, fieldFormat);
-        const count = schema[key].count || 1;
+        // Binary fields need 4-byte counter by default to support large data
+        const count = schema[key].count || (internalType === 'binary' ? 4 : 1);
         const childSchema = computeNested(schema, key);
 
         ret[key] = {
@@ -116,6 +157,10 @@ export default function Schema(schema, options = { keyOrder: false }) {
   /** @private */
   function applyBlank() {
     for (const key in scope.schema) {
+      // Skip variant fields in applyBlank as their size depends on runtime variant
+      if (scope.indices[key].variants) {
+        continue;
+      }
       scope.header.push({
         key: scope.indices[key],
         size: scope.indices[key].size || sizeRef[scope.indices[key].type],
@@ -141,6 +186,33 @@ export default function Schema(schema, options = { keyOrder: false }) {
         childSchema = {
           count: schema[key].items.count || 1,
           getSize: Encoder.getSize.bind(null, schema[key].items.count || 1),
+          transformIn: (itemChildSchema !== undefined) ? Encoder[internalItemType].bind(null, itemChildSchema) : Encoder[internalItemType],
+          transformOut: (itemChildSchema !== undefined) ? Decoder[internalItemType].bind(null, itemChildSchema) : Decoder[internalItemType],
+        };
+      }
+    }
+
+    return childSchema;
+  }
+
+  /** @private */
+  function computeNestedVariant(variantDef) {
+    const variantType = variantDef.type;
+    const isObject = (variantType === 'object');
+    const isArray = (variantType === 'array');
+    let childSchema;
+
+    if (isObject === true || isArray === true) {
+      if (isObject === true) childSchema = Schema(variantDef.schema, options);
+      if (isArray === true) {
+        const itemChildSchema = variantDef.items?.schema ? Schema(variantDef.items.schema, options) : undefined;
+        const itemType = variantDef.items.type;
+        const itemFormat = variantDef.items.format;
+        const internalItemType = resolveType(itemType, itemFormat);
+
+        childSchema = {
+          count: variantDef.items.count || 1,
+          getSize: Encoder.getSize.bind(null, variantDef.items.count || 1),
           transformIn: (itemChildSchema !== undefined) ? Encoder[internalItemType].bind(null, itemChildSchema) : Encoder[internalItemType],
           transformOut: (itemChildSchema !== undefined) ? Decoder[internalItemType].bind(null, itemChildSchema) : Decoder[internalItemType],
         };
