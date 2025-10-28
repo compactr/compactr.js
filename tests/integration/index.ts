@@ -49,6 +49,56 @@ describe('Data integrity - simple', () => {
     });
   });
 
+  describe('Integer (int64)', () => {
+    const Schema = schema({ test: { type: 'integer', format: 'int64' } });
+
+    it('should preserve int64 value and type', () => {
+      expect(Schema.read(Schema.write({ test: 9007199254740991 }).buffer())).toEqual({ test: 9007199254740991 });
+    });
+
+    it('should preserve int64 value and type for negative values', () => {
+      expect(Schema.read(Schema.write({ test: -9007199254740991 }).buffer())).toEqual({ test: -9007199254740991 });
+    });
+  });
+
+  describe('Number (float)', () => {
+    const Schema = schema({ test: { type: 'number', format: 'float' } });
+
+    it('should preserve float value (with precision loss)', () => {
+      const result = Schema.read(Schema.write({ test: 3.14159 }).buffer());
+      expect(result.test).toBeCloseTo(3.14159, 5);
+    });
+
+    it('should preserve float value for negative values', () => {
+      const result = Schema.read(Schema.write({ test: -2.71828 }).buffer());
+      expect(result.test).toBeCloseTo(-2.71828, 5);
+    });
+  });
+
+  describe('Plain Integer (no format)', () => {
+    const Schema = schema({ test: { type: 'integer' } });
+
+    it('should default to int32 format', () => {
+      expect(Schema.read(Schema.write({ test: 42 }).buffer())).toEqual({ test: 42 });
+    });
+
+    it('should handle negative values', () => {
+      expect(Schema.read(Schema.write({ test: -42 }).buffer())).toEqual({ test: -42 });
+    });
+  });
+
+  describe('Plain Number (no format)', () => {
+    const Schema = schema({ test: { type: 'number' } });
+
+    it('should default to double format', () => {
+      expect(Schema.read(Schema.write({ test: 3.141592653589793 }).buffer())).toEqual({ test: 3.141592653589793 });
+    });
+
+    it('should handle negative values', () => {
+      expect(Schema.read(Schema.write({ test: -2.718281828459045 }).buffer())).toEqual({ test: -2.718281828459045 });
+    });
+  });
+
   describe('String', () => {
     const Schema = schema({ test: { type: 'string' } });
 
@@ -250,6 +300,40 @@ describe('Data integrity - partial - multi mixed', () => {
 
     it('should preserve values and types', () => {
       expect(Schema.readContent(Schema.write({ bool: true, num: 23.23, str: 'hello world', arr: ['a', 'b', 'c'], obj: { sub: 'way' } }).contentBuffer())).toEqual({ bool: true, num: 23.23, str: 'hello world', arr: ['a', 'b', 'c'], obj: { sub: 'way' } });
+    });
+  });
+});
+
+/* Size comparison tests ----------------------------------------------------- */
+
+describe('Format size differences', () => {
+  describe('Float vs Double', () => {
+    const FloatSchema = schema({ value: { type: 'number', format: 'float' } });
+    const DoubleSchema = schema({ value: { type: 'number', format: 'double' } });
+
+    it('float should use 4 bytes for content', () => {
+      const buffer = FloatSchema.write({ value: 3.14 }).contentBuffer();
+      expect(buffer.length).toBe(4);
+    });
+
+    it('double should use 8 bytes for content', () => {
+      const buffer = DoubleSchema.write({ value: 3.14 }).contentBuffer();
+      expect(buffer.length).toBe(8);
+    });
+  });
+
+  describe('Int32 vs Int64', () => {
+    const Int32Schema = schema({ value: { type: 'integer', format: 'int32' } });
+    const Int64Schema = schema({ value: { type: 'integer', format: 'int64' } });
+
+    it('int32 should use 4 bytes for content', () => {
+      const buffer = Int32Schema.write({ value: 12345 }).contentBuffer();
+      expect(buffer.length).toBe(4);
+    });
+
+    it('int64 should use 8 bytes for content', () => {
+      const buffer = Int64Schema.write({ value: 12345 }).contentBuffer();
+      expect(buffer.length).toBe(8);
     });
   });
 });

@@ -3,14 +3,6 @@
 /* Local variables ----------------------------------------------------------- */
 
 const intMap = [null, unsigned8, unsigned16, null, unsigned32];
-const abs = Math.abs;
-const pow = Math.pow;
-const ln2 = Math.LN2;
-const log = Math.log;
-const floor = Math.floor;
-const bias = pow(2, 52);
-const eIn = pow(2, -1022);
-const eOut = pow(2, 1022) * bias;
 
 /* Methods ------------------------------------------------------------------- */
 
@@ -76,63 +68,47 @@ function object(schema, val) {
 }
 
 /**
- * Credit to @feross' ieee754 module
+ * IEEE 754 single precision (32-bit float)
+ * Simplified implementation using JavaScript's Float32Array
+ * @private
+ */
+function float(val) {
+  // Use Float32Array to get proper IEEE 754 single precision encoding
+  const floatArray = new Float32Array(1);
+  const byteArray = new Uint8Array(floatArray.buffer);
+
+  floatArray[0] = val;
+
+  // Return bytes in big-endian order to match double implementation
+  return [byteArray[3], byteArray[2], byteArray[1], byteArray[0]];
+}
+
+/**
+ * IEEE 754 double precision (64-bit float)
+ * Simplified implementation using JavaScript's Float64Array
  * @private
  */
 function double(val) {
-  const buffer = [];
-  let e, m, c;
-  const eMax = 2047;
-  const eBias = 1023;
-  const rt = 0;
-  let i = 7;
-  const d = -1;
-  const s = val <= 0 ? 1 : 0;
-  val = abs(val);
-  e = floor(log(val) / ln2);
-  c = pow(2, -e);
-  if (val * c < 1) {
-    e--;
-    c *= 2;
-  }
+  // Use Float64Array to get proper IEEE 754 double precision encoding
+  const doubleArray = new Float64Array(1);
+  const byteArray = new Uint8Array(doubleArray.buffer);
 
-  if (e + eBias >= 1) val += rt / c;
-  else val += rt * eIn;
+  doubleArray[0] = val;
 
-  if (val * c >= 2) {
-    e++;
-    c /= 2;
-  }
+  // Return bytes in big-endian order
+  return [
+    byteArray[7], byteArray[6], byteArray[5], byteArray[4],
+    byteArray[3], byteArray[2], byteArray[1], byteArray[0]
+  ];
+}
 
-  if (e + eBias >= eMax) {
-    m = 0;
-    e = eMax;
-  }
-  else if (e + eBias >= 1) {
-    m = (val * c - 1) * bias;
-    e = e + eBias;
-  }
-  else {
-    m = val * eOut;
-    e = 0;
-  }
-
-  for (let a = 0; a < 6; a++) {
-    buffer[i] = m & 0xff;
-    i += d;
-    m /= 256;
-  }
-
-  e = (e << 4) | m;
-  for (let b = 0; b < 2; b++) {
-    buffer[i] = e & 0xff;
-    i += d;
-    e /= 256;
-  }
-
-  buffer[i - d] |= s * 128;
-
-  return buffer;
+/**
+ * 64-bit integer encoding (uses double for JavaScript compatibility)
+ * JavaScript's Number type can safely represent integers up to 2^53-1
+ * @private
+ */
+function int64(val) {
+  return double(val);
 }
 
 /** @private */
@@ -145,6 +121,8 @@ function getSize(count, byteLength) {
 export default {
   boolean,
   int32,
+  int64,
+  float,
   double,
   string: string.bind(null, unsigned16),
   char8,

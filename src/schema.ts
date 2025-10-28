@@ -17,11 +17,12 @@ import Converter from './converter';
 function resolveType(type, format) {
   if (type === 'integer') {
     const fmt = format || 'int32';
-    return fmt === 'int64' ? 'double' : 'int32';
+    return fmt === 'int64' ? 'int64' : 'int32';
   }
 
   if (type === 'number') {
-    return 'double'; // Both float and double use double (8 bytes)
+    const fmt = format || 'double';
+    return fmt === 'float' ? 'float' : 'double';
   }
 
   return type;
@@ -31,6 +32,8 @@ export default function Schema(schema, options = { keyOrder: false }) {
   const sizeRef = {
     boolean: 1,
     int32: 4,
+    int64: 8,
+    float: 4,
     double: 8,
     string: 2,
     char8: 1,
@@ -43,6 +46,8 @@ export default function Schema(schema, options = { keyOrder: false }) {
   const defaultSizes = {
     boolean: 1,
     int32: 4,
+    int64: 8,
+    float: 4,
     double: 8,
   };
 

@@ -73,26 +73,40 @@ function object(schema, bytes) {
 }
 
 /**
- * Credit to @feross' ieee754 module
+ * IEEE 754 single precision (32-bit float) decoder
+ * Simplified implementation using JavaScript's Float32Array
+ * @private
+ */
+function float(bytes) {
+  // Bytes come in big-endian order, convert to little-endian for typed array
+  const byteArray = new Uint8Array([bytes[3], bytes[2], bytes[1], bytes[0]]);
+  const floatArray = new Float32Array(byteArray.buffer);
+
+  return floatArray[0];
+}
+
+/**
+ * IEEE 754 double precision (64-bit float) decoder
+ * Simplified implementation using JavaScript's Float64Array
  * @private
  */
 function double(bytes) {
-  let s = bytes[0];
-  let e = (s & 127);
-  e = e * 256 + bytes[1];
-  let m = e & 15;
-  s >>= 7;
-  e >>= 4;
-  for (let im = 2; im <= 7; im++) {
-    m = m * 256 + bytes[im];
-  }
-  if (e === 0) e = -1022;
-  else if (e === 2047) return NaN;
-  else {
-    m += 4503599627370496;
-    e -= 1023;
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - 52);
+  // Bytes come in big-endian order, convert to little-endian for typed array
+  const byteArray = new Uint8Array([
+    bytes[7], bytes[6], bytes[5], bytes[4],
+    bytes[3], bytes[2], bytes[1], bytes[0]
+  ]);
+  const doubleArray = new Float64Array(byteArray.buffer);
+
+  return doubleArray[0];
+}
+
+/**
+ * 64-bit integer decoder (uses double for JavaScript compatibility)
+ * @private
+ */
+function int64(bytes) {
+  return double(bytes);
 }
 
 /* Exports ------------------------------------------------------------------- */
@@ -100,6 +114,8 @@ function double(bytes) {
 export default {
   boolean,
   int32,
+  int64,
+  float,
   double,
   string,
   char8,

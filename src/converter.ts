@@ -10,9 +10,21 @@ function int32(value) {
 }
 
 /** @private */
+function float(value) {
+  const ret = Number(value);
+  return (Number.isFinite(ret)) ? ret : 0;
+}
+
+/** @private */
 function double(value) {
   const ret = Number(value);
   return (Number.isFinite(ret)) ? ret : 0;
+}
+
+/** @private */
+function int64(value) {
+  const ret = Number(value);
+  return (Number.isFinite(ret)) ? Math.trunc(ret) : 0;
 }
 
 /** @private */
@@ -39,6 +51,8 @@ function array(value) {
 
 export default {
   int32,
+  int64,
+  float,
   double,
   string,
   char8: string,
