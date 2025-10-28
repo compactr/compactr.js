@@ -115,6 +115,164 @@ describe('Data integrity - simple', () => {
     });
   });
 
+  describe('UUID', () => {
+    const Schema = schema({ test: { type: 'string', format: 'uuid' } });
+
+    it('should preserve UUID value', () => {
+      const uuid = '550e8400-e29b-4d4e-a7d4-426614174000';
+      expect(Schema.read(Schema.write({ test: uuid }).buffer())).toEqual({ test: uuid });
+    });
+
+    it('should compress UUID to 16 bytes instead of 72', () => {
+      const uuid = '550e8400-e29b-4d4e-a7d4-426614174000';
+      const buffer = Schema.write({ test: uuid }).buffer();
+      // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
+      // Content: 16 bytes (UUID binary)
+      // Total: 19 bytes (vs 75 bytes for string encoding: 3 header + 72 content)
+      expect(buffer.length).toBe(19);
+    });
+
+    it('should handle uppercase UUIDs', () => {
+      const uuid = '550E8400-E29B-4D4E-A7D4-426614174000';
+      const result = Schema.read(Schema.write({ test: uuid }).buffer());
+      // UUID should be normalized to lowercase
+      expect(result.test).toBe('550e8400-e29b-4d4e-a7d4-426614174000');
+    });
+
+    it('should handle nil UUID', () => {
+      const uuid = '00000000-0000-0000-0000-000000000000';
+      expect(Schema.read(Schema.write({ test: uuid }).buffer())).toEqual({ test: uuid });
+    });
+  });
+
+  describe('IPv4', () => {
+    const Schema = schema({ test: { type: 'string', format: 'ipv4' } });
+
+    it('should preserve IPv4 value', () => {
+      const ip = '192.168.1.1';
+      expect(Schema.read(Schema.write({ test: ip }).buffer())).toEqual({ test: ip });
+    });
+
+    it('should compress IPv4 to 4 bytes instead of 30', () => {
+      const ip = '192.168.1.1';
+      const buffer = Schema.write({ test: ip }).buffer();
+      // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
+      // Content: 4 bytes (IPv4 binary)
+      // Total: 7 bytes (vs 33 bytes for string encoding)
+      expect(buffer.length).toBe(7);
+    });
+
+    it('should handle edge cases', () => {
+      expect(Schema.read(Schema.write({ test: '0.0.0.0' }).buffer())).toEqual({ test: '0.0.0.0' });
+      expect(Schema.read(Schema.write({ test: '255.255.255.255' }).buffer())).toEqual({ test: '255.255.255.255' });
+    });
+  });
+
+  describe('IPv6', () => {
+    const Schema = schema({ test: { type: 'string', format: 'ipv6' } });
+
+    it('should compress IPv6 value', () => {
+      const ip = '2001:0db8:85a3:0000:0000:8a2e:0370:7334';
+      expect(Schema.read(Schema.write({ test: ip }).buffer())).toEqual({ test: '2001:db8:85a3::8a2e:370:7334' });
+    });
+
+    it('should compress IPv6 to 16 bytes instead of 78', () => {
+      const ip = '2001:0db8:85a3:0000:0000:8a2e:0370:7334';
+      const buffer = Schema.write({ test: ip }).buffer();
+      // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
+      // Content: 16 bytes (IPv6 binary)
+      // Total: 19 bytes (vs 81 bytes for string encoding)
+      expect(buffer.length).toBe(19);
+    });
+
+    it('should handle compressed IPv6 notation', () => {
+      const ip = '2001:db8:85a3::8a2e:370:7334';
+      const result = Schema.read(Schema.write({ test: ip }).buffer());
+      // Should be decoded back with compression
+      expect(result.test).toBe(ip);
+    });
+
+    it('should handle loopback', () => {
+      const ip = '::1';
+      const result = Schema.read(Schema.write({ test: ip }).buffer());
+      expect(result.test).toBe('::1');
+    });
+
+    it('should handle all zeros', () => {
+      const ip = '::';
+      const result = Schema.read(Schema.write({ test: ip }).buffer());
+      expect(result.test).toBe('::');
+    });
+  });
+
+  describe('Date', () => {
+    const Schema = schema({ test: { type: 'string', format: 'date' } });
+
+    it('should preserve date value', () => {
+      const date = '2025-10-28';
+      expect(Schema.read(Schema.write({ test: date }).buffer())).toEqual({ test: date });
+    });
+
+    it('should compress date to 4 bytes instead of 20', () => {
+      const date = '2025-10-28';
+      const buffer = Schema.write({ test: date }).buffer();
+      // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
+      // Content: 4 bytes (days since epoch)
+      // Total: 7 bytes (vs 23 bytes for string encoding)
+      expect(buffer.length).toBe(7);
+    });
+
+    it('should handle epoch date', () => {
+      const date = '1970-01-01';
+      expect(Schema.read(Schema.write({ test: date }).buffer())).toEqual({ test: date });
+    });
+
+    it('should handle dates before epoch', () => {
+      const date = '1969-12-31';
+      expect(Schema.read(Schema.write({ test: date }).buffer())).toEqual({ test: date });
+    });
+
+    it('should handle far future dates', () => {
+      const date = '2099-12-31';
+      expect(Schema.read(Schema.write({ test: date }).buffer())).toEqual({ test: date });
+    });
+  });
+
+  describe('DateTime', () => {
+    const Schema = schema({ test: { type: 'string', format: 'date-time' } });
+
+    it('should preserve date-time value', () => {
+      const datetime = '2025-10-28T14:30:00.000Z';
+      expect(Schema.read(Schema.write({ test: datetime }).buffer())).toEqual({ test: datetime });
+    });
+
+    it('should compress date-time to 8 bytes instead of 40+', () => {
+      const datetime = '2025-10-28T14:30:00.000Z';
+      const buffer = Schema.write({ test: datetime }).buffer();
+      // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
+      // Content: 8 bytes (milliseconds since epoch)
+      // Total: 11 bytes (vs 43+ bytes for string encoding)
+      expect(buffer.length).toBe(11);
+    });
+
+    it('should handle epoch datetime', () => {
+      const datetime = '1970-01-01T00:00:00.000Z';
+      expect(Schema.read(Schema.write({ test: datetime }).buffer())).toEqual({ test: datetime });
+    });
+
+    it('should handle millisecond precision', () => {
+      const datetime = '2025-10-28T14:30:00.123Z';
+      expect(Schema.read(Schema.write({ test: datetime }).buffer())).toEqual({ test: datetime });
+    });
+
+    it('should normalize various ISO 8601 formats', () => {
+      // Input without milliseconds, output should have .000Z
+      const input = '2025-10-28T14:30:00Z';
+      const result = Schema.read(Schema.write({ test: input }).buffer());
+      expect(result.test).toBe('2025-10-28T14:30:00.000Z');
+    });
+  });
+
   describe('Array', () => {
     const Schema = schema({ test: { type: 'array', items: { type: 'string' } } });
 

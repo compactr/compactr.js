@@ -25,27 +25,45 @@ function resolveType(type, format) {
     return fmt === 'float' ? 'float' : 'double';
   }
 
+  if (type === 'string') {
+    if (format === 'uuid') return 'uuid';
+    if (format === 'ipv4') return 'ipv4';
+    if (format === 'ipv6') return 'ipv6';
+    if (format === 'date') return 'date';
+    if (format === 'date-time') return 'date-time';
+  }
+
   return type;
 }
 
 export default function Schema(schema, options = { keyOrder: false }) {
   const sizeRef = {
-    boolean: 1,
-    int32: 4,
-    int64: 8,
-    float: 4,
-    double: 8,
-    string: 2,
-    array: 2,
-    object: 1,
+    'boolean': 1,
+    'int32': 4,
+    'int64': 8,
+    'float': 4,
+    'double': 8,
+    'string': 2,
+    'uuid': 1,
+    'ipv4': 1,
+    'ipv6': 1,
+    'date': 1,
+    'date-time': 1,
+    'array': 2,
+    'object': 1,
   };
 
   const defaultSizes = {
-    boolean: 1,
-    int32: 4,
-    int64: 8,
-    float: 4,
-    double: 8,
+    'boolean': 1,
+    'int32': 4,
+    'int64': 8,
+    'float': 4,
+    'double': 8,
+    'uuid': 16,
+    'ipv4': 4,
+    'ipv6': 16,
+    'date': 4,
+    'date-time': 8,
   };
 
   const scope = {
