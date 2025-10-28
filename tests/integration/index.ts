@@ -345,3 +345,183 @@ describe('Format size differences', () => {
     });
   });
 });
+
+/* Nullable properties tests ------------------------------------------------- */
+
+describe('Nullable properties', () => {
+  describe('Nullable string', () => {
+    const Schema = schema({ test: { type: 'string', nullable: true } });
+
+    it('should preserve null value', () => {
+      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+    });
+
+    it('should preserve non-null string value', () => {
+      expect(Schema.read(Schema.write({ test: 'hello' }).buffer())).toEqual({ test: 'hello' });
+    });
+
+    it('should encode null with minimal bytes (header only)', () => {
+      const buffer = Schema.write({ test: null }).buffer();
+      const nonNullBuffer = Schema.write({ test: 'a' }).buffer();
+      expect(buffer.length).toBeLessThan(nonNullBuffer.length);
+    });
+  });
+
+  describe('Nullable number', () => {
+    const Schema = schema({ test: { type: 'number', format: 'double', nullable: true } });
+
+    it('should preserve null value', () => {
+      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+    });
+
+    it('should preserve non-null number value', () => {
+      expect(Schema.read(Schema.write({ test: 42.5 }).buffer())).toEqual({ test: 42.5 });
+    });
+  });
+
+  describe('Nullable integer', () => {
+    const Schema = schema({ test: { type: 'integer', format: 'int32', nullable: true } });
+
+    it('should preserve null value', () => {
+      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+    });
+
+    it('should preserve non-null integer value', () => {
+      expect(Schema.read(Schema.write({ test: 123 }).buffer())).toEqual({ test: 123 });
+    });
+  });
+
+  describe('Nullable boolean', () => {
+    const Schema = schema({ test: { type: 'boolean', nullable: true } });
+
+    it('should preserve null value', () => {
+      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+    });
+
+    it('should preserve false value (not confused with null)', () => {
+      expect(Schema.read(Schema.write({ test: false }).buffer())).toEqual({ test: false });
+    });
+
+    it('should preserve true value', () => {
+      expect(Schema.read(Schema.write({ test: true }).buffer())).toEqual({ test: true });
+    });
+  });
+
+  describe('Mixed nullable and non-nullable', () => {
+    const Schema = schema({
+      nullableField: { type: 'string', nullable: true },
+      regularField: { type: 'string' },
+      anotherNullable: { type: 'integer', format: 'int32', nullable: true },
+    });
+
+    it('should handle mix of null and non-null values', () => {
+      const data = { nullableField: null, regularField: 'hello', anotherNullable: 42 };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should skip non-nullable fields when null', () => {
+      const data = { nullableField: 'test', regularField: null, anotherNullable: null };
+      const result = Schema.read(Schema.write(data).buffer());
+      expect(result).toEqual({ nullableField: 'test', anotherNullable: null });
+      expect(result.regularField).toBeUndefined();
+    });
+
+    it('should preserve all null values in nullable fields', () => {
+      const data = { nullableField: null, regularField: 'value', anotherNullable: null };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Nullable object', () => {
+    const Schema = schema({
+      test: {
+        type: 'object',
+        nullable: true,
+        schema: { name: { type: 'string' } },
+      },
+    });
+
+    it('should preserve null value', () => {
+      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+    });
+
+    it('should preserve non-null object value', () => {
+      expect(Schema.read(Schema.write({ test: { name: 'John' } }).buffer())).toEqual({ test: { name: 'John' } });
+    });
+  });
+
+  describe('Nullable array', () => {
+    const Schema = schema({
+      test: {
+        type: 'array',
+        nullable: true,
+        items: { type: 'string' },
+      },
+    });
+
+    it('should preserve null value', () => {
+      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+    });
+
+    it('should preserve non-null array value', () => {
+      expect(Schema.read(Schema.write({ test: ['a', 'b', 'c'] }).buffer())).toEqual({ test: ['a', 'b', 'c'] });
+    });
+
+    it('should preserve empty array (different from null)', () => {
+      expect(Schema.read(Schema.write({ test: [] }).buffer())).toEqual({ test: [] });
+    });
+
+    it('empty array should have different encoding than null', () => {
+      const emptyArrayBuffer = Schema.write({ test: [] }).buffer();
+      const nullBuffer = Schema.write({ test: null }).buffer();
+      expect(emptyArrayBuffer).not.toEqual(nullBuffer);
+    });
+  });
+
+  describe('Empty vs null distinction', () => {
+    describe('Empty string vs null', () => {
+      const Schema = schema({ test: { type: 'string', nullable: true } });
+
+      it('should distinguish empty string from null', () => {
+        const emptyString = Schema.read(Schema.write({ test: '' }).buffer());
+        const nullValue = Schema.read(Schema.write({ test: null }).buffer());
+
+        expect(emptyString).toEqual({ test: '' });
+        expect(nullValue).toEqual({ test: null });
+        expect(emptyString.test).not.toBe(nullValue.test);
+      });
+
+      it('should have different byte encodings', () => {
+        const emptyStringBuffer = Schema.write({ test: '' }).buffer();
+        const nullBuffer = Schema.write({ test: null }).buffer();
+        expect(emptyStringBuffer).not.toEqual(nullBuffer);
+      });
+    });
+
+    describe('Zero vs null for numbers', () => {
+      const Schema = schema({ test: { type: 'number', format: 'double', nullable: true } });
+
+      it('should distinguish zero from null', () => {
+        const zero = Schema.read(Schema.write({ test: 0 }).buffer());
+        const nullValue = Schema.read(Schema.write({ test: null }).buffer());
+
+        expect(zero).toEqual({ test: 0 });
+        expect(nullValue).toEqual({ test: null });
+        expect(zero.test).not.toBe(nullValue.test);
+      });
+    });
+
+    describe('False vs null for booleans', () => {
+      const Schema = schema({ test: { type: 'boolean', nullable: true } });
+
+      it('should distinguish false from null', () => {
+        const falseValue = Schema.read(Schema.write({ test: false }).buffer());
+        const nullValue = Schema.read(Schema.write({ test: null }).buffer());
+
+        expect(falseValue).toEqual({ test: false });
+        expect(nullValue).toEqual({ test: null });
+        expect(falseValue.test).not.toBe(nullValue.test);
+      });
+    });
+  });
+});

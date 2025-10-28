@@ -1,5 +1,9 @@
 /** Data writer component */
 
+/* Requires ------------------------------------------------------------------ */
+
+import { NULL_INDICATOR, PRESENT_INDICATOR } from './encoder';
+
 /* Methods ------------------------------------------------------------------- */
 
 export default function Writer(scope) {
@@ -11,23 +15,42 @@ export default function Writer(scope) {
     scope.headerBytes[0] = keys.length;
     for (let i = 0; i < keys.length; i++) {
       let keyData = data[keys[i]];
+
+      // Handle nullable fields with null values
+      if (scope.indices[keys[i]].nullable && keyData === null) {
+        // Write header with NULL_INDICATOR (no size or content follows)
+        scope.headerBytes.push(scope.indices[keys[i]].index, NULL_INDICATOR);
+        continue;
+      }
+
+      // For nullable fields that are not null, add PRESENT_INDICATOR
+      if (scope.indices[keys[i]].nullable) {
+        scope.headerBytes.push(scope.indices[keys[i]].index, PRESENT_INDICATOR);
+      }
+      else {
+        scope.headerBytes.push(scope.indices[keys[i]].index);
+      }
+
       if (options !== undefined) {
         if (options.coerse === true) keyData = scope.indices[keys[i]].coerse(keyData);
         if (options.validate === true) scope.indices[keys[i]].validate(keyData);
       }
-      splitBytes(scope.indices[keys[i]].transformIn(keyData), keys[i]);
+
+      // Add size and content
+      const encoded = scope.indices[keys[i]].transformIn(keyData);
+      addSizeAndContent(encoded, keys[i]);
     }
 
     return this;
   }
 
   /** @private */
-  function splitBytes(encoded, key) {
+  function addSizeAndContent(encoded, key) {
     if (scope.indices[key].fixedSize !== null) {
-      scope.headerBytes.push(scope.indices[key].index, ...scope.indices[key].fixedSize);
+      scope.headerBytes.push(...scope.indices[key].fixedSize);
     }
     else {
-      scope.headerBytes.push(scope.indices[key].index, ...scope.indices[key].getSize(encoded.length));
+      scope.headerBytes.push(...scope.indices[key].getSize(encoded.length));
       if (scope.indices[key].size !== encoded.length && scope.indices[key].size !== null) {
         const fixedSize = new Array(scope.indices[key].size).fill(0);
         const smallestSize = Math.min(encoded.length, fixedSize.length);
@@ -55,7 +78,18 @@ export default function Writer(scope) {
   function filterKeys(data) {
     const res = [];
     for (const key in data) {
-      if (scope.items.indexOf(key) !== -1 && data[key] !== null && data[key] !== undefined) res.push(key);
+      if (scope.items.indexOf(key) === -1) continue;
+
+      // Include nullable fields even when null
+      if (scope.indices[key].nullable && data[key] === null) {
+        res.push(key);
+        continue;
+      }
+
+      // Skip non-nullable fields that are null or undefined
+      if (data[key] !== null && data[key] !== undefined) {
+        res.push(key);
+      }
     }
     return res;
   }

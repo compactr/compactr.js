@@ -4,6 +4,10 @@
 
 const fromChar = String.fromCharCode;
 
+// Presence indicators for nullable fields
+export const NULL_INDICATOR = 0x00; // Field is null
+export const PRESENT_INDICATOR = 0x01; // Field is present (not null)
+
 /* Methods ------------------------------------------------------------------- */
 
 /** @private */

@@ -80,6 +80,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
           name: key,
           index,
           type: internalType,
+          nullable: schema[key].nullable || false,
           transformIn: (childSchema !== undefined) ? Encoder[internalType].bind(null, childSchema) : Encoder[internalType],
           transformOut: (childSchema !== undefined) ? Decoder[internalType].bind(null, childSchema) : Decoder[internalType],
           coerse: Converter[internalType],
