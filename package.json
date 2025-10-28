@@ -1,13 +1,19 @@
 {
   "name": "compactr",
-  "version": "2.4.2",
+  "version": "3.0.0",
   "description": "Schema based serialization made easy",
-  "main": "index.js",
+  "main": "dist/compactr.js",
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "mocha tests/index.js --exit",
-    "bench": "node benchmarks/array.js && node benchmarks/boolean.js && node benchmarks/double.js && node benchmarks/integer.js && node benchmarks/object.js && node benchmarks/string.js"
+    "test": "jest ./tests",
+    "build": "npm run clean && rollup -c rollup.config.mjs",
+    "clean": "rm -rf ./dist/*",
+    "bench": "node ./benchmarks/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "funding": {
     "type": "Github",
@@ -18,21 +24,23 @@
     "url": "git+https://github.com/compactr/compactr-js.git"
   },
   "keywords": [
-    "compactr",
-    "compact",
-    "encode",
-    "encoding",
+    "serialize",
     "serializing",
     "buffer",
     "byte",
-    "decode",
-    "decoding",
     "compress",
-    "serialize"
+    "protobuff",
+    "snappy",
+    "msgpack"
   ],
+  "files": [
+    "dist",
+    "types.d.ts"
+  ],
+  "typings": "./types.d.ts",
   "husky": {
     "hooks": {
-      "pre-commit": "yarn lint"
+      "pre-commit": "npm run lint"
     }
   },
   "author": "frederic charette <fredericcharette@gmail.com>",
@@ -41,12 +49,43 @@
     "url": "https://github.com/compactr/compactr.js/issues"
   },
   "homepage": "https://github.com/compactr/compactr.js#readme",
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.ts",
+      "**/tests/**/*.js"
+    ],
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "diagnostics": false
+        }
+      ],
+      "^.+\\.jsx?$": [
+        "ts-jest",
+        {
+          "diagnostics": false
+        }
+      ]
+    }
+  },
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-sucrase": "^5.0.0",
+    "@stylistic/eslint-plugin": "^5.5.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.9.0",
     "benchmark": "^2.1.4",
-    "chai": "^4.2.0",
-    "eslint": "^6.7.1",
-    "husky": "^3.1.0",
-    "mocha": "^6.2.0",
-    "protobufjs": "^6.8.8"
+    "eslint": "^9.38.0",
+    "eslint-plugin-jest": "^29.0.0",
+    "husky": "^9.1.0",
+    "jest": "^30.2.0",
+    "protobufjs": "^7.5.0",
+    "rollup": "^4.52.0",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.46.0"
   }
 }

@@ -2,11 +2,11 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const Encoder = require('./encoder');
-const Decoder = require('./decoder');
-const Reader = require('./reader');
-const Writer = require('./writer');
-const Converter = require('./converter');
+import Encoder from './encoder';
+import Decoder from './decoder';
+import Reader from './reader';
+import Writer from './writer';
+import Converter from './converter';
 
 /* Methods -------------------------------------------------------------------*/
 
@@ -15,7 +15,7 @@ const Converter = require('./converter');
  * @param {*} schema The schema to use
  * @param {Object (keyOrder: {boolean})} options The options for the schema
  */
-function Schema(schema, options = { keyOrder: false }) {
+export default function Schema(schema, options = { keyOrder: false }) {
   const sizeRef = {
     boolean: 1,
     number: 8,
@@ -128,7 +128,3 @@ function Schema(schema, options = { keyOrder: false }) {
 
   return Object.assign({}, writer, reader);
 }
-
-/* Exports -------------------------------------------------------------------*/
-
-module.exports = Schema;

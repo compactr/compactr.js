@@ -2,11 +2,11 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const Decoder = require('./decoder');
+import Decoder from './decoder';
 
 /* Methods -------------------------------------------------------------------*/
 
-function Reader(scope) {
+export default function Reader(scope) {
 
   /**
    * Decodes an encoded buffer. Requires header bytes.
@@ -75,7 +75,3 @@ function Reader(scope) {
 
   return { read, readHeader, readContent };
 }
-
-/* Exports -------------------------------------------------------------------*/
-
-module.exports = Reader;

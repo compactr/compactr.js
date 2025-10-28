@@ -45,7 +45,7 @@ function array(value) {
 
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = {
+export default {
   int8,
   int16,
   int32,
@@ -58,4 +58,4 @@ module.exports = {
   boolean,
   array,
   object,
-};
+}

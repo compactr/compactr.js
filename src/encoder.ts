@@ -151,7 +151,7 @@ function getSize(count, byteLength) {
 
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = {
+export default {
   boolean,
   number: double,
   int8,

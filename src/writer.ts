@@ -2,7 +2,7 @@
 
 /* Methods -------------------------------------------------------------------*/
 
-function Writer(scope) {
+export default function Writer(scope) {
 
   /**
    * Start writing some data against a schema
@@ -104,7 +104,3 @@ function Writer(scope) {
 
   return { write, headerBuffer, contentBuffer, buffer, typedArray, sizes };
 }
-
-/* Exports -------------------------------------------------------------------*/
-
-module.exports = Writer;

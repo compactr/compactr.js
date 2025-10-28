@@ -108,7 +108,7 @@ function double(bytes) {
 
 /* Exports -------------------------------------------------------------------*/
 
-module.exports = { 
+export default { 
   boolean,
   number: double,
   int8,
@@ -125,4 +125,4 @@ module.exports = {
   unsigned8: uint8,
   unsigned16: uint16,
   unsigned32: int32,
-};
+}
