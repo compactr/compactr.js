@@ -20,17 +20,6 @@ function boolean(val) {
 }
 
 /** @private */
-function int8(val) {
-  return [(val < 0) ? 256 + val : val];
-}
-
-/** @private */
-function int16(val) {
-  if (val < 0) val = 0xffff + val + 1;
-  return [val >> 8, val & 0xff];
-}
-
-/** @private */
 function int32(val) {
   if (val < 0) val = 0xffffffff + val + 1;
   return [val >> 24, val >> 16, val >> 8, val & 0xff];
@@ -155,9 +144,6 @@ function getSize(count, byteLength) {
 
 export default {
   boolean,
-  number: double,
-  int8,
-  int16,
   int32,
   double,
   string: string.bind(null, unsigned16),
@@ -167,7 +153,4 @@ export default {
   array,
   object,
   getSize,
-  unsigned8,
-  unsigned16,
-  unsigned32,
 };

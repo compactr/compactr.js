@@ -3,14 +3,6 @@
 /* Methods ------------------------------------------------------------------- */
 
 /** @private */
-function int8(value) {
-  return Number(value) & 0xff;
-}
-
-/** @private */
-function int16(value) {
-  return Number(value) & 0xffff;
-}
 
 /** @private */
 function int32(value) {
@@ -46,10 +38,7 @@ function array(value) {
 /* Exports ------------------------------------------------------------------- */
 
 export default {
-  int8,
-  int16,
   int32,
-  number: double,
   double,
   string,
   char8: string,

@@ -26,7 +26,7 @@ describe('Data integrity - simple', () => {
   });
 
   describe('Number', () => {
-    const Schema = schema({ test: { type: 'number' } });
+    const Schema = schema({ test: { type: 'number', format: 'double' } });
 
     it('should preserve number value and type', () => {
       expect(Schema.read(Schema.write({ test: 23.23 }).buffer())).toEqual({ test: 23.23 });
@@ -34,6 +34,18 @@ describe('Data integrity - simple', () => {
 
     it('should preserve number value and type for negative values', () => {
       expect(Schema.read(Schema.write({ test: -23.23 }).buffer())).toEqual({ test: -23.23 });
+    });
+  });
+
+  describe('Integer', () => {
+    const Schema = schema({ test: { type: 'integer', format: 'int32' } });
+
+    it('should preserve integer value and type', () => {
+      expect(Schema.read(Schema.write({ test: 123 }).buffer())).toEqual({ test: 123 });
+    });
+
+    it('should preserve integer value and type for negative values', () => {
+      expect(Schema.read(Schema.write({ test: -456 }).buffer())).toEqual({ test: -456 });
     });
   });
 
@@ -54,7 +66,7 @@ describe('Data integrity - simple', () => {
   });
 
   describe('Schema', () => {
-    const Schema = schema({ test: { type: 'object', schema: { test: { type: 'number' } } } });
+    const Schema = schema({ test: { type: 'object', schema: { test: { type: 'number', format: 'double' } } } });
 
     it('should preserve object values and types', () => {
       expect(Schema.read(Schema.write({ test: { test: 23.23 } }).buffer())).toEqual({ test: { test: 23.23 } });
@@ -76,7 +88,7 @@ describe('Data integrity - multi simple', () => {
   });
 
   describe('Numbers', () => {
-    const Schema = schema({ test: { type: 'number' }, test2: { type: 'number' } });
+    const Schema = schema({ test: { type: 'number', format: 'double' }, test2: { type: 'number', format: 'double' } });
 
     it('should preserve number value and type', () => {
       expect(Schema.read(Schema.write({ test: 23.23, test2: -97.7 }).buffer())).toEqual({ test: 23.23, test2: -97.7 });
@@ -100,7 +112,7 @@ describe('Data integrity - multi simple', () => {
   });
 
   describe('Schemas', () => {
-    const Schema = schema({ test: { type: 'object', schema: { test: { type: 'number' } } }, test2: { type: 'object', schema: { test: { type: 'number' } } } });
+    const Schema = schema({ test: { type: 'object', schema: { test: { type: 'number', format: 'double' } } }, test2: { type: 'object', schema: { test: { type: 'number', format: 'double' } } } });
 
     it('should preserve object values and types', () => {
       expect(Schema.read(Schema.write({ test: { test: 23.23 }, test2: { test: -97.7 } }).buffer())).toEqual({ test: { test: 23.23 }, test2: { test: -97.7 } });
@@ -112,7 +124,7 @@ describe('Data integrity - multi mixed', () => {
   describe('Boolean + number + string + array + object', () => {
     const Schema = schema({
       bool: { type: 'boolean' },
-      num: { type: 'number' },
+      num: { type: 'number', format: 'double' },
       str: { type: 'string' },
       arr: { type: 'array', items: { type: 'string' } },
       obj: { type: 'object', schema: { sub: { type: 'string' } } },
@@ -144,7 +156,7 @@ describe('Data integrity - partial - simple', () => {
   });
 
   describe('Number', () => {
-    const Schema = schema({ test: { type: 'number' } });
+    const Schema = schema({ test: { type: 'number', format: 'double' } });
 
     it('should preserve number value and type', () => {
       expect(Schema.readContent(Schema.write({ test: 23.23 }).contentBuffer())).toEqual({ test: 23.23 });
@@ -172,7 +184,7 @@ describe('Data integrity - partial - simple', () => {
   });
 
   describe('Schema', () => {
-    const Schema = schema({ test: { type: 'object', size: 20, schema: { test: { type: 'number' } } } });
+    const Schema = schema({ test: { type: 'object', size: 20, schema: { test: { type: 'number', format: 'double' } } } });
 
     it('should preserve object values and types', () => {
       expect(Schema.readContent(Schema.write({ test: { test: 23.23 } }).contentBuffer())).toEqual({ test: { test: 23.23 } });
@@ -194,7 +206,7 @@ describe('Data integrity - partial - multi simple', () => {
   });
 
   describe('Numbers', () => {
-    const Schema = schema({ test: { type: 'number' }, test2: { type: 'number' } });
+    const Schema = schema({ test: { type: 'number', format: 'double' }, test2: { type: 'number', format: 'double' } });
 
     it('should preserve number value and type', () => {
       expect(Schema.readContent(Schema.write({ test: 23.23, test2: -97.7 }).contentBuffer())).toEqual({ test: 23.23, test2: -97.7 });
@@ -218,7 +230,7 @@ describe('Data integrity - partial - multi simple', () => {
   });
 
   describe('Schemas', () => {
-    const Schema = schema({ test: { type: 'object', size: 11, schema: { test: { type: 'number' } } }, test2: { type: 'object', size: 11, schema: { test: { type: 'number' } } } });
+    const Schema = schema({ test: { type: 'object', size: 11, schema: { test: { type: 'number', format: 'double' } } }, test2: { type: 'object', size: 11, schema: { test: { type: 'number', format: 'double' } } } });
 
     it('should preserve object values and types', () => {
       expect(Schema.readContent(Schema.write({ test: { test: 23.23 }, test2: { test: -97.7 } }).contentBuffer())).toEqual({ test: { test: 23.23 }, test2: { test: -97.7 } });
@@ -230,7 +242,7 @@ describe('Data integrity - partial - multi mixed', () => {
   describe('Boolean + number + string + array + object', () => {
     const Schema = schema({
       bool: { type: 'boolean' },
-      num: { type: 'number' },
+      num: { type: 'number', format: 'double' },
       str: { type: 'string', size: 22 },
       arr: { type: 'array', items: { type: 'string' }, size: 9 },
       obj: { type: 'object', size: 9, schema: { sub: { type: 'string' } } },

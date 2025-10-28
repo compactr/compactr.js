@@ -56,12 +56,14 @@ declare module 'compactr' {
   }
 
   export interface SchemaFieldDefinition {
-    type: 'boolean' | 'number' | 'int8' | 'int16' | 'int32' | 'double' | 'string' | 'char8' | 'char16' | 'char32' | 'array' | 'object' | 'unsigned' | 'unsigned8' | 'unsigned16' | 'unsigned32'
+    type: 'boolean' | 'integer' | 'number' | 'string' | 'char8' | 'char16' | 'char32' | 'array' | 'object'
+    format?: 'int32' | 'int64' | 'float' | 'double'
     count?: number
     size?: number
     schema?: SchemaDefinition
     items?: {
       type: string
+      format?: string
       count?: number
       schema?: SchemaDefinition
     }

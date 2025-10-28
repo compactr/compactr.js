@@ -10,12 +10,26 @@ import Converter from './converter';
 
 /* Methods ------------------------------------------------------------------- */
 
+/**
+ * Resolves the internal type based on OpenAPI type and format
+ * @private
+ */
+function resolveType(type, format) {
+  if (type === 'integer') {
+    const fmt = format || 'int32';
+    return fmt === 'int64' ? 'double' : 'int32';
+  }
+
+  if (type === 'number') {
+    return 'double'; // Both float and double use double (8 bytes)
+  }
+
+  return type;
+}
+
 export default function Schema(schema, options = { keyOrder: false }) {
   const sizeRef = {
     boolean: 1,
-    number: 8,
-    int8: 1,
-    int16: 2,
     int32: 4,
     double: 8,
     string: 2,
@@ -24,23 +38,12 @@ export default function Schema(schema, options = { keyOrder: false }) {
     char32: 4,
     array: 2,
     object: 1,
-    unsigned: 8,
-    unsigned8: 1,
-    unsigned16: 2,
-    unsigned32: 4,
   };
 
   const defaultSizes = {
     boolean: 1,
-    number: 8,
-    int8: 1,
-    int16: 2,
     int32: 4,
     double: 8,
-    unsigned: 8,
-    unsigned8: 1,
-    unsigned16: 2,
-    unsigned32: 4,
   };
 
   const scope = {
@@ -65,20 +68,22 @@ export default function Schema(schema, options = { keyOrder: false }) {
     Object.keys(schema)
       .sort()
       .forEach((key, index) => {
-        const keyType = schema[key].type;
+        const fieldType = schema[key].type;
+        const fieldFormat = schema[key].format;
+        const internalType = resolveType(fieldType, fieldFormat);
         const count = schema[key].count || 1;
         const childSchema = computeNested(schema, key);
 
         ret[key] = {
           name: key,
           index,
-          type: keyType,
-          transformIn: (childSchema !== undefined) ? Encoder[keyType].bind(null, childSchema) : Encoder[keyType],
-          transformOut: (childSchema !== undefined) ? Decoder[keyType].bind(null, childSchema) : Decoder[keyType],
-          coerse: Converter[keyType],
+          type: internalType,
+          transformIn: (childSchema !== undefined) ? Encoder[internalType].bind(null, childSchema) : Encoder[internalType],
+          transformOut: (childSchema !== undefined) ? Decoder[internalType].bind(null, childSchema) : Decoder[internalType],
+          coerse: Converter[internalType],
           getSize: Encoder.getSize.bind(null, count),
-          fixedSize: (defaultSizes[keyType] && Encoder.getSize(count, defaultSizes[keyType])) || null,
-          size: schema[key].size || defaultSizes[keyType] || null,
+          fixedSize: (defaultSizes[internalType] && Encoder.getSize(count, defaultSizes[internalType])) || null,
+          size: schema[key].size || defaultSizes[internalType] || null,
           count,
           nested: childSchema,
         };
@@ -108,12 +113,15 @@ export default function Schema(schema, options = { keyOrder: false }) {
       if (isObject === true) childSchema = Schema(schema[key].schema, options);
       if (isArray === true) {
         const itemChildSchema = computeNested(schema[key], 'items');
+        const itemType = schema[key].items.type;
+        const itemFormat = schema[key].items.format;
+        const internalItemType = resolveType(itemType, itemFormat);
 
         childSchema = {
           count: schema[key].items.count || 1,
           getSize: Encoder.getSize.bind(null, schema[key].items.count || 1),
-          transformIn: (itemChildSchema !== undefined) ? Encoder[schema[key].items.type].bind(null, itemChildSchema) : Encoder[schema[key].items.type],
-          transformOut: (itemChildSchema !== undefined) ? Decoder[schema[key].items.type].bind(null, itemChildSchema) : Decoder[schema[key].items.type],
+          transformIn: (itemChildSchema !== undefined) ? Encoder[internalItemType].bind(null, itemChildSchema) : Encoder[internalItemType],
+          transformOut: (itemChildSchema !== undefined) ? Decoder[internalItemType].bind(null, itemChildSchema) : Decoder[internalItemType],
         };
       }
     }

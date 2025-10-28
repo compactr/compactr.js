@@ -12,17 +12,6 @@ function boolean(bytes) {
 }
 
 /** @private */
-function int8(bytes) {
-  return (!(bytes[0] & 0x80)) ? bytes[0] : ((0xff - bytes[0] + 1) * -1);
-}
-
-/** @private */
-function int16(bytes) {
-  const val = (bytes[0] << 8) | bytes[1];
-  return (val & 0x8000) ? val | 0xFFFF0000 : val;
-}
-
-/** @private */
 function int32(bytes) {
   return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | (bytes[3]);
 }
@@ -110,9 +99,6 @@ function double(bytes) {
 
 export default {
   boolean,
-  number: double,
-  int8,
-  int16,
   int32,
   double,
   string,
@@ -122,7 +108,4 @@ export default {
   array,
   object,
   unsigned,
-  unsigned8: uint8,
-  unsigned16: uint16,
-  unsigned32: int32,
 };
