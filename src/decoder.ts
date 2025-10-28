@@ -1,10 +1,10 @@
 /** Decoding utilities */
 
-/* Local variables -----------------------------------------------------------*/
+/* Local variables ----------------------------------------------------------- */
 
 const fromChar = String.fromCharCode;
 
-/* Methods -------------------------------------------------------------------*/
+/* Methods ------------------------------------------------------------------- */
 
 /** @private */
 function boolean(bytes) {
@@ -13,7 +13,7 @@ function boolean(bytes) {
 
 /** @private */
 function int8(bytes) {
-  return (!(bytes[0] & 0x80))?bytes[0]:((0xff - bytes[0] + 1) * -1);
+  return (!(bytes[0] & 0x80)) ? bytes[0] : ((0xff - bytes[0] + 1) * -1);
 }
 
 /** @private */
@@ -24,7 +24,7 @@ function int16(bytes) {
 
 /** @private */
 function int32(bytes) {
-  return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | (bytes[3])
+  return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | (bytes[3]);
 }
 
 function uint8(bytes) {
@@ -44,7 +44,7 @@ function unsigned(bytes) {
 
 /** @private */
 function string(bytes) {
-  let res = [];
+  const res = [];
   for (let i = 0; i < bytes.length; i += 2) {
     res.push(unsigned([bytes[i], bytes[i + 1]]));
   }
@@ -58,7 +58,7 @@ function char8(bytes) {
 
 /** @private */
 function char32(bytes) {
-  let res = [];
+  const res = [];
   for (let i = 0; i < bytes.length; i += 4) {
     res.push(int32([bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]]));
   }
@@ -92,7 +92,7 @@ function double(bytes) {
   let e = (s & 127);
   e = e * 256 + bytes[1];
   let m = e & 15;
-  s >>= 7;    
+  s >>= 7;
   e >>= 4;
   for (let im = 2; im <= 7; im++) {
     m = m * 256 + bytes[im];
@@ -106,9 +106,9 @@ function double(bytes) {
   return (s ? -1 : 1) * m * Math.pow(2, e - 52);
 }
 
-/* Exports -------------------------------------------------------------------*/
+/* Exports ------------------------------------------------------------------- */
 
-export default { 
+export default {
   boolean,
   number: double,
   int8,
@@ -119,10 +119,10 @@ export default {
   char8,
   char16: string,
   char32,
-  array, 
+  array,
   object,
   unsigned,
   unsigned8: uint8,
   unsigned16: uint16,
   unsigned32: int32,
-}
+};

@@ -4,13 +4,13 @@
 
 /* Requires ------------------------------------------------------------------ */
 
-import Compactr from '../../src';
+import { schema } from '../../src';
 
 /* Tests --------------------------------------------------------------------- */
 
 describe('Data integrity - simple', () => {
   describe('Boolean', () => {
-    const Schema = Compactr.schema({ test: { type: 'boolean' } });
+    const Schema = schema({ test: { type: 'boolean' } });
 
     it('should preserve boolean value and type - true', () => {
       expect(Schema.read(Schema.write({ test: true }).buffer())).toEqual({ test: true });
@@ -26,7 +26,7 @@ describe('Data integrity - simple', () => {
   });
 
   describe('Number', () => {
-    const Schema = Compactr.schema({ test: { type: 'number' } });
+    const Schema = schema({ test: { type: 'number' } });
 
     it('should preserve number value and type', () => {
       expect(Schema.read(Schema.write({ test: 23.23 }).buffer())).toEqual({ test: 23.23 });
@@ -38,7 +38,7 @@ describe('Data integrity - simple', () => {
   });
 
   describe('String', () => {
-    const Schema = Compactr.schema({ test: { type: 'string' } });
+    const Schema = schema({ test: { type: 'string' } });
 
     it('should preserve string value and type', () => {
       expect(Schema.read(Schema.write({ test: 'hello world' }).buffer())).toEqual({ test: 'hello world' });
@@ -46,7 +46,7 @@ describe('Data integrity - simple', () => {
   });
 
   describe('Array', () => {
-    const Schema = Compactr.schema({ test: { type: 'array', items: { type: 'string' } } });
+    const Schema = schema({ test: { type: 'array', items: { type: 'string' } } });
 
     it('should preserve array values and types', () => {
       expect(Schema.read(Schema.write({ test: ['a', 'b', 'c'] }).buffer())).toEqual({ test: ['a', 'b', 'c'] });
@@ -54,7 +54,7 @@ describe('Data integrity - simple', () => {
   });
 
   describe('Schema', () => {
-    const Schema = Compactr.schema({ test: { type: 'object', schema: { test: { type: 'number' } } } });
+    const Schema = schema({ test: { type: 'object', schema: { test: { type: 'number' } } } });
 
     it('should preserve object values and types', () => {
       expect(Schema.read(Schema.write({ test: { test: 23.23 } }).buffer())).toEqual({ test: { test: 23.23 } });
@@ -64,7 +64,7 @@ describe('Data integrity - simple', () => {
 
 describe('Data integrity - multi simple', () => {
   describe('Booleans', () => {
-    const Schema = Compactr.schema({ test: { type: 'boolean' }, test2: { type: 'boolean' } });
+    const Schema = schema({ test: { type: 'boolean' }, test2: { type: 'boolean' } });
 
     it('should preserve boolean value and type - false', () => {
       expect(Schema.read(Schema.write({ test: false, test2: true }).buffer())).toEqual({ test: false, test2: true });
@@ -76,7 +76,7 @@ describe('Data integrity - multi simple', () => {
   });
 
   describe('Numbers', () => {
-    const Schema = Compactr.schema({ test: { type: 'number' }, test2: { type: 'number' } });
+    const Schema = schema({ test: { type: 'number' }, test2: { type: 'number' } });
 
     it('should preserve number value and type', () => {
       expect(Schema.read(Schema.write({ test: 23.23, test2: -97.7 }).buffer())).toEqual({ test: 23.23, test2: -97.7 });
@@ -84,7 +84,7 @@ describe('Data integrity - multi simple', () => {
   });
 
   describe('Strings', () => {
-    const Schema = Compactr.schema({ test: { type: 'string' }, test2: { type: 'string' } });
+    const Schema = schema({ test: { type: 'string' }, test2: { type: 'string' } });
 
     it('should preserve string value and type', () => {
       expect(Schema.read(Schema.write({ test: 'hello world', test2: 'écho' }).buffer())).toEqual({ test: 'hello world', test2: 'écho' });
@@ -92,7 +92,7 @@ describe('Data integrity - multi simple', () => {
   });
 
   describe('Arrays', () => {
-    const Schema = Compactr.schema({ test: { type: 'array', items: { type: 'string' } }, test2: { type: 'array', items: { type: 'string' } } });
+    const Schema = schema({ test: { type: 'array', items: { type: 'string' } }, test2: { type: 'array', items: { type: 'string' } } });
 
     it('should preserve array values and types', () => {
       expect(Schema.read(Schema.write({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] }).buffer())).toEqual({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] });
@@ -100,7 +100,7 @@ describe('Data integrity - multi simple', () => {
   });
 
   describe('Schemas', () => {
-    const Schema = Compactr.schema({ test: { type: 'object', schema: { test: { type: 'number' } } }, test2: { type: 'object', schema: { test: { type: 'number' } } } });
+    const Schema = schema({ test: { type: 'object', schema: { test: { type: 'number' } } }, test2: { type: 'object', schema: { test: { type: 'number' } } } });
 
     it('should preserve object values and types', () => {
       expect(Schema.read(Schema.write({ test: { test: 23.23 }, test2: { test: -97.7 } }).buffer())).toEqual({ test: { test: 23.23 }, test2: { test: -97.7 } });
@@ -110,7 +110,7 @@ describe('Data integrity - multi simple', () => {
 
 describe('Data integrity - multi mixed', () => {
   describe('Boolean + number + string + array + object', () => {
-    const Schema = Compactr.schema({
+    const Schema = schema({
       bool: { type: 'boolean' },
       num: { type: 'number' },
       str: { type: 'string' },
@@ -128,7 +128,7 @@ describe('Data integrity - multi mixed', () => {
 
 describe('Data integrity - partial - simple', () => {
   describe('Boolean', () => {
-    const Schema = Compactr.schema({ test: { type: 'boolean' } });
+    const Schema = schema({ test: { type: 'boolean' } });
 
     it('should preserve boolean value and type - true', () => {
       expect(Schema.readContent(Schema.write({ test: true }).contentBuffer())).toEqual({ test: true });
@@ -144,7 +144,7 @@ describe('Data integrity - partial - simple', () => {
   });
 
   describe('Number', () => {
-    const Schema = Compactr.schema({ test: { type: 'number' } });
+    const Schema = schema({ test: { type: 'number' } });
 
     it('should preserve number value and type', () => {
       expect(Schema.readContent(Schema.write({ test: 23.23 }).contentBuffer())).toEqual({ test: 23.23 });
@@ -156,7 +156,7 @@ describe('Data integrity - partial - simple', () => {
   });
 
   describe('String', () => {
-    const Schema = Compactr.schema({ test: { type: 'string', size: 22 } });
+    const Schema = schema({ test: { type: 'string', size: 22 } });
 
     it('should preserve string value and type', () => {
       expect(Schema.readContent(Schema.write({ test: 'hello world' }).contentBuffer())).toEqual({ test: 'hello world' });
@@ -164,7 +164,7 @@ describe('Data integrity - partial - simple', () => {
   });
 
   describe('Array', () => {
-    const Schema = Compactr.schema({ test: { type: 'array', size: 12, items: { type: 'string' } } });
+    const Schema = schema({ test: { type: 'array', size: 12, items: { type: 'string' } } });
 
     it('should preserve array values and types', () => {
       expect(Schema.readContent(Schema.write({ test: ['a', 'b', 'c'] }).contentBuffer())).toEqual({ test: ['a', 'b', 'c', '', '', ''] });
@@ -172,7 +172,7 @@ describe('Data integrity - partial - simple', () => {
   });
 
   describe('Schema', () => {
-    const Schema = Compactr.schema({ test: { type: 'object', size: 20, schema: { test: { type: 'number' } } } });
+    const Schema = schema({ test: { type: 'object', size: 20, schema: { test: { type: 'number' } } } });
 
     it('should preserve object values and types', () => {
       expect(Schema.readContent(Schema.write({ test: { test: 23.23 } }).contentBuffer())).toEqual({ test: { test: 23.23 } });
@@ -182,7 +182,7 @@ describe('Data integrity - partial - simple', () => {
 
 describe('Data integrity - partial - multi simple', () => {
   describe('Booleans', () => {
-    const Schema = Compactr.schema({ test: { type: 'boolean' }, test2: { type: 'boolean' } });
+    const Schema = schema({ test: { type: 'boolean' }, test2: { type: 'boolean' } });
 
     it('should preserve boolean value and type - false', () => {
       expect(Schema.readContent(Schema.write({ test: false, test2: true }).contentBuffer())).toEqual({ test: false, test2: true });
@@ -194,7 +194,7 @@ describe('Data integrity - partial - multi simple', () => {
   });
 
   describe('Numbers', () => {
-    const Schema = Compactr.schema({ test: { type: 'number' }, test2: { type: 'number' } });
+    const Schema = schema({ test: { type: 'number' }, test2: { type: 'number' } });
 
     it('should preserve number value and type', () => {
       expect(Schema.readContent(Schema.write({ test: 23.23, test2: -97.7 }).contentBuffer())).toEqual({ test: 23.23, test2: -97.7 });
@@ -202,7 +202,7 @@ describe('Data integrity - partial - multi simple', () => {
   });
 
   describe('Strings', () => {
-    const Schema = Compactr.schema({ test: { type: 'string', size: 22 }, test2: { type: 'string', size: 8 } });
+    const Schema = schema({ test: { type: 'string', size: 22 }, test2: { type: 'string', size: 8 } });
 
     it('should preserve string value and type', () => {
       expect(Schema.readContent(Schema.write({ test: 'hello world', test2: 'écho' }).contentBuffer())).toEqual({ test: 'hello world', test2: 'écho' });
@@ -210,7 +210,7 @@ describe('Data integrity - partial - multi simple', () => {
   });
 
   describe('Arrays', () => {
-    const Schema = Compactr.schema({ test: { type: 'array', size: 9, items: { type: 'string' } }, test2: { type: 'array', size: 9, items: { type: 'string' } } });
+    const Schema = schema({ test: { type: 'array', size: 9, items: { type: 'string' } }, test2: { type: 'array', size: 9, items: { type: 'string' } } });
 
     it('should preserve array values and types', () => {
       expect(Schema.readContent(Schema.write({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] }).contentBuffer())).toEqual({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] });
@@ -218,7 +218,7 @@ describe('Data integrity - partial - multi simple', () => {
   });
 
   describe('Schemas', () => {
-    const Schema = Compactr.schema({ test: { type: 'object', size: 11, schema: { test: { type: 'number' } } }, test2: { type: 'object', size: 11, schema: { test: { type: 'number' } } } });
+    const Schema = schema({ test: { type: 'object', size: 11, schema: { test: { type: 'number' } } }, test2: { type: 'object', size: 11, schema: { test: { type: 'number' } } } });
 
     it('should preserve object values and types', () => {
       expect(Schema.readContent(Schema.write({ test: { test: 23.23 }, test2: { test: -97.7 } }).contentBuffer())).toEqual({ test: { test: 23.23 }, test2: { test: -97.7 } });
@@ -228,7 +228,7 @@ describe('Data integrity - partial - multi simple', () => {
 
 describe('Data integrity - partial - multi mixed', () => {
   describe('Boolean + number + string + array + object', () => {
-    const Schema = Compactr.schema({
+    const Schema = schema({
       bool: { type: 'boolean' },
       num: { type: 'number' },
       str: { type: 'string', size: 22 },

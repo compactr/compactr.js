@@ -1,6 +1,6 @@
 /** Encoding utilities */
 
-/* Local variables -----------------------------------------------------------*/
+/* Local variables ----------------------------------------------------------- */
 
 const intMap = [null, unsigned8, unsigned16, null, unsigned32];
 const abs = Math.abs;
@@ -12,7 +12,7 @@ const bias = pow(2, 52);
 const eIn = pow(2, -1022);
 const eOut = pow(2, 1022) * bias;
 
-/* Methods -------------------------------------------------------------------*/
+/* Methods ------------------------------------------------------------------- */
 
 /** @private */
 function boolean(val) {
@@ -75,7 +75,7 @@ function string(encoding, val) {
 function array(schema, val) {
   const ret = [];
   for (let i = 0; i < val.length; i++) {
-    let encoded = schema.transformIn(val[i]);
+    const encoded = schema.transformIn(val[i]);
     ret.push(...schema.getSize(encoded.length), ...encoded);
   }
   return ret;
@@ -86,19 +86,19 @@ function object(schema, val) {
   return schema.write(val).typedArray();
 }
 
-/** 
- * Credit to @feross' ieee754 module 
+/**
+ * Credit to @feross' ieee754 module
  * @private
  */
 function double(val) {
-  let buffer = [];
+  const buffer = [];
   let e, m, c;
-  let eMax = 2047;
-  let eBias = 1023;
-  let rt = 0;
+  const eMax = 2047;
+  const eBias = 1023;
+  const rt = 0;
   let i = 7;
-  let d = -1;
-  let s = val <= 0 ? 1 : 0;
+  const d = -1;
+  const s = val <= 0 ? 1 : 0;
   val = abs(val);
   e = floor(log(val) / ln2);
   c = pow(2, -e);
@@ -109,7 +109,7 @@ function double(val) {
 
   if (e + eBias >= 1) val += rt / c;
   else val += rt * eIn;
-      
+
   if (val * c >= 2) {
     e++;
     c /= 2;
@@ -118,14 +118,16 @@ function double(val) {
   if (e + eBias >= eMax) {
     m = 0;
     e = eMax;
-  } else if (e + eBias >= 1) {
-    m = (val * c - 1) * bias
+  }
+  else if (e + eBias >= 1) {
+    m = (val * c - 1) * bias;
     e = e + eBias;
-  } else {
+  }
+  else {
     m = val * eOut;
     e = 0;
   }
-  
+
   for (let a = 0; a < 6; a++) {
     buffer[i] = m & 0xff;
     i += d;
@@ -149,7 +151,7 @@ function getSize(count, byteLength) {
   return intMap[count](byteLength);
 }
 
-/* Exports -------------------------------------------------------------------*/
+/* Exports ------------------------------------------------------------------- */
 
 export default {
   boolean,

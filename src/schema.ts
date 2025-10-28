@@ -1,6 +1,6 @@
 /** Schema parsing component */
 
-/* Requires ------------------------------------------------------------------*/
+/* Requires ------------------------------------------------------------------ */
 
 import Encoder from './encoder';
 import Decoder from './decoder';
@@ -8,13 +8,8 @@ import Reader from './reader';
 import Writer from './writer';
 import Converter from './converter';
 
-/* Methods -------------------------------------------------------------------*/
+/* Methods ------------------------------------------------------------------- */
 
-/**
- * Creates a new schema definition, with a reader and writer attached
- * @param {*} schema The schema to use
- * @param {Object (keyOrder: {boolean})} options The options for the schema
- */
 export default function Schema(schema, options = { keyOrder: false }) {
   const sizeRef = {
     boolean: 1,
@@ -72,7 +67,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
       .forEach((key, index) => {
         const keyType = schema[key].type;
         const count = schema[key].count || 1;
-        const childSchema = computeNested(schema, key, keyType);
+        const childSchema = computeNested(schema, key);
 
         ret[key] = {
           name: key,
@@ -82,7 +77,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
           transformOut: (childSchema !== undefined) ? Decoder[keyType].bind(null, childSchema) : Decoder[keyType],
           coerse: Converter[keyType],
           getSize: Encoder.getSize.bind(null, count),
-          fixedSize: defaultSizes[keyType] && Encoder.getSize(count, defaultSizes[keyType]) || null,
+          fixedSize: (defaultSizes[keyType] && Encoder.getSize(count, defaultSizes[keyType])) || null,
           size: schema[key].size || defaultSizes[keyType] || null,
           count,
           nested: childSchema,
@@ -94,7 +89,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
 
   /** @private */
   function applyBlank() {
-    for (let key in scope.schema) {
+    for (const key in scope.schema) {
       scope.header.push({
         key: scope.indices[key],
         size: scope.indices[key].size || sizeRef[scope.indices[key].type],
@@ -122,7 +117,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
         };
       }
     }
-    
+
     return childSchema;
   }
 

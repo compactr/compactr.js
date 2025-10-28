@@ -1,27 +1,17 @@
 /** Data reader component */
 
-/* Requires ------------------------------------------------------------------*/
+/* Requires ------------------------------------------------------------------ */
 
 import Decoder from './decoder';
 
-/* Methods -------------------------------------------------------------------*/
+/* Methods ------------------------------------------------------------------- */
 
 export default function Reader(scope) {
-
-  /**
-   * Decodes an encoded buffer. Requires header bytes.
-   * @param {Buffer} bytes
-   * @returns {Object} The decoded buffer
-   */
   function read(bytes) {
     readHeader(bytes);
     return readContent(bytes, scope.contentBegins);
   }
 
-  /**
-   * Reads only the header of an encoded buffer
-   * @param {*} bytes 
-   */
   function readHeader(bytes) {
     scope.header = [];
     let caret = 1;
@@ -52,13 +42,7 @@ export default function Reader(scope) {
     }
   }
 
-  /**
-   * Reads only a content buffer and returns an object with the decoded values 
-   * @param {Buffer} bytes The content buffer 
-   * @param {Integer} caret The content bytes offset, if the bytes also include an header
-   * @returns {Object} An object with the decoded values
-   */
-  function readContent(bytes, caret) {
+  function readContent(bytes, caret?) {
     caret = caret || 0;
     const ret = {};
     if (scope.options.keyOrder === true) {

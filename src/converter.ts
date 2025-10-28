@@ -1,6 +1,6 @@
 /** Type Coersion utilities */
 
-/* Methods -------------------------------------------------------------------*/
+/* Methods ------------------------------------------------------------------- */
 
 /** @private */
 function int8(value) {
@@ -43,7 +43,7 @@ function array(value) {
   return (value.concat !== undefined) ? value : [value];
 }
 
-/* Exports -------------------------------------------------------------------*/
+/* Exports ------------------------------------------------------------------- */
 
 export default {
   int8,
@@ -58,4 +58,4 @@ export default {
   boolean,
   array,
   object,
-}
+};
