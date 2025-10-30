@@ -178,21 +178,81 @@ export default function Schema(schema, options = { keyOrder: false }) {
     if (isObject === true || isArray === true) {
       if (isObject === true) childSchema = Schema(schema[key].schema, options);
       if (isArray === true) {
-        const itemChildSchema = computeNested(schema[key], 'items');
-        const itemType = schema[key].items.type;
-        const itemFormat = schema[key].items.format;
-        const internalItemType = resolveType(itemType, itemFormat);
-
-        childSchema = {
-          count: schema[key].items.count || 1,
-          getSize: Encoder.getSize.bind(null, schema[key].items.count || 1),
-          transformIn: (itemChildSchema !== undefined) ? Encoder[internalItemType].bind(null, itemChildSchema) : Encoder[internalItemType],
-          transformOut: (itemChildSchema !== undefined) ? Decoder[internalItemType].bind(null, itemChildSchema) : Decoder[internalItemType],
-        };
+        childSchema = processArrayItems(schema[key].items);
       }
     }
 
     return childSchema;
+  }
+
+  /** @private */
+  function processArrayItems(itemDef) {
+    // Handle oneOf/anyOf in array items
+    if (itemDef.oneOf || itemDef.anyOf) {
+      const variantDefs = itemDef.oneOf || itemDef.anyOf;
+      const variants = variantDefs.map((variantDef) => {
+        const variantType = variantDef.type;
+        const variantFormat = variantDef.format;
+        const variantInternalType = resolveType(variantType, variantFormat);
+        const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : 1);
+        const variantChildSchema = processArrayItemsNested(variantDef);
+
+        return {
+          type: variantInternalType,
+          transformIn: (variantChildSchema !== undefined)
+            ? Encoder[variantInternalType].bind(null, variantChildSchema)
+            : Encoder[variantInternalType],
+          transformOut: (variantChildSchema !== undefined)
+            ? Decoder[variantInternalType].bind(null, variantChildSchema)
+            : Decoder[variantInternalType],
+          coerse: Converter[variantInternalType],
+          getSize: Encoder.getSize.bind(null, variantCount),
+          fixedSize: (defaultSizes[variantInternalType] && Encoder.getSize(variantCount, defaultSizes[variantInternalType])) || null,
+          size: variantDef.size || defaultSizes[variantInternalType] || null,
+          count: variantCount,
+          nested: variantChildSchema,
+        };
+      });
+
+      return {
+        nullable: itemDef.nullable || false,
+        variants,
+        count: 1,
+        getSize: Encoder.getSize.bind(null, 1),
+      };
+    }
+
+    // Handle regular array items
+    const itemType = itemDef.type;
+    const itemFormat = itemDef.format;
+    const internalItemType = resolveType(itemType, itemFormat);
+    const itemCount = itemDef.count || (internalItemType === 'binary' ? 4 : 1);
+    const itemChildSchema = processArrayItemsNested(itemDef);
+
+    return {
+      nullable: itemDef.nullable || false,
+      count: itemCount,
+      getSize: Encoder.getSize.bind(null, itemCount),
+      transformIn: (itemChildSchema !== undefined) ? Encoder[internalItemType].bind(null, itemChildSchema) : Encoder[internalItemType],
+      transformOut: (itemChildSchema !== undefined) ? Decoder[internalItemType].bind(null, itemChildSchema) : Decoder[internalItemType],
+    };
+  }
+
+  /** @private */
+  function processArrayItemsNested(itemDef) {
+    const itemType = itemDef.type;
+    const isObject = (itemType === 'object');
+    const isArray = (itemType === 'array');
+
+    if (isObject === true) {
+      return Schema(itemDef.schema, options);
+    }
+
+    if (isArray === true) {
+      return processArrayItems(itemDef.items);
+    }
+
+    return undefined;
   }
 
   /** @private */
@@ -205,17 +265,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
     if (isObject === true || isArray === true) {
       if (isObject === true) childSchema = Schema(variantDef.schema, options);
       if (isArray === true) {
-        const itemChildSchema = variantDef.items?.schema ? Schema(variantDef.items.schema, options) : undefined;
-        const itemType = variantDef.items.type;
-        const itemFormat = variantDef.items.format;
-        const internalItemType = resolveType(itemType, itemFormat);
-
-        childSchema = {
-          count: variantDef.items.count || 1,
-          getSize: Encoder.getSize.bind(null, variantDef.items.count || 1),
-          transformIn: (itemChildSchema !== undefined) ? Encoder[internalItemType].bind(null, itemChildSchema) : Encoder[internalItemType],
-          transformOut: (itemChildSchema !== undefined) ? Decoder[internalItemType].bind(null, itemChildSchema) : Decoder[internalItemType],
-        };
+        childSchema = processArrayItems(variantDef.items);
       }
     }
 

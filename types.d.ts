@@ -62,12 +62,7 @@ declare module 'compactr' {
     count?: number
     size?: number
     schema?: SchemaDefinition
-    items?: {
-      type: string
-      format?: string
-      count?: number
-      schema?: SchemaDefinition
-    }
+    items?: SchemaFieldDefinition
     oneOf?: SchemaFieldDefinition[]
     anyOf?: SchemaFieldDefinition[]
   }

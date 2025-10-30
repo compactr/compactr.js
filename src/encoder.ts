@@ -197,11 +197,91 @@ function binary(val) {
 /** @private */
 function array(schema, val) {
   const ret = [];
+
   for (let i = 0; i < val.length; i++) {
-    const encoded = schema.transformIn(val[i]);
+    const item = val[i];
+
+    // Handle nullable array items
+    if (schema.nullable && item === null) {
+      ret.push(NULL_INDICATOR);
+      continue;
+    }
+
+    // Handle variant array items (oneOf/anyOf)
+    if (schema.variants) {
+      let variantIndex = -1;
+      let variantField = null;
+
+      // Find matching variant
+      for (let v = 0; v < schema.variants.length; v++) {
+        if (matchesVariantItem(item, schema.variants[v])) {
+          variantIndex = v;
+          variantField = schema.variants[v];
+          break;
+        }
+      }
+
+      if (variantIndex === -1) {
+        throw new Error(`Array item does not match any variant`);
+      }
+
+      // Encode discriminator (1-indexed for nullable support)
+      const discriminator = schema.nullable ? VARIANT_BASE + variantIndex : VARIANT_BASE + variantIndex;
+      ret.push(discriminator);
+
+      // Encode the item using the matched variant
+      const encoded = variantField.transformIn(item);
+      ret.push(...variantField.getSize(encoded.length), ...encoded);
+      continue;
+    }
+
+    // Handle nullable non-null items (add presence indicator)
+    if (schema.nullable) {
+      ret.push(VARIANT_BASE);
+    }
+
+    // Handle regular array items
+    const encoded = schema.transformIn(item);
     ret.push(...schema.getSize(encoded.length), ...encoded);
   }
+
   return ret;
+}
+
+/** @private */
+function matchesVariantItem(data, variant) {
+  const dataType = Array.isArray(data)
+    ? 'array'
+    : data === null
+      ? 'null'
+      : typeof data;
+
+  // Map internal types to JavaScript types
+  if (variant.type === 'int32' || variant.type === 'int64'
+    || variant.type === 'float' || variant.type === 'double') {
+    return dataType === 'number';
+  }
+
+  if (variant.type === 'string' || variant.type === 'uuid'
+    || variant.type === 'ipv4' || variant.type === 'ipv6'
+    || variant.type === 'date' || variant.type === 'date-time'
+    || variant.type === 'binary') {
+    return dataType === 'string' || data instanceof Buffer || data instanceof Uint8Array;
+  }
+
+  if (variant.type === 'boolean') {
+    return dataType === 'boolean';
+  }
+
+  if (variant.type === 'array') {
+    return dataType === 'array';
+  }
+
+  if (variant.type === 'object') {
+    return dataType === 'object';
+  }
+
+  return false;
 }
 
 /** @private */

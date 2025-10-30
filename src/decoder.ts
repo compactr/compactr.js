@@ -218,11 +218,44 @@ function binary(bytes) {
 /** @private */
 function array(schema, bytes) {
   const ret = [];
+
   for (let i = 0; i < bytes.length;) {
+    // Handle nullable or variant array items
+    if (schema.nullable || schema.variants) {
+      const discriminator = bytes[i];
+      i++;
+
+      // Handle null value
+      if (discriminator === 0x00) {
+        ret.push(null);
+        continue;
+      }
+
+      // Handle variant items
+      if (schema.variants) {
+        const variantIndex = discriminator - 0x01;
+        const variantField = schema.variants[variantIndex];
+
+        if (!variantField) {
+          throw new Error(`Invalid variant discriminator: ${discriminator}`);
+        }
+
+        const size = unsigned(bytes.slice(i, i + variantField.count));
+        i += variantField.count;
+        ret.push(variantField.transformOut(bytes.slice(i, i + size)));
+        i += size;
+        continue;
+      }
+
+      // For nullable non-variant items, discriminator 0x01 means value is present
+      // Continue to decode the value normally below
+    }
+
+    // Handle regular array items
     const size = unsigned(bytes.slice(i, i + schema.count));
-    i = (i + schema.count);
+    i += schema.count;
     ret.push(schema.transformOut(bytes.slice(i, i + size)));
-    i = (i + size);
+    i += size;
   }
 
   return ret;

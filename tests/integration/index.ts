@@ -852,3 +852,321 @@ describe('Nullable properties', () => {
     });
   });
 });
+
+/* OpenAPI Array Format Tests ----------------------------------------------- */
+
+describe('OpenAPI-compatible array formats', () => {
+  describe('Array of integers (int32)', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'integer', format: 'int32' } } });
+
+    it('should preserve array of integers', () => {
+      expect(Schema.read(Schema.write({ test: [1, 2, 3, 4, 5] }).buffer())).toEqual({ test: [1, 2, 3, 4, 5] });
+    });
+
+    it('should handle negative integers', () => {
+      expect(Schema.read(Schema.write({ test: [-100, 0, 100] }).buffer())).toEqual({ test: [-100, 0, 100] });
+    });
+  });
+
+  describe('Array of integers (int64)', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'integer', format: 'int64' } } });
+
+    it('should preserve array of int64 values', () => {
+      const data = { test: [9007199254740991, -9007199254740991, 0] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array of floats', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'number', format: 'float' } } });
+
+    it('should preserve array of floats with precision loss', () => {
+      const result = Schema.read(Schema.write({ test: [3.14, 2.71, 1.41] }).buffer());
+      expect(result.test[0]).toBeCloseTo(3.14, 5);
+      expect(result.test[1]).toBeCloseTo(2.71, 5);
+      expect(result.test[2]).toBeCloseTo(1.41, 5);
+    });
+  });
+
+  describe('Array of doubles', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'number', format: 'double' } } });
+
+    it('should preserve array of doubles', () => {
+      expect(Schema.read(Schema.write({ test: [3.141592653589793, 2.718281828459045] }).buffer())).toEqual({ test: [3.141592653589793, 2.718281828459045] });
+    });
+  });
+
+  describe('Array of UUIDs', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'string', format: 'uuid' } } });
+
+    it('should preserve array of UUIDs', () => {
+      const data = {
+        test: [
+          '550e8400-e29b-4d4e-a7d4-426614174000',
+          '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+          '00000000-0000-0000-0000-000000000000',
+        ],
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should compress UUIDs efficiently', () => {
+      const data = {
+        test: ['550e8400-e29b-4d4e-a7d4-426614174000', '6ba7b810-9dad-11d1-80b4-00c04fd430c8'],
+      };
+      const buffer = Schema.write(data).buffer();
+      // Each UUID is 16 bytes + 1 byte size = 17 bytes per UUID
+      // Plus array overhead
+      expect(buffer.length).toBeLessThan(100); // Much less than string encoding
+    });
+  });
+
+  describe('Array of IPv4 addresses', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'string', format: 'ipv4' } } });
+
+    it('should preserve array of IPv4 addresses', () => {
+      const data = { test: ['192.168.1.1', '10.0.0.1', '172.16.0.1'] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array of IPv6 addresses', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'string', format: 'ipv6' } } });
+
+    it('should preserve array of IPv6 addresses', () => {
+      const data = {
+        test: ['2001:db8:85a3::8a2e:370:7334', '::1', '::'],
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array of dates', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'string', format: 'date' } } });
+
+    it('should preserve array of dates', () => {
+      const data = { test: ['2025-10-28', '2024-01-01', '1970-01-01'] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array of date-times', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'string', format: 'date-time' } } });
+
+    it('should preserve array of date-times', () => {
+      const data = {
+        test: ['2025-10-28T14:30:00.000Z', '2024-01-01T00:00:00.000Z'],
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array of binary data', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'string', format: 'binary' } } });
+
+    it('should preserve array of binary data', () => {
+      const data = { test: ['SGVsbG8=', 'V29ybGQ=', 'Zm9vYmFy'] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle Buffer inputs', () => {
+      const input = { test: [Buffer.from('Hello'), Buffer.from('World')] };
+      const result = Schema.read(Schema.write(input).buffer());
+      expect(result.test).toEqual(['SGVsbG8=', 'V29ybGQ=']);
+    });
+  });
+
+  describe('Array with nullable items', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'string', nullable: true } } });
+
+    it('should preserve null values in array', () => {
+      const data = { test: ['a', null, 'b', null, 'c'] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should distinguish empty string from null', () => {
+      const data = { test: ['', null, 'text'] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle all null array', () => {
+      const data = { test: [null, null, null] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array with nullable integer items', () => {
+    const Schema = schema({ test: { type: 'array', items: { type: 'integer', format: 'int32', nullable: true } } });
+
+    it('should preserve null values with integers', () => {
+      const data = { test: [1, null, 2, null, 3] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should distinguish zero from null', () => {
+      const data = { test: [0, null, -1] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array with oneOf items', () => {
+    const Schema = schema({
+      test: {
+        type: 'array',
+        items: {
+          oneOf: [
+            { type: 'string' },
+            { type: 'integer', format: 'int32' },
+            { type: 'boolean' },
+          ],
+        },
+      },
+    });
+
+    it('should handle mixed types in array', () => {
+      const data = { test: ['hello', 42, true, 'world', false, 123] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle all strings', () => {
+      const data = { test: ['a', 'b', 'c'] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle all integers', () => {
+      const data = { test: [1, 2, 3] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle all booleans', () => {
+      const data = { test: [true, false, true] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array with anyOf items', () => {
+    const Schema = schema({
+      test: {
+        type: 'array',
+        items: {
+          anyOf: [
+            { type: 'number', format: 'double' },
+            { type: 'string' },
+          ],
+        },
+      },
+    });
+
+    it('should handle mixed numbers and strings', () => {
+      const data = { test: [3.14, 'pi', 2.71, 'e'] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array with oneOf and nullable items', () => {
+    const Schema = schema({
+      test: {
+        type: 'array',
+        items: {
+          nullable: true,
+          oneOf: [
+            { type: 'string' },
+            { type: 'integer', format: 'int32' },
+          ],
+        },
+      },
+    });
+
+    it('should handle null with oneOf variants', () => {
+      const data = { test: ['hello', null, 42, null, 'world'] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Nested arrays', () => {
+    const Schema = schema({
+      test: {
+        type: 'array',
+        items: {
+          type: 'array',
+          items: { type: 'integer', format: 'int32' },
+        },
+      },
+    });
+
+    it('should handle 2D arrays', () => {
+      const data = { test: [[1, 2, 3], [4, 5, 6], [7, 8, 9]] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle empty nested arrays', () => {
+      const data = { test: [[], [1], []] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Nested arrays with strings', () => {
+    const Schema = schema({
+      test: {
+        type: 'array',
+        items: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+    });
+
+    it('should handle 2D string arrays', () => {
+      const data = { test: [['a', 'b'], ['c', 'd', 'e'], ['f']] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Arrays of objects', () => {
+    const Schema = schema({
+      test: {
+        type: 'array',
+        items: {
+          type: 'object',
+          schema: {
+            x: { type: 'integer', format: 'int32' },
+            y: { type: 'integer', format: 'int32' },
+          },
+        },
+      },
+    });
+
+    it('should handle array of objects', () => {
+      const data = { test: [{ x: 1, y: 2 }, { x: 3, y: 4 }, { x: 5, y: 6 }] };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Complex nested structure', () => {
+    const Schema = schema({
+      test: {
+        type: 'array',
+        items: {
+          oneOf: [
+            { type: 'string' },
+            { type: 'array', items: { type: 'integer', format: 'int32' } },
+            { type: 'object', schema: { name: { type: 'string' } } },
+          ],
+        },
+      },
+    });
+
+    it('should handle complex nested structures with oneOf', () => {
+      const data = {
+        test: [
+          'hello',
+          [1, 2, 3],
+          { name: 'test' },
+          'world',
+          [4, 5],
+        ],
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+});
