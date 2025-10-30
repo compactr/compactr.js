@@ -11,7 +11,7 @@ export default function Writer(scope) {
     scope.headerBytes = [0];
     scope.contentBytes = [];
 
-    const keys = filterKeys(data);
+    const keys = filterKeys(data, options);
     scope.headerBytes[0] = keys.length;
     for (let i = 0; i < keys.length; i++) {
       let keyData = data[keys[i]];
@@ -70,8 +70,8 @@ export default function Writer(scope) {
       }
 
       if (options !== undefined) {
-        if (options.coerse === true) keyData = field.coerse(keyData);
-        if (options.validate === true) field.validate(keyData);
+        if (options.coerse === true && field.coerse) keyData = field.coerse(keyData);
+        if (options.validate === true && field.validate) field.validate(keyData);
       }
 
       // Add size and content
@@ -178,8 +178,13 @@ export default function Writer(scope) {
   /** @private */
   function filterKeys(data) {
     const res = [];
+    const undeclaredKeys = [];
+
     for (const key in data) {
-      if (scope.items.indexOf(key) === -1) continue;
+      if (scope.items.indexOf(key) === -1) {
+        undeclaredKeys.push(key);
+        continue;
+      }
 
       // Include nullable fields even when null
       if (scope.indices[key].nullable && data[key] === null) {
@@ -192,6 +197,14 @@ export default function Writer(scope) {
         res.push(key);
       }
     }
+
+    // Always warn about undeclared properties
+    if (undeclaredKeys.length > 0) {
+      console.warn(
+        `Schema validation warning: Object contains undeclared properties that will not be serialized: ${undeclaredKeys.join(', ')}`,
+      );
+    }
+
     return res;
   }
 

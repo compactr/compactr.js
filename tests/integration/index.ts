@@ -1170,3 +1170,511 @@ describe('OpenAPI-compatible array formats', () => {
     });
   });
 });
+
+/* OpenAPI Object Format Tests ---------------------------------------------- */
+
+describe('OpenAPI-compatible object formats', () => {
+  describe('Object with various format types', () => {
+    const Schema = schema({
+      user: {
+        type: 'object',
+        schema: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          age: { type: 'integer', format: 'int32' },
+          balance: { type: 'number', format: 'double' },
+          active: { type: 'boolean' },
+          created: { type: 'string', format: 'date-time' },
+          ip: { type: 'string', format: 'ipv4' },
+        },
+      },
+    });
+
+    it('should preserve object with mixed format types', () => {
+      const data = {
+        user: {
+          id: '550e8400-e29b-4d4e-a7d4-426614174000',
+          name: 'John Doe',
+          age: 30,
+          balance: 1234.56,
+          active: true,
+          created: '2025-10-28T14:30:00.000Z',
+          ip: '192.168.1.1',
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Object with nullable properties', () => {
+    const Schema = schema({
+      data: {
+        type: 'object',
+        schema: {
+          required: { type: 'string' },
+          optional: { type: 'string', nullable: true },
+          number: { type: 'integer', format: 'int32', nullable: true },
+        },
+      },
+    });
+
+    it('should preserve null values in object properties', () => {
+      const data = {
+        data: {
+          required: 'value',
+          optional: null,
+          number: null,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should preserve non-null values', () => {
+      const data = {
+        data: {
+          required: 'value',
+          optional: 'text',
+          number: 42,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle mix of null and non-null', () => {
+      const data = {
+        data: {
+          required: 'value',
+          optional: 'text',
+          number: null,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Object with oneOf properties', () => {
+    const Schema = schema({
+      response: {
+        type: 'object',
+        schema: {
+          status: { type: 'integer', format: 'int32' },
+          data: {
+            oneOf: [
+              { type: 'string' },
+              { type: 'integer', format: 'int32' },
+              { type: 'object', schema: { message: { type: 'string' } } },
+            ],
+          },
+        },
+      },
+    });
+
+    it('should handle string variant', () => {
+      const data = {
+        response: {
+          status: 200,
+          data: 'success',
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle integer variant', () => {
+      const data = {
+        response: {
+          status: 200,
+          data: 42,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle object variant', () => {
+      const data = {
+        response: {
+          status: 200,
+          data: { message: 'Operation completed' },
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Object with anyOf properties', () => {
+    const Schema = schema({
+      item: {
+        type: 'object',
+        schema: {
+          id: { type: 'integer', format: 'int32' },
+          value: {
+            anyOf: [
+              { type: 'number', format: 'double' },
+              { type: 'string' },
+            ],
+          },
+        },
+      },
+    });
+
+    it('should handle number variant', () => {
+      const data = {
+        item: {
+          id: 1,
+          value: 3.14159,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle string variant', () => {
+      const data = {
+        item: {
+          id: 1,
+          value: 'text value',
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Deeply nested objects', () => {
+    const Schema = schema({
+      root: {
+        type: 'object',
+        schema: {
+          level1: {
+            type: 'object',
+            schema: {
+              level2: {
+                type: 'object',
+                schema: {
+                  level3: {
+                    type: 'object',
+                    schema: {
+                      value: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    it('should handle deeply nested objects', () => {
+      const data = {
+        root: {
+          level1: {
+            level2: {
+              level3: {
+                value: 'deep',
+              },
+            },
+          },
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Object with array properties', () => {
+    const Schema = schema({
+      data: {
+        type: 'object',
+        schema: {
+          tags: { type: 'array', items: { type: 'string' } },
+          scores: { type: 'array', items: { type: 'integer', format: 'int32' } },
+          metadata: {
+            type: 'array',
+            items: {
+              type: 'object',
+              schema: {
+                key: { type: 'string' },
+                value: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    it('should handle objects with array properties', () => {
+      const data = {
+        data: {
+          tags: ['typescript', 'serialization'],
+          scores: [10, 20, 30],
+          metadata: [
+            { key: 'author', value: 'John' },
+            { key: 'version', value: '1.0' },
+          ],
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Object with nullable oneOf properties', () => {
+    const Schema = schema({
+      record: {
+        type: 'object',
+        schema: {
+          id: { type: 'integer', format: 'int32' },
+          value: {
+            nullable: true,
+            oneOf: [
+              { type: 'string' },
+              { type: 'integer', format: 'int32' },
+            ],
+          },
+        },
+      },
+    });
+
+    it('should handle null in nullable oneOf', () => {
+      const data = {
+        record: {
+          id: 1,
+          value: null,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle string variant', () => {
+      const data = {
+        record: {
+          id: 1,
+          value: 'text',
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle integer variant', () => {
+      const data = {
+        record: {
+          id: 1,
+          value: 42,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Complex object with all OpenAPI features', () => {
+    const Schema = schema({
+      entity: {
+        type: 'object',
+        schema: {
+          id: { type: 'string', format: 'uuid' },
+          type: { type: 'string' },
+          attributes: {
+            type: 'object',
+            schema: {
+              name: { type: 'string' },
+              age: { type: 'integer', format: 'int32', nullable: true },
+              balance: { type: 'number', format: 'double' },
+            },
+          },
+          tags: { type: 'array', items: { type: 'string' } },
+          metadata: {
+            oneOf: [
+              { type: 'string' },
+              { type: 'object', schema: { key: { type: 'string' }, value: { type: 'string' } } },
+            ],
+          },
+          created: { type: 'string', format: 'date-time' },
+        },
+      },
+    });
+
+    it('should handle complex object with all features', () => {
+      const data = {
+        entity: {
+          id: '550e8400-e29b-4d4e-a7d4-426614174000',
+          type: 'user',
+          attributes: {
+            name: 'John Doe',
+            age: null,
+            balance: 1234.56,
+          },
+          tags: ['active', 'premium'],
+          metadata: { key: 'region', value: 'us-east-1' },
+          created: '2025-10-28T14:30:00.000Z',
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle with string metadata variant', () => {
+      const data = {
+        entity: {
+          id: '550e8400-e29b-4d4e-a7d4-426614174000',
+          type: 'user',
+          attributes: {
+            name: 'Jane Doe',
+            age: 25,
+            balance: 5678.90,
+          },
+          tags: ['new'],
+          metadata: 'simple string metadata',
+          created: '2025-10-28T15:00:00.000Z',
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Property order independence', () => {
+    const Schema = schema({
+      data: {
+        type: 'object',
+        schema: {
+          first: { type: 'string' },
+          second: { type: 'integer', format: 'int32' },
+          third: { type: 'boolean' },
+          fourth: { type: 'number', format: 'double' },
+        },
+      },
+    });
+
+    it('should handle properties in schema order', () => {
+      const data = {
+        data: {
+          first: 'value1',
+          second: 42,
+          third: true,
+          fourth: 3.14,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should handle properties in different order than schema', () => {
+      const data = {
+        data: {
+          fourth: 3.14,
+          first: 'value1',
+          third: true,
+          second: 42,
+        },
+      };
+      const expected = {
+        data: {
+          first: 'value1',
+          second: 42,
+          third: true,
+          fourth: 3.14,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(expected);
+    });
+
+    it('should handle properties in reverse order', () => {
+      const data = {
+        data: {
+          fourth: 2.71,
+          third: false,
+          second: 100,
+          first: 'reversed',
+        },
+      };
+      const expected = {
+        data: {
+          first: 'reversed',
+          second: 100,
+          third: false,
+          fourth: 2.71,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(expected);
+    });
+
+    it('should handle properties in random order', () => {
+      const data = {
+        data: {
+          third: true,
+          first: 'random',
+          fourth: 1.41,
+          second: 7,
+        },
+      };
+      const expected = {
+        data: {
+          first: 'random',
+          second: 7,
+          third: true,
+          fourth: 1.41,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(expected);
+    });
+  });
+
+  describe('Undeclared properties validation', () => {
+    const Schema = schema({
+      data: {
+        type: 'object',
+        schema: {
+          declared: { type: 'string' },
+        },
+      },
+    });
+
+    it('should ignore undeclared properties', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      const input = {
+        data: {
+          declared: 'value',
+          undeclared: 'should be ignored',
+        },
+      };
+      const result = Schema.read(Schema.write(input).buffer());
+      expect(result).toEqual({ data: { declared: 'value' } });
+      expect(result.data).not.toHaveProperty('undeclared');
+
+      warnSpy.mockRestore();
+    });
+
+    it('should always warn about undeclared properties', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      const input = {
+        data: {
+          declared: 'value',
+          extra1: 'ignored',
+          extra2: 'also ignored',
+        },
+      };
+
+      Schema.write(input);
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('undeclared properties'),
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('extra1, extra2'),
+      );
+
+      warnSpy.mockRestore();
+    });
+
+    it('should not warn when all properties are declared', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      const input = {
+        data: {
+          declared: 'value',
+        },
+      };
+
+      Schema.write(input);
+
+      expect(warnSpy).not.toHaveBeenCalled();
+
+      warnSpy.mockRestore();
+    });
+  });
+});
