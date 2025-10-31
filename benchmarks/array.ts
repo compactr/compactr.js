@@ -2,15 +2,16 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const Benchmark = require('benchmark');
-const Compactr = require('../');
+import Benchmark from 'benchmark';
+import {schema} from '../dist/compactr.js';
+import {deferred} from './utils.ts';
 
 /* Local variables -----------------------------------------------------------*/
 
 
-let User = Compactr.schema({
-  id: { type: 'integer', format: 'int32', size: 4 },
-  arr: { type: 'array', size: 6, items: { type: 'string', size: 1 }},
+let User = schema({
+  id: { type: 'integer', format: 'int32' },
+  arr: { type: 'array', items: { type: 'string' }},
 });
 
 const mult = 32;
@@ -18,30 +19,36 @@ const sizes = { json: 0, compactr: 0 };
 
 const arraySuite = new Benchmark.Suite();
 
-/* Float suite ---------------------------------------------------------------*/
+/* Array suite ---------------------------------------------------------------*/
 
-arraySuite.add('[Array] JSON', arrJSON)
-  .add('[Array] Compactr', arrCompactr)
-  .on('cycle', e => console.log(String(e.target)))
-  .run({ 'async': true })
-  .on('complete', _ => console.log(sizes));
+export function init() {
+  const {promise, resolve} = deferred();
 
-function arrJSON() {
-  let packed, unpacked;
+  arraySuite.add('[Array] JSON', arrJSON)
+    .add('[Array] Compactr', arrCompactr)
+    .on('cycle', e => console.log(String(e.target)))
+    .run({ 'async': true })
+    .on('complete', _ => resolve(sizes));
 
-  for(let i = 0; i<mult*mult; i++) {
-    packed = Buffer.from(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
-    unpacked = JSON.parse(packed.toString());
-    if (packed.length > sizes.json) sizes.json = packed.length;
+  function arrJSON() {
+    let packed, unpacked;
+
+    for(let i = 0; i<mult*mult; i++) {
+      packed = Buffer.from(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
+      unpacked = JSON.parse(packed.toString());
+      if (packed.length > sizes.json) sizes.json = packed.length;
+    }
   }
-}
 
-function arrCompactr() {
-  let packed, unpacked;
+  function arrCompactr() {
+    let packed, unpacked;
 
-  for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).contentBuffer();
-    unpacked = User.readContent(packed);
-    if (packed.length > sizes.compactr) sizes.compactr = packed.length;
+    for(let i = 0; i<mult*mult; i++) {
+      packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).contentBuffer();
+      unpacked = User.readContent(packed);
+      if (packed.length > sizes.compactr) sizes.compactr = packed.length;
+    }
   }
+
+  return promise;
 }

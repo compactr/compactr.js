@@ -38,6 +38,16 @@ function resolveType(type, format) {
 }
 
 export default function Schema(schema, options = { keyOrder: false }) {
+  // Handle top-level schema object (OpenAPI format)
+  // If schema has type: 'object' and properties, unwrap it
+  let unwrappedSchema = schema;
+  if (schema.type === 'object' && schema.properties) {
+    unwrappedSchema = schema.properties;
+  }
+
+  // Normalize OpenAPI schema format to internal format
+  const normalizedSchema = normalizeSchema(unwrappedSchema, options);
+
   const sizeRef = {
     'boolean': 1,
     'int32': 4,
@@ -69,16 +79,99 @@ export default function Schema(schema, options = { keyOrder: false }) {
   };
 
   const scope = {
-    schema,
+    schema: normalizedSchema,
     indices: {},
-    items: Object.keys(schema),
+    items: Object.keys(normalizedSchema),
     headerBytes: [0],
     contentBytes: [0],
     header: [],
     contentBegins: 0,
     options,
   };
-  scope.indices = preformat(schema);
+  scope.indices = preformat(normalizedSchema);
+
+  /** @private */
+  function resolveRef(ref, options) {
+    if (!ref || !ref.startsWith('#/')) {
+      throw new Error(`Invalid $ref format: ${ref}. Only internal references (#/...) are supported.`);
+    }
+
+    const parts = ref.split('/').slice(1); // Remove leading '#'
+    let resolved = options.schemas;
+
+    for (const part of parts) {
+      if (!resolved || typeof resolved !== 'object') {
+        throw new Error(`Cannot resolve $ref: ${ref}`);
+      }
+      resolved = resolved[part];
+    }
+
+    if (!resolved) {
+      throw new Error(`$ref not found: ${ref}`);
+    }
+
+    return resolved;
+  }
+
+  /** @private */
+  function normalizeFieldDefinition(fieldDef, options) {
+    // Handle $ref
+    if (fieldDef.$ref) {
+      if (!options.schemas) {
+        throw new Error(`$ref "${fieldDef.$ref}" found but no schemas provided in options`);
+      }
+      // Resolve the reference
+      let resolved = resolveRef(fieldDef.$ref, options);
+
+      // Unwrap if the component is a wrapped object schema
+      if (resolved.type === 'object' && resolved.properties && !resolved.schema) {
+        resolved = { ...resolved };
+        resolved.schema = resolved.properties;
+        delete resolved.properties;
+      }
+
+      // Normalize the resolved component
+      return normalizeFieldDefinition(resolved, options);
+    }
+
+    // Create a copy to avoid mutating the original
+    const normalized = { ...fieldDef };
+
+    // Transform OpenAPI 'properties' to internal 'schema'
+    if (normalized.properties && !normalized.schema) {
+      normalized.schema = normalizeSchema(normalized.properties, options);
+      delete normalized.properties;
+    }
+
+    // Normalize nested items
+    if (normalized.items) {
+      normalized.items = normalizeFieldDefinition(normalized.items, options);
+    }
+
+    // Normalize oneOf/anyOf variants
+    if (normalized.oneOf) {
+      normalized.oneOf = normalized.oneOf.map(v => normalizeFieldDefinition(v, options));
+    }
+    if (normalized.anyOf) {
+      normalized.anyOf = normalized.anyOf.map(v => normalizeFieldDefinition(v, options));
+    }
+
+    // Normalize nested schema
+    if (normalized.schema && typeof normalized.schema === 'object') {
+      normalized.schema = normalizeSchema(normalized.schema, options);
+    }
+
+    return normalized;
+  }
+
+  /** @private */
+  function normalizeSchema(schema, options) {
+    const normalized = {};
+    for (const key in schema) {
+      normalized[key] = normalizeFieldDefinition(schema[key], options);
+    }
+    return normalized;
+  }
   const writer = Writer(scope);
   const reader = Reader(scope);
 
@@ -101,6 +194,11 @@ export default function Schema(schema, options = { keyOrder: false }) {
             const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : 1);
             const variantChildSchema = computeNestedVariant(variantDef);
 
+            // For object variants, extract schema keys for variant matching
+            const schemaKeys = (variantInternalType === 'object' && variantDef.schema)
+              ? Object.keys(variantDef.schema)
+              : null;
+
             return {
               type: variantInternalType,
               transformIn: (variantChildSchema !== undefined)
@@ -115,6 +213,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
               size: variantDef.size || defaultSizes[variantInternalType] || null,
               count: variantCount,
               nested: variantChildSchema,
+              schemaKeys,
             };
           });
 
@@ -176,7 +275,10 @@ export default function Schema(schema, options = { keyOrder: false }) {
     let childSchema;
 
     if (isObject === true || isArray === true) {
-      if (isObject === true) childSchema = Schema(schema[key].schema, options);
+      if (isObject === true) {
+        // After normalization, schema should always be present for objects
+        childSchema = Schema(schema[key].schema, options);
+      }
       if (isArray === true) {
         childSchema = processArrayItems(schema[key].items);
       }
@@ -197,6 +299,11 @@ export default function Schema(schema, options = { keyOrder: false }) {
         const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : 1);
         const variantChildSchema = processArrayItemsNested(variantDef);
 
+        // For object variants, extract schema keys for variant matching
+        const schemaKeys = (variantInternalType === 'object' && variantDef.schema)
+          ? Object.keys(variantDef.schema)
+          : null;
+
         return {
           type: variantInternalType,
           transformIn: (variantChildSchema !== undefined)
@@ -211,6 +318,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
           size: variantDef.size || defaultSizes[variantInternalType] || null,
           count: variantCount,
           nested: variantChildSchema,
+          schemaKeys,
         };
       });
 
@@ -245,6 +353,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
     const isArray = (itemType === 'array');
 
     if (isObject === true) {
+      // After normalization, schema should always be present for objects
       return Schema(itemDef.schema, options);
     }
 
@@ -263,7 +372,10 @@ export default function Schema(schema, options = { keyOrder: false }) {
     let childSchema;
 
     if (isObject === true || isArray === true) {
-      if (isObject === true) childSchema = Schema(variantDef.schema, options);
+      if (isObject === true) {
+        // After normalization, schema should always be present for objects
+        childSchema = Schema(variantDef.schema, options);
+      }
       if (isArray === true) {
         childSchema = processArrayItems(variantDef.items);
       }

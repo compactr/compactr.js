@@ -62,9 +62,11 @@ declare module 'compactr' {
     count?: number
     size?: number
     schema?: SchemaDefinition
+    properties?: SchemaDefinition
     items?: SchemaFieldDefinition
     oneOf?: SchemaFieldDefinition[]
     anyOf?: SchemaFieldDefinition[]
+    $ref?: string
   }
 
   export interface SchemaDefinition {
@@ -73,6 +75,7 @@ declare module 'compactr' {
 
   export interface SchemaOptions {
     keyOrder?: boolean
+    schemas?: { [key: string]: SchemaFieldDefinition }
   }
 
   export interface WriteOptions {

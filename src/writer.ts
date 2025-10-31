@@ -122,7 +122,27 @@ export default function Writer(scope) {
     }
 
     if (variant.type === 'object') {
-      return dataType === 'object';
+      if (dataType !== 'object') return false;
+
+      // For objects with schema keys, check if the data properties match
+      if (variant.schemaKeys && variant.schemaKeys.length > 0) {
+        const schemaKeys = variant.schemaKeys;
+        const dataKeys = Object.keys(data);
+
+        // Check if data keys match schema keys
+        let matchCount = 0;
+        for (const key of schemaKeys) {
+          if (data.hasOwnProperty(key)) {
+            matchCount++;
+          }
+        }
+
+        // Require at least one matching key and 50% overlap
+        // This helps distinguish between different object variants
+        return matchCount > 0 && matchCount >= Math.min(schemaKeys.length, dataKeys.length) * 0.5;
+      }
+
+      return true;
     }
 
     return false;

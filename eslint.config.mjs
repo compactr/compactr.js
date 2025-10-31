@@ -15,6 +15,7 @@ export default tseslint.config(
       '@typescript-eslint/no-require-imports': 1,
       'jest/no-done-callback': 0,
       'jest/no-conditional-expect': 0,
+      'no-prototype-builtins': 'warn',
     },
   },
   {

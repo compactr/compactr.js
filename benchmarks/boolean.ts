@@ -2,15 +2,16 @@
 
 /* Requires ------------------------------------------------------------------*/
 
-const Benchmark = require('benchmark');
-const Compactr = require('../');
-const protobuf = require('protobufjs');
+import Benchmark from 'benchmark';
+import {schema} from '../dist/compactr.js';
+import protobuf  from 'protobufjs';
+import {deferred} from './utils.ts';
 
 /* Local variables -----------------------------------------------------------*/
 
 
-let User = Compactr.schema({ 
-  id: { type: 'int32', size: 4 }, 
+let User = schema({ 
+  id: { type: 'int32' }, 
   bool: { type: 'boolean' },
 });
 
@@ -31,42 +32,48 @@ var BoolBenchTest = root.lookupType('BoolBenchTest');
 
 const boolSuite = new Benchmark.Suite();
 
-/* Float suite ---------------------------------------------------------------*/
+/* Boolean suite ---------------------------------------------------------------*/
 
-boolSuite.add('[Boolean] JSON', boolJSON)
-  .add('[Boolean] Compactr', boolCompactr)
-  .add('[Boolean] Protobuf', boolProtobuf)
-  .on('cycle', e => console.log(String(e.target)))
-  .run({ 'async': true })
-  .on('complete', _ => console.log(sizes));
+export function init() {
+  const {promise, resolve} = deferred();
 
-function boolJSON(e) {
-  let packed, unpacked;
+  boolSuite.add('[Boolean] JSON', boolJSON)
+    .add('[Boolean] Compactr', boolCompactr)
+    .add('[Boolean] Protobuf', boolProtobuf)
+    .on('cycle', e => console.log(String(e.target)))
+    .run({ 'async': true })
+    .on('complete', _ => resolve(sizes));
 
-  for(let i = 0; i<mult*mult; i++) {
-    packed = Buffer.from(JSON.stringify({ id: i, bool: !!Math.random() }));
-    unpacked = JSON.parse(packed.toString());
-    if (packed.length > sizes.json) sizes.json = packed.length;
+  function boolJSON(e) {
+    let packed, unpacked;
+
+    for(let i = 0; i<mult*mult; i++) {
+      packed = Buffer.from(JSON.stringify({ id: i, bool: !!Math.random() }));
+      unpacked = JSON.parse(packed.toString());
+      if (packed.length > sizes.json) sizes.json = packed.length;
+    }
   }
-}
 
-function boolCompactr() {
-  let packed, unpacked;
+  function boolCompactr() {
+    let packed, unpacked;
 
-  for(let i = 0; i<mult*mult; i++) {
-    packed = User.write({ id: i, bool: !!Math.random() }).contentBuffer();
-    unpacked = User.readContent(packed);
-    if (packed.length > sizes.compactr) sizes.compactr = packed.length;
+    for(let i = 0; i<mult*mult; i++) {
+      packed = User.write({ id: i, bool: !!Math.random() }).contentBuffer();
+      unpacked = User.readContent(packed);
+      if (packed.length > sizes.compactr) sizes.compactr = packed.length;
+    }
   }
-}
 
-function boolProtobuf() {
-  let packed, unpacked;
+  function boolProtobuf() {
+    let packed, unpacked;
 
-  for(let i = 0; i<mult*mult; i++) {
-    let message = BoolBenchTest.create({ id: i, bool: !!Math.random() });
-    packed = BoolBenchTest.encode(message).finish();
-    unpacked = BoolBenchTest.decode(packed);
-    if (packed.length > sizes.protobuf) sizes.protobuf = packed.length;
+    for(let i = 0; i<mult*mult; i++) {
+      let message = BoolBenchTest.create({ id: i, bool: !!Math.random() });
+      packed = BoolBenchTest.encode(message).finish();
+      unpacked = BoolBenchTest.decode(packed);
+      if (packed.length > sizes.protobuf) sizes.protobuf = packed.length;
+    }
   }
+
+  return promise;
 }

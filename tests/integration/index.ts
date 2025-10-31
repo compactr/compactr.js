@@ -1,9 +1,3 @@
-/**
- * Unit test suite
- */
-
-/* Requires ------------------------------------------------------------------ */
-
 import { schema } from '../../src';
 
 /* Tests --------------------------------------------------------------------- */
@@ -1675,6 +1669,460 @@ describe('OpenAPI-compatible object formats', () => {
       expect(warnSpy).not.toHaveBeenCalled();
 
       warnSpy.mockRestore();
+    });
+  });
+});
+
+/* OpenAPI Native Format Tests ---------------------------------------------- */
+
+describe('OpenAPI native format support', () => {
+  describe('Using properties instead of schema', () => {
+    const Schema = schema({
+      user: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          age: { type: 'integer', format: 'int32' },
+        },
+      },
+    });
+
+    it('should handle properties field (OpenAPI format)', () => {
+      const data = {
+        user: {
+          id: '550e8400-e29b-4d4e-a7d4-426614174000',
+          name: 'John Doe',
+          age: 30,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Using $ref for schema references', () => {
+    const Schema = schema(
+      {
+        user: {
+          $ref: '#/User',
+        },
+      },
+      {
+        schemas: {
+          User: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+            },
+          },
+        },
+      },
+    );
+
+    it('should resolve $ref to schema definition', () => {
+      const data = {
+        user: {
+          id: '550e8400-e29b-4d4e-a7d4-426614174000',
+          name: 'John Doe',
+          email: 'john@example.com',
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Nested $ref usage', () => {
+    const Schema = schema(
+      {
+        order: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', format: 'int32' },
+            customer: { $ref: '#/Customer' },
+            items: {
+              type: 'array',
+              items: { $ref: '#/Product' },
+            },
+          },
+        },
+      },
+      {
+        schemas: {
+          Customer: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              email: { type: 'string' },
+            },
+          },
+          Product: {
+            type: 'object',
+            properties: {
+              sku: { type: 'string' },
+              price: { type: 'number', format: 'double' },
+            },
+          },
+        },
+      },
+    );
+
+    it('should resolve nested $ref in objects and arrays', () => {
+      const data = {
+        order: {
+          id: 12345,
+          customer: {
+            name: 'Jane Doe',
+            email: 'jane@example.com',
+          },
+          items: [
+            { sku: 'PROD-001', price: 29.99 },
+            { sku: 'PROD-002', price: 49.99 },
+          ],
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('$ref in oneOf/anyOf', () => {
+    const Schema = schema(
+      {
+        payment: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', format: 'int32' },
+            method: {
+              oneOf: [{ $ref: '#/CreditCard' }, { $ref: '#/BankAccount' }],
+            },
+          },
+        },
+      },
+      {
+        schemas: {
+          CreditCard: {
+            type: 'object',
+            properties: {
+              cardNumber: { type: 'string' },
+              expiry: { type: 'string' },
+            },
+          },
+          BankAccount: {
+            type: 'object',
+            properties: {
+              accountNumber: { type: 'string' },
+              routingNumber: { type: 'string' },
+            },
+          },
+        },
+      },
+    );
+
+    it('should resolve $ref in oneOf (credit card)', () => {
+      const data = {
+        payment: {
+          id: 1,
+          method: {
+            cardNumber: '4111111111111111',
+            expiry: '12/25',
+          },
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+
+    it('should resolve $ref in oneOf (bank account)', () => {
+      const data = {
+        payment: {
+          id: 1,
+          method: {
+            accountNumber: '123456789',
+            routingNumber: '987654321',
+          },
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Complex OpenAPI schema', () => {
+    const Schema = schema(
+      {
+        response: {
+          type: 'object',
+          properties: {
+            status: { type: 'integer', format: 'int32' },
+            data: { $ref: '#/UserResponse' },
+            metadata: {
+              type: 'object',
+              properties: {
+                timestamp: { type: 'string', format: 'date-time' },
+                requestId: { type: 'string', format: 'uuid' },
+              },
+            },
+          },
+        },
+      },
+      {
+        schemas: {
+          UserResponse: {
+            type: 'object',
+            properties: {
+              user: { $ref: '#/User' },
+              permissions: {
+                type: 'array',
+                items: { type: 'string' },
+              },
+            },
+          },
+          User: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              name: { type: 'string' },
+              email: { type: 'string' },
+              profile: { $ref: '#/Profile' },
+            },
+          },
+          Profile: {
+            type: 'object',
+            properties: {
+              bio: { type: 'string', nullable: true },
+              avatar: { type: 'string', format: 'binary' },
+              settings: {
+                type: 'object',
+                properties: {
+                  theme: { type: 'string' },
+                  notifications: { type: 'boolean' },
+                },
+              },
+            },
+          },
+        },
+      },
+    );
+
+    it('should handle complex nested OpenAPI schema', () => {
+      const data = {
+        response: {
+          status: 200,
+          data: {
+            user: {
+              id: '550e8400-e29b-4d4e-a7d4-426614174000',
+              name: 'John Doe',
+              email: 'john@example.com',
+              profile: {
+                bio: null,
+                avatar: 'SGVsbG8gV29ybGQh',
+                settings: {
+                  theme: 'dark',
+                  notifications: true,
+                },
+              },
+            },
+            permissions: ['read', 'write', 'admin'],
+          },
+          metadata: {
+            timestamp: '2025-10-28T14:30:00.000Z',
+            requestId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+          },
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Mixed format (properties and schema)', () => {
+    const Schema = schema(
+      {
+        // Using properties (OpenAPI format)
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' },
+          },
+        },
+        // Using schema (internal format)
+        product: {
+          type: 'object',
+          schema: {
+            sku: { type: 'string' },
+            price: { type: 'number', format: 'double' },
+          },
+        },
+        // Using $ref
+        order: {
+          $ref: '#/Order',
+        },
+      },
+      {
+        schemas: {
+          Order: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer', format: 'int32' },
+              total: { type: 'number', format: 'double' },
+            },
+          },
+        },
+      },
+    );
+
+    it('should handle mixed schema formats', () => {
+      const data = {
+        user: {
+          id: 'user-123',
+          name: 'John',
+        },
+        product: {
+          sku: 'PROD-001',
+          price: 29.99,
+        },
+        order: {
+          id: 12345,
+          total: 99.99,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Array with $ref items', () => {
+    const Schema = schema(
+      {
+        users: {
+          type: 'array',
+          items: { $ref: '#/User' },
+        },
+      },
+      {
+        schemas: {
+          User: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer', format: 'int32' },
+              name: { type: 'string' },
+            },
+          },
+        },
+      },
+    );
+
+    it('should handle array items with $ref', () => {
+      const data = {
+        users: [
+          { id: 1, name: 'Alice' },
+          { id: 2, name: 'Bob' },
+          { id: 3, name: 'Charlie' },
+        ],
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Top-level schema object (OpenAPI format)', () => {
+    const Schema = schema({
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string' },
+        email: { type: 'string' },
+        age: { type: 'integer', format: 'int32' },
+        active: { type: 'boolean' },
+      },
+    });
+
+    it('should unwrap top-level schema object', () => {
+      const data = {
+        id: '550e8400-e29b-4d4e-a7d4-426614174000',
+        name: 'John Doe',
+        email: 'john@example.com',
+        age: 30,
+        active: true,
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Top-level schema with nested objects', () => {
+    const Schema = schema({
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer', format: 'int32' },
+            name: { type: 'string' },
+          },
+        },
+        settings: {
+          type: 'object',
+          properties: {
+            theme: { type: 'string' },
+            notifications: { type: 'boolean' },
+          },
+        },
+      },
+    });
+
+    it('should handle nested objects in top-level schema', () => {
+      const data = {
+        user: {
+          id: 123,
+          name: 'Jane Doe',
+        },
+        settings: {
+          theme: 'dark',
+          notifications: true,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+    });
+  });
+
+  describe('Top-level schema with $ref', () => {
+    const Schema = schema(
+      {
+        type: 'object',
+        properties: {
+          user: { $ref: '#/User' },
+          product: { $ref: '#/Product' },
+        },
+      },
+      {
+        schemas: {
+          User: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer', format: 'int32' },
+              name: { type: 'string' },
+            },
+          },
+          Product: {
+            type: 'object',
+            properties: {
+              sku: { type: 'string' },
+              price: { type: 'number', format: 'double' },
+            },
+          },
+        },
+      },
+    );
+
+    it('should handle $ref in top-level schema object', () => {
+      const data = {
+        user: {
+          id: 1,
+          name: 'Alice',
+        },
+        product: {
+          sku: 'PROD-001',
+          price: 29.99,
+        },
+      };
+      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
     });
   });
 });
