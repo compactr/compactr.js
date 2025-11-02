@@ -6,71 +6,72 @@ import Benchmark from 'benchmark';
 import {schema} from '../dist/compactr.js';
 import protobuf  from 'protobufjs';
 import {deferred} from './utils.ts';
+import {randomUUID} from 'crypto';
 
 /* Local variables -----------------------------------------------------------*/
 
 
 let User = schema({
-  id: { type: 'integer', format: 'int32' },
-  arr: { type: 'array', items: { type: 'string' }},
+  id: { type: 'integer', format: 'int32'},
+  uid: { type: 'string', format: 'uuid' },
 });
 
 let root = protobuf.Root.fromJSON({
   nested: {
-    ArrayBenchTest: {
+    StringBenchTest: {
       fields: {
         id: { type: 'uint32', id: 1 },
-        arr: { rule: 'repeated', type: 'string', id: 2 },
+        uid: { type: 'string', id: 2 },
       },
     },
   },
 });
-var ArrayBenchTest = root.lookupType('ArrayBenchTest');
+var StringBenchTest = root.lookupType('StringBenchTest');
 
 const sizes = { json: 0, compactr: 0, protobuf: 0 };
 
-const arraySuite = new Benchmark.Suite();
+const stringSuite = new Benchmark.Suite();
 
-/* Array suite ---------------------------------------------------------------*/
+/* UUID suite ---------------------------------------------------------------*/
 
 export function init(mult) {
   const {promise, resolve} = deferred();
 
-  arraySuite.add('[Array] JSON', arrJSON)
-    .add('[Array] Compactr', arrCompactr)
-    .add('[Array] Protobuf', arrProtobuf)
+  stringSuite.add('[UUID] JSON', strJSON)
+    .add('[UUID] Compactr', strCompactr)
+    .add('[UUID] Protobuf', strProtobuf)
     .on('cycle', e => console.log(String(e.target)))
     .run({ 'async': true })
     .on('complete', _ => resolve(sizes));
 
 
-  function arrJSON() {
+  function strJSON() {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      packed = Buffer.from(JSON.stringify({ id: i, arr: ['a', 'b', 'c'] }));
+      packed = Buffer.from(JSON.stringify({ id: i, uid: randomUUID() }));
       unpacked = JSON.parse(packed.toString());
       if (packed.length > sizes.json) sizes.json = packed.length;
     }
   }
 
-  function arrCompactr() {
+  function strCompactr() {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      packed = User.write({ id: i, arr: ['a', 'b', 'c'] }).buffer();
+      packed = User.write({ id: i, uid: randomUUID() }).buffer();
       unpacked = User.read(packed);
       if (packed.length > sizes.compactr) sizes.compactr = packed.length;
     }
   }
 
-  function arrProtobuf() {
+  function strProtobuf() {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      let message = ArrayBenchTest.create({ id: i, arr: ['a', 'b', 'c'] });
-      packed = ArrayBenchTest.encode(message).finish();
-      unpacked = ArrayBenchTest.decode(packed);
+      let message = StringBenchTest.create({ id: i, uid: randomUUID() });
+      packed = StringBenchTest.encode(message).finish();
+      unpacked = StringBenchTest.decode(packed);
       if (packed.length > sizes.protobuf) sizes.protobuf = packed.length;
     }
   }

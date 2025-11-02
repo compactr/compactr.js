@@ -48,23 +48,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
   // Normalize OpenAPI schema format to internal format
   const normalizedSchema = normalizeSchema(unwrappedSchema, options);
 
-  const sizeRef = {
-    'boolean': 1,
-    'int32': 4,
-    'int64': 8,
-    'float': 4,
-    'double': 8,
-    'string': 2,
-    'uuid': 1,
-    'ipv4': 1,
-    'ipv6': 1,
-    'date': 1,
-    'date-time': 1,
-    'binary': 4,
-    'array': 2,
-    'object': 1,
-  };
-
   const defaultSizes = {
     'boolean': 1,
     'int32': 4,
@@ -82,13 +65,20 @@ export default function Schema(schema, options = { keyOrder: false }) {
     schema: normalizedSchema,
     indices: {},
     items: Object.keys(normalizedSchema),
-    headerBytes: [0],
-    contentBytes: [0],
-    header: [],
-    contentBegins: 0,
+    buffer: [],
     options,
+    indexToField: {}, // Performance: O(1) reverse lookup from index to field
+    itemsSet: null, // Performance: O(1) field validation in writer
   };
   scope.indices = preformat(normalizedSchema);
+
+  // Build reverse index map for O(1) lookups during deserialization
+  for (const fieldName of scope.items) {
+    scope.indexToField[scope.indices[fieldName].index] = scope.indices[fieldName];
+  }
+
+  // Build Set for O(1) field validation during serialization
+  scope.itemsSet = new Set(scope.items);
 
   /** @private */
   function resolveRef(ref, options) {
@@ -175,8 +165,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
   const writer = Writer(scope);
   const reader = Reader(scope);
 
-  applyBlank(); // Pre-load header for easy streaming
-
   /** @private */
   function preformat(schema) {
     const ret = {};
@@ -190,8 +178,8 @@ export default function Schema(schema, options = { keyOrder: false }) {
             const variantType = variantDef.type;
             const variantFormat = variantDef.format;
             const variantInternalType = resolveType(variantType, variantFormat);
-            // Binary fields need 4-byte counter by default to support large data
-            const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : 1);
+            // Binary fields need 4 bytes, arrays/objects need 2 bytes for size counters
+            const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : (variantInternalType === 'array' || variantInternalType === 'object' ? 2 : 1));
             const variantChildSchema = computeNestedVariant(variantDef);
 
             // For object variants, extract schema keys for variant matching
@@ -210,7 +198,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
               coerse: Converter[variantInternalType],
               getSize: Encoder.getSize.bind(null, variantCount),
               fixedSize: (defaultSizes[variantInternalType] && Encoder.getSize(variantCount, defaultSizes[variantInternalType])) || null,
-              size: variantDef.size || defaultSizes[variantInternalType] || null,
+              size: defaultSizes[variantInternalType] || null,
               count: variantCount,
               nested: variantChildSchema,
               schemaKeys,
@@ -230,8 +218,8 @@ export default function Schema(schema, options = { keyOrder: false }) {
         const fieldType = schema[key].type;
         const fieldFormat = schema[key].format;
         const internalType = resolveType(fieldType, fieldFormat);
-        // Binary fields need 4-byte counter by default to support large data
-        const count = schema[key].count || (internalType === 'binary' ? 4 : 1);
+        // Binary fields need 4 bytes, arrays/objects need 2 bytes for size counters
+        const count = schema[key].count || (internalType === 'binary' ? 4 : (internalType === 'array' || internalType === 'object' ? 2 : 1));
         const childSchema = computeNested(schema, key);
 
         ret[key] = {
@@ -244,27 +232,13 @@ export default function Schema(schema, options = { keyOrder: false }) {
           coerse: Converter[internalType],
           getSize: Encoder.getSize.bind(null, count),
           fixedSize: (defaultSizes[internalType] && Encoder.getSize(count, defaultSizes[internalType])) || null,
-          size: schema[key].size || defaultSizes[internalType] || null,
+          size: defaultSizes[internalType] || null,
           count,
           nested: childSchema,
         };
       });
 
     return ret;
-  }
-
-  /** @private */
-  function applyBlank() {
-    for (const key in scope.schema) {
-      // Skip variant fields in applyBlank as their size depends on runtime variant
-      if (scope.indices[key].variants) {
-        continue;
-      }
-      scope.header.push({
-        key: scope.indices[key],
-        size: scope.indices[key].size || sizeRef[scope.indices[key].type],
-      });
-    }
   }
 
   /** @private */
@@ -296,7 +270,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
         const variantType = variantDef.type;
         const variantFormat = variantDef.format;
         const variantInternalType = resolveType(variantType, variantFormat);
-        const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : 1);
+        const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : (variantInternalType === 'array' || variantInternalType === 'object' ? 2 : 1));
         const variantChildSchema = processArrayItemsNested(variantDef);
 
         // For object variants, extract schema keys for variant matching
@@ -315,7 +289,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
           coerse: Converter[variantInternalType],
           getSize: Encoder.getSize.bind(null, variantCount),
           fixedSize: (defaultSizes[variantInternalType] && Encoder.getSize(variantCount, defaultSizes[variantInternalType])) || null,
-          size: variantDef.size || defaultSizes[variantInternalType] || null,
+          size: defaultSizes[variantInternalType] || null,
           count: variantCount,
           nested: variantChildSchema,
           schemaKeys,
@@ -334,7 +308,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
     const itemType = itemDef.type;
     const itemFormat = itemDef.format;
     const internalItemType = resolveType(itemType, itemFormat);
-    const itemCount = itemDef.count || (internalItemType === 'binary' ? 4 : 1);
+    const itemCount = itemDef.count || (internalItemType === 'binary' ? 4 : (internalItemType === 'array' || internalItemType === 'object' ? 2 : 1));
     const itemChildSchema = processArrayItemsNested(itemDef);
 
     return {

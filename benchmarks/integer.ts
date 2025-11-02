@@ -9,12 +9,11 @@ import {deferred} from './utils.ts';
 
 /* Local variables -----------------------------------------------------------*/
 
-let User = schema({ 
-  id: { type: 'int32' }, 
-  int: { type: 'int32' },
+let User = schema({
+  id: { type: 'integer', format: 'int32' },
+  int: { type: 'integer', format: 'int32' },
 });
 
-const mult = 32;
 const sizes = { json: 0, compactr: 0, protobuf: 0 };
 
 let root = protobuf.Root.fromJSON({
@@ -33,7 +32,7 @@ const intSuite = new Benchmark.Suite();
 
 /* Integer suite ---------------------------------------------------------------*/
 
-export function init() {
+export function init(mult) {
   const {promise, resolve} = deferred();
 
   intSuite.add('[Integer] JSON', intJSON)
@@ -57,8 +56,8 @@ export function init() {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      packed = User.write({ id: i, int: Math.round(Math.random() * 1000000) }).contentBuffer();
-      unpacked = User.readContent(packed);
+      packed = User.write({ id: i, int: Math.round(Math.random() * 1000000) }).buffer();
+      unpacked = User.read(packed);
       if (packed.length > sizes.compactr) sizes.compactr = packed.length;
     }
   }

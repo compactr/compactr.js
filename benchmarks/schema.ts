@@ -6,21 +6,21 @@ import Benchmark from 'benchmark';
 import {schema} from '../dist/compactr.js';
 import protobuf  from 'protobufjs';
 import {deferred} from './utils.ts';
+import {randomUUID} from 'crypto';
 
 /* Local variables -----------------------------------------------------------*/
 
 
-let User = schema({ 
-  id: { type: 'int32' }, 
+let User = schema({
+  id: { type: 'integer', format: 'int32' },
   obj: {
     type: 'object',
     properties: {
       str: { type: 'string' }
     },
-  }, 
+  },
 });
 
-const mult = 32;
 const sizes = { json: 0, compactr: 0, protobuf: 0 };
 
 let root = protobuf.Root.fromJSON({
@@ -44,7 +44,7 @@ const objectSuite = new Benchmark.Suite();
 
 /* Schema suite ---------------------------------------------------------------*/
 
-export function init() {
+export function init(mult) {
   const {promise, resolve} = deferred();
 
   objectSuite.add('[Schema] JSON', objJSON)
@@ -59,7 +59,7 @@ export function init() {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      packed = Buffer.from(JSON.stringify({ id: i, obj: { str: '' + (Math.random()*0xffffff) } }));
+      packed = Buffer.from(JSON.stringify({ id: i, obj: { str: randomUUID() } }));
       unpacked = JSON.parse(packed.toString());
       if (packed.length > sizes.json) sizes.json = packed.length;
     }
@@ -69,8 +69,8 @@ export function init() {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      packed = User.write({ id: i, obj: { str: '' + (Math.random()*0xffffff) } }).contentBuffer();
-      unpacked = User.readContent(packed);
+      packed = User.write({ id: i, obj: { str: randomUUID() } }).buffer();
+      unpacked = User.read(packed);
       if (packed.length > sizes.compactr) sizes.compactr = packed.length;
     }
   }
@@ -79,7 +79,7 @@ export function init() {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      let message = ObjectBenchTest.create({ id: i, obj: { str: '' + (Math.random()*0xffffff) } });
+      let message = ObjectBenchTest.create({ id: i, obj: { str: randomUUID() } });
       packed = ObjectBenchTest.encode(message).finish();
       unpacked = ObjectBenchTest.decode(packed);
       if (packed.length > sizes.protobuf) sizes.protobuf = packed.length;

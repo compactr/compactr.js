@@ -515,124 +515,6 @@ describe('Data integrity - multi mixed', () => {
   });
 });
 
-/* Partial ------------------------------------------------------------------- */
-
-describe('Data integrity - partial - simple', () => {
-  describe('Boolean', () => {
-    const Schema = schema({ test: { type: 'boolean' } });
-
-    it('should preserve boolean value and type - true', () => {
-      expect(Schema.readContent(Schema.write({ test: true }).contentBuffer())).toEqual({ test: true });
-    });
-
-    it('should preserve boolean value and type - false', () => {
-      expect(Schema.readContent(Schema.write({ test: false }).contentBuffer())).toEqual({ test: false });
-    });
-
-    it('should still send one 0 byte in case of null (coersed)', () => {
-      expect(Schema.readContent(Schema.write({ test: null }).contentBuffer())).toEqual({ test: false });
-    });
-  });
-
-  describe('Number', () => {
-    const Schema = schema({ test: { type: 'number', format: 'double' } });
-
-    it('should preserve number value and type', () => {
-      expect(Schema.readContent(Schema.write({ test: 23.23 }).contentBuffer())).toEqual({ test: 23.23 });
-    });
-
-    it('should preserve number value and type for negative values', () => {
-      expect(Schema.readContent(Schema.write({ test: -23.23 }).contentBuffer())).toEqual({ test: -23.23 });
-    });
-  });
-
-  describe('String', () => {
-    const Schema = schema({ test: { type: 'string', size: 22 } });
-
-    it('should preserve string value and type', () => {
-      expect(Schema.readContent(Schema.write({ test: 'hello world' }).contentBuffer())).toEqual({ test: 'hello world' });
-    });
-  });
-
-  describe('Array', () => {
-    const Schema = schema({ test: { type: 'array', size: 12, items: { type: 'string' } } });
-
-    it('should preserve array values and types', () => {
-      expect(Schema.readContent(Schema.write({ test: ['a', 'b', 'c'] }).contentBuffer())).toEqual({ test: ['a', 'b', 'c', '', '', ''] });
-    });
-  });
-
-  describe('Schema', () => {
-    const Schema = schema({ test: { type: 'object', size: 20, schema: { test: { type: 'number', format: 'double' } } } });
-
-    it('should preserve object values and types', () => {
-      expect(Schema.readContent(Schema.write({ test: { test: 23.23 } }).contentBuffer())).toEqual({ test: { test: 23.23 } });
-    });
-  });
-});
-
-describe('Data integrity - partial - multi simple', () => {
-  describe('Booleans', () => {
-    const Schema = schema({ test: { type: 'boolean' }, test2: { type: 'boolean' } });
-
-    it('should preserve boolean value and type - false', () => {
-      expect(Schema.readContent(Schema.write({ test: false, test2: true }).contentBuffer())).toEqual({ test: false, test2: true });
-    });
-
-    it('should skip null or undefined values', () => {
-      expect(Schema.readContent(Schema.write({ test: null, test2: false }).contentBuffer())).toEqual({ test: false, test2: false });
-    });
-  });
-
-  describe('Numbers', () => {
-    const Schema = schema({ test: { type: 'number', format: 'double' }, test2: { type: 'number', format: 'double' } });
-
-    it('should preserve number value and type', () => {
-      expect(Schema.readContent(Schema.write({ test: 23.23, test2: -97.7 }).contentBuffer())).toEqual({ test: 23.23, test2: -97.7 });
-    });
-  });
-
-  describe('Strings', () => {
-    const Schema = schema({ test: { type: 'string', size: 22 }, test2: { type: 'string', size: 8 } });
-
-    it('should preserve string value and type', () => {
-      expect(Schema.readContent(Schema.write({ test: 'hello world', test2: 'écho' }).contentBuffer())).toEqual({ test: 'hello world', test2: 'écho' });
-    });
-  });
-
-  describe('Arrays', () => {
-    const Schema = schema({ test: { type: 'array', size: 9, items: { type: 'string' } }, test2: { type: 'array', size: 9, items: { type: 'string' } } });
-
-    it('should preserve array values and types', () => {
-      expect(Schema.readContent(Schema.write({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] }).contentBuffer())).toEqual({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] });
-    });
-  });
-
-  describe('Schemas', () => {
-    const Schema = schema({ test: { type: 'object', size: 11, schema: { test: { type: 'number', format: 'double' } } }, test2: { type: 'object', size: 11, schema: { test: { type: 'number', format: 'double' } } } });
-
-    it('should preserve object values and types', () => {
-      expect(Schema.readContent(Schema.write({ test: { test: 23.23 }, test2: { test: -97.7 } }).contentBuffer())).toEqual({ test: { test: 23.23 }, test2: { test: -97.7 } });
-    });
-  });
-});
-
-describe('Data integrity - partial - multi mixed', () => {
-  describe('Boolean + number + string + array + object', () => {
-    const Schema = schema({
-      bool: { type: 'boolean' },
-      num: { type: 'number', format: 'double' },
-      str: { type: 'string', size: 22 },
-      arr: { type: 'array', items: { type: 'string' }, size: 9 },
-      obj: { type: 'object', size: 9, schema: { sub: { type: 'string' } } },
-    });
-
-    it('should preserve values and types', () => {
-      expect(Schema.readContent(Schema.write({ bool: true, num: 23.23, str: 'hello world', arr: ['a', 'b', 'c'], obj: { sub: 'way' } }).contentBuffer())).toEqual({ bool: true, num: 23.23, str: 'hello world', arr: ['a', 'b', 'c'], obj: { sub: 'way' } });
-    });
-  });
-});
-
 /* Size comparison tests ----------------------------------------------------- */
 
 describe('Format size differences', () => {
@@ -640,14 +522,14 @@ describe('Format size differences', () => {
     const FloatSchema = schema({ value: { type: 'number', format: 'float' } });
     const DoubleSchema = schema({ value: { type: 'number', format: 'double' } });
 
-    it('float should use 4 bytes for content', () => {
-      const buffer = FloatSchema.write({ value: 3.14 }).contentBuffer();
-      expect(buffer.length).toBe(4);
+    it('float should use 4 bytes for value (7 bytes total with metadata)', () => {
+      const buffer = FloatSchema.write({ value: 3.14 }).buffer();
+      expect(buffer.length).toBe(7); // 1 field count + 1 field index + 1 size + 4 value
     });
 
-    it('double should use 8 bytes for content', () => {
-      const buffer = DoubleSchema.write({ value: 3.14 }).contentBuffer();
-      expect(buffer.length).toBe(8);
+    it('double should use 8 bytes for value (11 bytes total with metadata)', () => {
+      const buffer = DoubleSchema.write({ value: 3.14 }).buffer();
+      expect(buffer.length).toBe(11); // 1 field count + 1 field index + 1 size + 8 value
     });
   });
 
@@ -655,14 +537,14 @@ describe('Format size differences', () => {
     const Int32Schema = schema({ value: { type: 'integer', format: 'int32' } });
     const Int64Schema = schema({ value: { type: 'integer', format: 'int64' } });
 
-    it('int32 should use 4 bytes for content', () => {
-      const buffer = Int32Schema.write({ value: 12345 }).contentBuffer();
-      expect(buffer.length).toBe(4);
+    it('int32 should use 4 bytes for value (7 bytes total with metadata)', () => {
+      const buffer = Int32Schema.write({ value: 12345 }).buffer();
+      expect(buffer.length).toBe(7); // 1 field count + 1 field index + 1 size + 4 value
     });
 
-    it('int64 should use 8 bytes for content', () => {
-      const buffer = Int64Schema.write({ value: 12345 }).contentBuffer();
-      expect(buffer.length).toBe(8);
+    it('int64 should use 8 bytes for value (11 bytes total with metadata)', () => {
+      const buffer = Int64Schema.write({ value: 12345 }).buffer();
+      expect(buffer.length).toBe(11); // 1 field count + 1 field index + 1 size + 8 value
     });
   });
 });

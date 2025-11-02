@@ -48,23 +48,11 @@ const userSchema = Compactr.schema({
 // Encoding
 userSchema.write({ id: 123, name: 'John' });
 
-// Get the header bytes
-const header = userSchema.headerBuffer();
-
-// Get the content bytes 
-const partial = userSchema.contentBuffer();
-
-// Get the full payload (header + content bytes)
+// Get the encoded buffer
 const buffer = userSchema.buffer();
 
-
-
-
-// Decoding a full payload
-const content = userSchema.read(buffer);
-
-// Decoding a partial payload (content)
-const content = userSchema.readContent(partial);
+// Decoding
+const decoded = userSchema.read(buffer);
 ```
 
 ## Size comparison

@@ -10,12 +10,11 @@ import {deferred} from './utils.ts';
 /* Local variables -----------------------------------------------------------*/
 
 
-let User = schema({ 
-  id: { type: 'int32' }, 
+let User = schema({
+  id: { type: 'integer', format: 'int32' },
   bool: { type: 'boolean' },
 });
 
-const mult = 32;
 const sizes = { json: 0, compactr: 0, protobuf: 0 };
 
 let root = protobuf.Root.fromJSON({
@@ -34,7 +33,7 @@ const boolSuite = new Benchmark.Suite();
 
 /* Boolean suite ---------------------------------------------------------------*/
 
-export function init() {
+export function init(mult) {
   const {promise, resolve} = deferred();
 
   boolSuite.add('[Boolean] JSON', boolJSON)
@@ -58,8 +57,8 @@ export function init() {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      packed = User.write({ id: i, bool: !!Math.random() }).contentBuffer();
-      unpacked = User.readContent(packed);
+      packed = User.write({ id: i, bool: !!Math.random() }).buffer();
+      unpacked = User.read(packed);
       if (packed.length > sizes.compactr) sizes.compactr = packed.length;
     }
   }

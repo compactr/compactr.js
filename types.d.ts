@@ -15,29 +15,10 @@ declare module 'compactr' {
     write(data: any, options?: WriteOptions): this
 
     /**
-     * Returns the bytes from the header of the encoded data buffer.
-     * A fresh schema with no written data will return a blank, usable for partial encodings.
-     * @returns The header buffer
-     */
-    headerBuffer(): Buffer
-
-    /**
-     * Returns the bytes from the content of the encoded data buffer.
-     * @returns The content buffer
-     */
-    contentBuffer(): Buffer
-
-    /**
-     * Returns the bytes from the header AND content of the encoded data buffer.
+     * Returns the bytes from the encoded data buffer.
      * @returns The data buffer
      */
     buffer(): Buffer
-
-    /**
-     * Returns the typedArray from the header AND content of the encoded data buffer.
-     * @returns The typed array
-     */
-    typedArray(): number[]
 
     /**
      * Returns the byte sizes of a data object, for insight or troubleshooting

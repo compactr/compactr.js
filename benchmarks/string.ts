@@ -29,14 +29,13 @@ let root = protobuf.Root.fromJSON({
 });
 var StringBenchTest = root.lookupType('StringBenchTest');
 
-const mult = 32;
 const sizes = { json: 0, compactr: 0, protobuf: 0 };
 
 const stringSuite = new Benchmark.Suite();
 
 /* String suite ---------------------------------------------------------------*/
 
-export function init() {
+export function init(mult) {
   const {promise, resolve} = deferred();
 
   stringSuite.add('[String] JSON', strJSON)
@@ -61,8 +60,8 @@ export function init() {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      packed = User.write({ id: i, str: '' + (Math.random()*0xffffff), special: String.fromCharCode(Math.random()*0xffff) }).contentBuffer();
-      unpacked = User.readContent(packed);
+      packed = User.write({ id: i, str: '' + (Math.random()*0xffffff), special: String.fromCharCode(Math.random()*0xffff) }).buffer();
+      unpacked = User.read(packed);
       if (packed.length > sizes.compactr) sizes.compactr = packed.length;
     }
   }
