@@ -1,9 +1,0 @@
-tests
-README.md
-.travis.yml
-benchmarks
-yarn.lock
-package-lock.json
-docs
-.eslintrc
-.clinic

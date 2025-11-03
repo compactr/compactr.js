@@ -39,3 +39,9 @@ api_docs
 yarn.lock
 package-lock.json
 .clinic
+
+# Build output
+dist/
+
+# TypeScript
+*.tsbuildinfo
