@@ -245,9 +245,9 @@ describe('Data integrity - simple', () => {
       const datetime = '2025-10-28T14:30:00.000Z';
       const buffer = Schema.write({ test: datetime });
       // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
-      // Content: 8 bytes (milliseconds since epoch)
-      // Total: 11 bytes (vs 43+ bytes for string encoding)
-      expect(buffer.length).toBe(11);
+      // Content: 9 bytes (milliseconds since epoch)
+      // Total: 12 bytes (vs 43+ bytes for string encoding)
+      expect(buffer.length).toBe(12);
     });
 
     it('should handle epoch datetime', () => {

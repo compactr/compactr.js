@@ -45,7 +45,7 @@ export default function Schema(schema, options = {}) {
     'ipv4': 4,
     'ipv6': 16,
     'date': 4,
-    'date-time': 8,
+    'date-time': 9,
   };
 
   const scope = {

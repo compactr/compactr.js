@@ -165,24 +165,46 @@ function ipv6(val, buffer, pos) {
 }
 
 function date(val, buffer, pos) {
-  const parsed = new Date(val + 'T00:00:00Z');
-  if (isNaN(parsed.getTime())) {
-    throw new Error('Invalid date format');
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(val);
+  if (!match) {
+    throw new Error('Invalid date format, expected YYYY-MM-DD');
   }
 
-  const epochMs = parsed.getTime();
-  const days = Math.floor(epochMs / 86400000);
+  const year = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const day = parseInt(match[3], 10);
 
-  return int32(days, buffer, pos);
+  buffer[pos] = year >> 8;
+  buffer[pos + 1] = year & 0xff;
+  buffer[pos + 2] = month;
+  buffer[pos + 3] = day;
+  return pos + 4;
 }
 
 function dateTime(val, buffer, pos) {
-  const parsed = new Date(val);
-  if (isNaN(parsed.getTime())) {
-    throw new Error('Invalid date-time format');
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?Z?$/.exec(val);
+  if (!match) {
+    throw new Error('Invalid date-time format, expected YYYY-MM-DDTHH:mm:ss.sssZ');
   }
 
-  return double(parsed.getTime(), buffer, pos);
+  const year = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const day = parseInt(match[3], 10);
+  const hour = parseInt(match[4], 10);
+  const minute = parseInt(match[5], 10);
+  const second = parseInt(match[6], 10);
+  const millisecond = match[7] ? parseInt(match[7], 10) : 0;
+
+  buffer[pos] = year >> 8;
+  buffer[pos + 1] = year & 0xff;
+  buffer[pos + 2] = month;
+  buffer[pos + 3] = day;
+  buffer[pos + 4] = hour;
+  buffer[pos + 5] = minute;
+  buffer[pos + 6] = second;
+  buffer[pos + 7] = millisecond >> 8;
+  buffer[pos + 8] = millisecond & 0xff;
+  return pos + 9;
 }
 
 function binary(val, buffer, pos) {

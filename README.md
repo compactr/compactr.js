@@ -111,15 +111,15 @@ Compactr supports the following OpenAPI types and formats:
 
 ## Performance
 
-I realistic scenarios, compactr performs a bit slower than JSON.stringify/ JSON.parse as well as other schema-based protocols such as `protobuf`, but can yield a byte reduction of 3.5x compared to JSON.
+I realistic scenarios, compactr performs a bit slower than JSON.stringify/ JSON.parse as well as `protobuf`, but can yield a byte reduction of 3.5x compared to JSON.
 
 ```
-[JSON-API Reponse] JSON x 289 ops/sec ±1.10% (83 runs sampled)
-[JSON-API Reponse] Compactr x 115 ops/sec ±0.93% (74 runs sampled)
-[JSON-API Reponse] Protobuf x 272 ops/sec ±1.06% (82 runs sampled)
-[JSON-API Reponse] MsgPack x 133 ops/sec ±1.38% (76 runs sampled)
+[JSON-API Reponse] JSON x 379 ops/sec ±0.66% (92 runs sampled)
+[JSON-API Reponse] Compactr x 167 ops/sec ±0.75% (85 runs sampled)
+[JSON-API Reponse] Protobuf x 358 ops/sec ±1.36% (91 runs sampled)
+[JSON-API Reponse] MsgPack x 161 ops/sec ±2.06% (79 runs sampled)
 
-Buffer size (bytes): { json: 277, compactr: 78, protobuf: 129, msgpack: 227 }
+Buffer size (bytes): { json: 277, compactr: 80, protobuf: 129, msgpack: 227 }
 ```
 
 ## Testing

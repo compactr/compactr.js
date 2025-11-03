@@ -64,20 +64,15 @@ function date(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) {
     throw new Error('Invalid date format, expected YYYY-MM-DD');
   }
-  const parsed = new Date(str + 'T00:00:00Z');
-  if (isNaN(parsed.getTime())) {
-    throw new Error('Invalid date format');
-  }
   return str;
 }
 
 function dateTime(value) {
   const str = '' + value;
-  const parsed = new Date(str);
-  if (isNaN(parsed.getTime())) {
-    throw new Error('Invalid date-time format');
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z?$/.test(str)) {
+    throw new Error('Invalid date-time format, expected YYYY-MM-DDTHH:mm:ss.sssZ');
   }
-  return parsed.toISOString();
+  return str;
 }
 
 function binary(value) {

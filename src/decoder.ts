@@ -165,27 +165,28 @@ function date(bytes, offset = 0, length?) {
     throw new Error('Invalid date byte length');
   }
 
-  const days = int32(bytes, offset);
-  const epochMs = days * 86400000;
-  const dateObj = new Date(epochMs);
-
-  const year = dateObj.getUTCFullYear();
-  const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getUTCDate()).padStart(2, '0');
+  const year = (bytes[offset] << 8) | bytes[offset + 1];
+  const month = String(bytes[offset + 2]).padStart(2, '0');
+  const day = String(bytes[offset + 3]).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
 }
 
 function dateTime(bytes, offset = 0, length?) {
   const len = length !== undefined ? length : bytes.length - offset;
-  if (len !== 8) {
+  if (len !== 9) {
     throw new Error('Invalid date-time byte length');
   }
 
-  const ms = double(bytes, offset);
-  const dateObj = new Date(ms);
+  const year = (bytes[offset] << 8) | bytes[offset + 1];
+  const month = String(bytes[offset + 2]).padStart(2, '0');
+  const day = String(bytes[offset + 3]).padStart(2, '0');
+  const hour = String(bytes[offset + 4]).padStart(2, '0');
+  const minute = String(bytes[offset + 5]).padStart(2, '0');
+  const second = String(bytes[offset + 6]).padStart(2, '0');
+  const millisecond = ((bytes[offset + 7] << 8) | bytes[offset + 8]).toString().padStart(3, '0');
 
-  return dateObj.toISOString();
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}.${millisecond}Z`;
 }
 
 function binary(bytes, offset = 0, length?) {
