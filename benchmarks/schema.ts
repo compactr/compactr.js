@@ -5,6 +5,7 @@
 import Benchmark from 'benchmark';
 import {schema} from '../dist/compactr.js';
 import protobuf  from 'protobufjs';
+import * as msgpack from '@msgpack/msgpack';
 import {deferred} from './utils.ts';
 import {randomUUID} from 'crypto';
 
@@ -21,7 +22,7 @@ let User = schema({
   },
 });
 
-const sizes = { json: 0, compactr: 0, protobuf: 0 };
+const sizes = { json: 0, compactr: 0, protobuf: 0, msgpack: 0 };
 
 let root = protobuf.Root.fromJSON({
   nested: {
@@ -50,6 +51,7 @@ export function init(mult) {
   objectSuite.add('[Schema] JSON', objJSON)
     .add('[Schema] Compactr', objCompactr)
     .add('[Schema] Protobuf', objProtobuf)
+    .add('[Schema] MsgPack', objMsgPack)
     .on('cycle', e => console.log(String(e.target)))
     .run({ 'async': true })
     .on('complete', _ => resolve(sizes));
@@ -83,6 +85,16 @@ export function init(mult) {
       packed = ObjectBenchTest.encode(message).finish();
       unpacked = ObjectBenchTest.decode(packed);
       if (packed.length > sizes.protobuf) sizes.protobuf = packed.length;
+    }
+  }
+
+  function objMsgPack() {
+    let packed, unpacked;
+
+    for(let i = 0; i<mult*mult; i++) {
+      packed = msgpack.encode({ id: i, obj: { str: randomUUID() } });
+      unpacked = msgpack.decode(packed);
+      if (packed.length > sizes.msgpack) sizes.msgpack = packed.length;
     }
   }
 

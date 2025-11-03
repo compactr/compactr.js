@@ -1,4 +1,5 @@
 import { schema } from '../../src';
+import * as logger from '../../src/logger';
 
 /* Tests --------------------------------------------------------------------- */
 
@@ -1499,7 +1500,7 @@ describe('OpenAPI-compatible object formats', () => {
     });
 
     it('should ignore undeclared properties', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const warnSpy = jest.spyOn(logger, 'log').mockImplementation();
 
       const input = {
         data: {
@@ -1515,7 +1516,7 @@ describe('OpenAPI-compatible object formats', () => {
     });
 
     it('should always warn about undeclared properties', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const warnSpy = jest.spyOn(logger, 'log').mockImplementation();
 
       const input = {
         data: {
@@ -1538,7 +1539,7 @@ describe('OpenAPI-compatible object formats', () => {
     });
 
     it('should not warn when all properties are declared', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const warnSpy = jest.spyOn(logger, 'log').mockImplementation();
 
       const input = {
         data: {

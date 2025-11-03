@@ -1,6 +1,8 @@
 import { NULL_INDICATOR, VARIANT_BASE } from './encoder';
 import { matchesVariant } from './variant-matcher';
 
+import { log } from './logger';
+
 export default function Writer(scope) {
   function estimateBufferSize(keys) {
     let size = 1;
@@ -192,7 +194,7 @@ export default function Writer(scope) {
     }
 
     if (undeclaredKeys.length > 0) {
-      console.warn(
+      log(
         `Schema validation warning: Object contains undeclared properties that will not be serialized: ${undeclaredKeys.join(', ')}`,
       );
     }

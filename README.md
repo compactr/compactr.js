@@ -1,12 +1,12 @@
 <h1 align="center">
-  <a title="OpenAPI schema serialization" href="http://compactr.js.org">
+  <a title="OpenAPI serialization" href="http://compactr.js.org">
     <img alt="Compactr" width="320px" src="http://res.cloudinary.com/kalm/image/upload/v1494589244/compactr_header_rev1.png" />
     <br/><br/>
   </a>
   Compactr
 </h1>
 <h3 align="center">
-  OpenAPI schema serialization
+  OpenAPI serialization
   <br/><br/><br/>
 </h3>
 <br/>
@@ -56,7 +56,7 @@ const decoded = userSchema.read(buffer);
 
 Compactr also supports component references ($ref).
 
-* Only local references are allowed *
+*Only local references are allowed*
 
 **Component References**
 
@@ -135,8 +135,9 @@ I realistic scenarios, compactr performs a bit slower than JSON.stringify/ JSON.
 [JSON-API Reponse] JSON x 289 ops/sec ±1.10% (83 runs sampled)
 [JSON-API Reponse] Compactr x 115 ops/sec ±0.93% (74 runs sampled)
 [JSON-API Reponse] Protobuf x 272 ops/sec ±1.06% (82 runs sampled)
+[JSON-API Reponse] MsgPack x 133 ops/sec ±1.38% (76 runs sampled)
 
-Buffer size (bytes): { json: 277, compactr: 78, protobuf: 129 }
+Buffer size (bytes): { json: 277, compactr: 78, protobuf: 129, msgpack: 227 }
 ```
 
 ## Testing

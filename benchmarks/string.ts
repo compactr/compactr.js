@@ -5,6 +5,7 @@
 import Benchmark from 'benchmark';
 import {schema} from '../dist/compactr.js';
 import protobuf  from 'protobufjs';
+import * as msgpack from '@msgpack/msgpack';
 import {deferred} from './utils.ts';
 
 /* Local variables -----------------------------------------------------------*/
@@ -29,7 +30,7 @@ let root = protobuf.Root.fromJSON({
 });
 var StringBenchTest = root.lookupType('StringBenchTest');
 
-const sizes = { json: 0, compactr: 0, protobuf: 0 };
+const sizes = { json: 0, compactr: 0, protobuf: 0, msgpack: 0 };
 
 const stringSuite = new Benchmark.Suite();
 
@@ -41,6 +42,7 @@ export function init(mult) {
   stringSuite.add('[String] JSON', strJSON)
     .add('[String] Compactr', strCompactr)
     .add('[String] Protobuf', strProtobuf)
+    .add('[String] MsgPack', strMsgPack)
     .on('cycle', e => console.log(String(e.target)))
     .run({ 'async': true })
     .on('complete', _ => resolve(sizes));
@@ -74,6 +76,16 @@ export function init(mult) {
       packed = StringBenchTest.encode(message).finish();
       unpacked = StringBenchTest.decode(packed);
       if (packed.length > sizes.protobuf) sizes.protobuf = packed.length;
+    }
+  }
+
+  function strMsgPack() {
+    let packed, unpacked;
+
+    for(let i = 0; i<mult*mult; i++) {
+      packed = msgpack.encode({ id: i, str: '' + (Math.random()*0xffffff), special: String.fromCharCode(Math.random()*0xffff) });
+      unpacked = msgpack.decode(packed);
+      if (packed.length > sizes.msgpack) sizes.msgpack = packed.length;
     }
   }
 

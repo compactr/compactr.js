@@ -5,6 +5,7 @@
 import Benchmark from 'benchmark';
 import {schema} from '../dist/compactr.js';
 import protobuf  from 'protobufjs';
+import * as msgpack from '@msgpack/msgpack';
 import {deferred} from './utils.ts';
 import {randomUUID} from 'crypto';
 
@@ -35,7 +36,7 @@ let User = schema({
   }
 });
 
-const sizes = { json: 0, compactr: 0, protobuf: 0 };
+const sizes = { json: 0, compactr: 0, protobuf: 0, msgpack: 0 };
 
 let root = protobuf.Root.fromJSON({
   nested: {
@@ -72,6 +73,7 @@ export function init(mult) {
   objectSuite.add('[JSON-API Reponse] JSON', objJSON)
     .add('[JSON-API Reponse] Compactr', objCompactr)
     .add('[JSON-API Reponse] Protobuf', objProtobuf)
+    .add('[JSON-API Reponse] MsgPack', objMsgPack)
     .on('cycle', e => console.log(String(e.target)))
     .run({ 'async': true })
     .on('complete', _ => resolve(sizes));
@@ -147,6 +149,30 @@ export function init(mult) {
       packed = ObjectBenchTest.encode(message).finish();
       unpacked = ObjectBenchTest.decode(packed);
       if (packed.length > sizes.protobuf) sizes.protobuf = packed.length;
+    }
+  }
+
+  function objMsgPack() {
+    let packed, unpacked;
+    let now = (new Date()).toISOString();
+
+    for(let i = 0; i<mult*mult; i++) {
+      packed = msgpack.encode({
+        id: randomUUID(),
+        name: `john-${i}`,
+        age: i*2+1,
+        last_connected_ip: `${generateIPDigit()}.${generateIPDigit()}.${generateIPDigit()}.${generateIPDigit()}`,
+        date_created: now,
+        date_updated: now,
+        user_settings: {
+            flag_a: true,
+            flag_b: false,
+            flag_c: false,
+        },
+        user_friends: []
+      });
+      unpacked = msgpack.decode(packed);
+      if (packed.length > sizes.msgpack) sizes.msgpack = packed.length;
     }
   }
 
