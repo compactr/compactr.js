@@ -1,6 +1,5 @@
 import { NULL_INDICATOR, VARIANT_BASE } from './encoder';
-import { matchesVariant } from './variant-matcher';
-
+import { writeFieldWithSize, processVariantWrite } from './buffer-utils';
 import { log } from './logger';
 
 export default function Writer(scope) {
@@ -64,35 +63,21 @@ export default function Writer(scope) {
       }
 
       if (field.variants) {
-        let variantIndex = -1;
-        let variantField = null;
-
-        for (let v = 0; v < field.variants.length; v++) {
-          if (matchesVariant(keyData, field.variants[v])) {
-            variantIndex = v;
-            variantField = field.variants[v];
-            break;
+        if (options !== undefined) {
+          for (let v = 0; v < field.variants.length; v++) {
+            const variant = field.variants[v];
+            if (options.coerse === true && variant.coerse) {
+              keyData = variant.coerse(keyData);
+            }
+            if (options.validate === true && variant.validate) {
+              variant.validate(keyData);
+            }
           }
-        }
-
-        if (variantIndex === -1) {
-          throw new Error(`Data does not match any variant for field: ${keys[i]}`);
         }
 
         ensureCapacity(2);
         scope.buffer[scope.position++] = field.index;
-        scope.buffer[scope.position++] = VARIANT_BASE + variantIndex;
-
-        if (options !== undefined) {
-          if (options.coerse === true && variantField.coerse) {
-            keyData = variantField.coerse(keyData);
-          }
-          if (options.validate === true && variantField.validate) {
-            variantField.validate(keyData);
-          }
-        }
-
-        scope.position = writeFieldValue(keyData, variantField);
+        scope.position = processVariantWrite(scope.buffer, scope.position, keyData, field, `Field: ${keys[i]}`);
         continue;
       }
 
@@ -119,45 +104,7 @@ export default function Writer(scope) {
 
   function writeFieldValue(value, fieldOrVariant) {
     ensureCapacity(1024);
-
-    if (fieldOrVariant.size) {
-      const count = fieldOrVariant.count;
-      if (count === 1) scope.buffer[scope.position++] = fieldOrVariant.size;
-      else if (count === 2) {
-        scope.buffer[scope.position++] = fieldOrVariant.size >> 8;
-        scope.buffer[scope.position++] = fieldOrVariant.size & 0xff;
-      }
-      else if (count === 4) {
-        scope.buffer[scope.position++] = fieldOrVariant.size >> 24;
-        scope.buffer[scope.position++] = fieldOrVariant.size >> 16;
-        scope.buffer[scope.position++] = fieldOrVariant.size >> 8;
-        scope.buffer[scope.position++] = fieldOrVariant.size & 0xff;
-      }
-      return fieldOrVariant.transformIn(value, scope.buffer, scope.position);
-    }
-
-    const sizePos = scope.position;
-    scope.position += fieldOrVariant.count;
-    const dataStart = scope.position;
-
-    const newPos = fieldOrVariant.transformIn(value, scope.buffer, scope.position);
-    const size = newPos - dataStart;
-
-    if (fieldOrVariant.count === 1) {
-      scope.buffer[sizePos] = size & 0xff;
-    }
-    else if (fieldOrVariant.count === 2) {
-      scope.buffer[sizePos] = size >> 8;
-      scope.buffer[sizePos + 1] = size & 0xff;
-    }
-    else if (fieldOrVariant.count === 4) {
-      scope.buffer[sizePos] = size >> 24;
-      scope.buffer[sizePos + 1] = size >> 16;
-      scope.buffer[sizePos + 2] = size >> 8;
-      scope.buffer[sizePos + 3] = size & 0xff;
-    }
-
-    return newPos;
+    return writeFieldWithSize(scope.buffer, scope.position, value, fieldOrVariant);
   }
 
   function sizes(data) {
@@ -220,57 +167,7 @@ export default function Writer(scope) {
       }
 
       if (field.variants) {
-        let variantIndex = -1;
-        let variantField = null;
-
-        for (let v = 0; v < field.variants.length; v++) {
-          if (matchesVariant(keyData, field.variants[v])) {
-            variantIndex = v;
-            variantField = field.variants[v];
-            break;
-          }
-        }
-
-        if (variantIndex === -1) {
-          throw new Error(`Data does not match any variant for field: ${key}`);
-        }
-
-        buffer[pos++] = VARIANT_BASE + variantIndex;
-
-        if (variantField.size) {
-          const count = variantField.count;
-          if (count === 1) buffer[pos++] = variantField.size;
-          else if (count === 2) {
-            buffer[pos++] = variantField.size >> 8;
-            buffer[pos++] = variantField.size & 0xff;
-          }
-          else if (count === 4) {
-            buffer[pos++] = variantField.size >> 24;
-            buffer[pos++] = variantField.size >> 16;
-            buffer[pos++] = variantField.size >> 8;
-            buffer[pos++] = variantField.size & 0xff;
-          }
-          pos = variantField.transformIn(keyData, buffer, pos);
-        }
-        else {
-          const sizePos = pos;
-          pos += variantField.count;
-          const dataStart = pos;
-          pos = variantField.transformIn(keyData, buffer, pos);
-          const size = pos - dataStart;
-
-          if (variantField.count === 1) buffer[sizePos] = size & 0xff;
-          else if (variantField.count === 2) {
-            buffer[sizePos] = size >> 8;
-            buffer[sizePos + 1] = size & 0xff;
-          }
-          else if (variantField.count === 4) {
-            buffer[sizePos] = size >> 24;
-            buffer[sizePos + 1] = size >> 16;
-            buffer[sizePos + 2] = size >> 8;
-            buffer[sizePos + 3] = size & 0xff;
-          }
-        }
+        pos = processVariantWrite(buffer, pos, keyData, field, `Field: ${key}`);
         continue;
       }
 
@@ -278,40 +175,7 @@ export default function Writer(scope) {
         buffer[pos++] = VARIANT_BASE;
       }
 
-      if (field.size) {
-        const count = field.count;
-        if (count === 1) buffer[pos++] = field.size;
-        else if (count === 2) {
-          buffer[pos++] = field.size >> 8;
-          buffer[pos++] = field.size & 0xff;
-        }
-        else if (count === 4) {
-          buffer[pos++] = field.size >> 24;
-          buffer[pos++] = field.size >> 16;
-          buffer[pos++] = field.size >> 8;
-          buffer[pos++] = field.size & 0xff;
-        }
-        pos = field.transformIn(keyData, buffer, pos);
-      }
-      else {
-        const sizePos = pos;
-        pos += field.count;
-        const dataStart = pos;
-        pos = field.transformIn(keyData, buffer, pos);
-        const size = pos - dataStart;
-
-        if (field.count === 1) buffer[sizePos] = size & 0xff;
-        else if (field.count === 2) {
-          buffer[sizePos] = size >> 8;
-          buffer[sizePos + 1] = size & 0xff;
-        }
-        else if (field.count === 4) {
-          buffer[sizePos] = size >> 24;
-          buffer[sizePos + 1] = size >> 16;
-          buffer[sizePos + 2] = size >> 8;
-          buffer[sizePos + 3] = size & 0xff;
-        }
-      }
+      pos = writeFieldWithSize(buffer, pos, keyData, field);
     }
 
     return pos;

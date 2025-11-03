@@ -27,7 +27,7 @@ function resolveType(type, format) {
   return type;
 }
 
-export default function Schema(schema, options = { keyOrder: false }) {
+export default function Schema(schema, options = {}) {
   let unwrappedSchema = schema;
   if (schema.type === 'object' && schema.properties) {
     unwrappedSchema = schema.properties;

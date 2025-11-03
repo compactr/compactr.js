@@ -55,7 +55,6 @@ declare module 'compactr' {
   }
 
   export interface SchemaOptions {
-    keyOrder?: boolean
     schemas?: { [key: string]: SchemaFieldDefinition }
   }
 

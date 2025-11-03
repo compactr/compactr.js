@@ -1,4 +1,4 @@
-import { matchesVariant } from './variant-matcher';
+import { writeFieldWithSize, processVariantWrite } from './buffer-utils';
 
 export const NULL_INDICATOR = 0x00;
 export const VARIANT_BASE = 0x01;
@@ -214,57 +214,7 @@ function array(schema, val, buffer, pos) {
     }
 
     if (schema.variants) {
-      let variantIndex = -1;
-      let variantField = null;
-
-      for (let v = 0; v < schema.variants.length; v++) {
-        if (matchesVariant(item, schema.variants[v])) {
-          variantIndex = v;
-          variantField = schema.variants[v];
-          break;
-        }
-      }
-
-      if (variantIndex === -1) {
-        throw new Error(`Array item does not match any variant`);
-      }
-
-      buffer[pos++] = schema.nullable ? VARIANT_BASE + variantIndex : VARIANT_BASE + variantIndex;
-
-      if (variantField.size) {
-        const count = variantField.count;
-        if (count === 1) buffer[pos++] = variantField.size;
-        else if (count === 2) {
-          buffer[pos++] = variantField.size >> 8;
-          buffer[pos++] = variantField.size & 0xff;
-        }
-        else if (count === 4) {
-          buffer[pos++] = variantField.size >> 24;
-          buffer[pos++] = variantField.size >> 16;
-          buffer[pos++] = variantField.size >> 8;
-          buffer[pos++] = variantField.size & 0xff;
-        }
-        pos = variantField.transformIn(item, buffer, pos);
-      }
-      else {
-        const sizePos = pos;
-        pos += variantField.count;
-        const dataStart = pos;
-        pos = variantField.transformIn(item, buffer, pos);
-        const size = pos - dataStart;
-
-        if (variantField.count === 1) buffer[sizePos] = size & 0xff;
-        else if (variantField.count === 2) {
-          buffer[sizePos] = size >> 8;
-          buffer[sizePos + 1] = size & 0xff;
-        }
-        else if (variantField.count === 4) {
-          buffer[sizePos] = size >> 24;
-          buffer[sizePos + 1] = size >> 16;
-          buffer[sizePos + 2] = size >> 8;
-          buffer[sizePos + 3] = size & 0xff;
-        }
-      }
+      pos = processVariantWrite(buffer, pos, item, schema, 'Array item');
       continue;
     }
 
@@ -272,40 +222,7 @@ function array(schema, val, buffer, pos) {
       buffer[pos++] = VARIANT_BASE;
     }
 
-    if (schema.size) {
-      const count = schema.count;
-      if (count === 1) buffer[pos++] = schema.size;
-      else if (count === 2) {
-        buffer[pos++] = schema.size >> 8;
-        buffer[pos++] = schema.size & 0xff;
-      }
-      else if (count === 4) {
-        buffer[pos++] = schema.size >> 24;
-        buffer[pos++] = schema.size >> 16;
-        buffer[pos++] = schema.size >> 8;
-        buffer[pos++] = schema.size & 0xff;
-      }
-      pos = schema.transformIn(item, buffer, pos);
-    }
-    else {
-      const sizePos = pos;
-      pos += schema.count;
-      const dataStart = pos;
-      pos = schema.transformIn(item, buffer, pos);
-      const size = pos - dataStart;
-
-      if (schema.count === 1) buffer[sizePos] = size & 0xff;
-      else if (schema.count === 2) {
-        buffer[sizePos] = size >> 8;
-        buffer[sizePos + 1] = size & 0xff;
-      }
-      else if (schema.count === 4) {
-        buffer[sizePos] = size >> 24;
-        buffer[sizePos + 1] = size >> 16;
-        buffer[sizePos + 2] = size >> 8;
-        buffer[sizePos + 3] = size & 0xff;
-      }
-    }
+    pos = writeFieldWithSize(buffer, pos, item, schema);
   }
 
   return pos;

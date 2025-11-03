@@ -109,27 +109,9 @@ Compactr supports the following OpenAPI types and formats:
 | object | - | variable | Nested object |
 
 
-## Size Comparison
-
-**Input:**
-```javascript
-{
-  id: 123,
-  name: 'John',
-  email: 'john@example.com',
-  active: true
-}
-```
-
-**JSON:** `{"id":123,"name":"John","email":"john@example.com","active":true}` - 61 bytes
-
-**Compactr:** `<Buffer 04 00 01 01 04 7b 01 04 4a 6f 68 6e 02 11 6a 6f 68 6e 40 65 78 61 6d 70 6c 65 2e 63 6f 6d 03 01 01>` - 32 bytes
-
-**Savings:** 48% smaller
-
 ## Performance
 
-I realistic scenarios, compactr performs a bit slower than JSON.stringify/ JSON.parse as well as other schema-based protocols such as `protobuf`, but can yield a byte reduction of 3.5x.
+I realistic scenarios, compactr performs a bit slower than JSON.stringify/ JSON.parse as well as other schema-based protocols such as `protobuf`, but can yield a byte reduction of 3.5x compared to JSON.
 
 ```
 [JSON-API Reponse] JSON x 289 ops/sec ±1.10% (83 runs sampled)
