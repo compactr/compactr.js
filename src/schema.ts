@@ -3,6 +3,8 @@ import Decoder from './decoder';
 import Reader from './reader';
 import Writer from './writer';
 import Converter from './converter';
+import { canUseCodegen, generateWriteFunction } from './codegen';
+import { writeFieldWithSize, processVariantWrite } from './buffer-utils';
 
 function resolveType(type, format) {
   if (type === 'integer') {
@@ -64,6 +66,25 @@ export default function Schema(schema, options = {}) {
   }
 
   scope.itemsSet = new Set(scope.items);
+
+  const codegenInfo = canUseCodegen(scope.indices);
+  if (codegenInfo.canGenerate) {
+    const generatedFn = generateWriteFunction(scope, codegenInfo);
+    if (generatedFn) {
+      // Bind the generated function with required context and helpers
+      scope.generatedWrite = function (data) {
+        return generatedFn.call({ scope }, data, writeFieldWithSize, processVariantWrite);
+      };
+      if (options.debug) {
+        const codegenCount = Object.values(codegenInfo.fields).filter(Boolean).length;
+        const totalCount = Object.keys(codegenInfo.fields).length;
+        console.log(`✓ Code generation enabled for ${codegenCount}/${totalCount} fields`);
+      }
+    }
+  }
+  else if (options.debug) {
+    console.log('✗ Code generation disabled (no compatible fields)');
+  }
 
   function resolveRef(ref, options) {
     if (!ref || !ref.startsWith('#/')) {
@@ -135,6 +156,7 @@ export default function Schema(schema, options = {}) {
     }
     return normalized;
   }
+
   const writer = Writer(scope);
   const reader = Reader(scope);
 

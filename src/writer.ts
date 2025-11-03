@@ -42,6 +42,10 @@ export default function Writer(scope) {
   }
 
   function write(data, options?) {
+    if (scope.generatedWrite && !options) {
+      return scope.generatedWrite(data);
+    }
+
     const keys = filterKeys(data, options);
 
     const estimatedSize = estimateBufferSize(keys);
