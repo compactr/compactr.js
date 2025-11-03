@@ -1,132 +1,174 @@
 <h1 align="center">
-  <a title="Schema based serialization made easy" href="http://compactr.js.org">
+  <a title="OpenAPI schema serialization" href="http://compactr.js.org">
     <img alt="Compactr" width="320px" src="http://res.cloudinary.com/kalm/image/upload/v1494589244/compactr_header_rev1.png" />
     <br/><br/>
   </a>
   Compactr
 </h1>
 <h3 align="center">
-  Schema based serialization made easy
+  OpenAPI schema serialization
   <br/><br/><br/>
 </h3>
 <br/>
 
-[![Compactr](https://img.shields.io/npm/v/compactr.svg)](https://www.npmjs.com/package/compactr)
-[![Build Status](https://travis-ci.org/compactr/compactr.js.svg?branch=master)](https://travis-ci.org/compactr/compactr.js)
-[![Gitter](https://img.shields.io/gitter/room/compactr/compactr.svg)](https://gitter.im/compactr/compactr)
-
----
-
-## What is this and why does it matter?
-
-Protocol Buffers are awesome. Having schemas to deflate and inflate data while maintaining some kind of validation is a great concept. Compactr's goal is to build on that to better suit the Javascript ecosystem.
-
-[More](docs/ABOUT.md)
-
+- **OpenAPI 3.x Compatible** Use your existing OpenAPI schemas, no extra definitions required
+- **Cuts bandwidth in half** Average API responses are multiple times smaller than JSON
+- **Built for actual APIs** Specialty field types to optimize common items, ex: UUID, date-time, ivp4 
+- **Zero dependencies** and can be bundled down to ~5kb!
 
 ## Install
 
+```bash
+npm install compactr
 ```
-    npm install compactr
-```
 
+## Usage
 
-## Implementation
+### Basic Example
 
-```node
+```typescript
+import { schema } from 'compactr';
 
-const Compactr = require('compactr');
-
-// Defining a schema
-const userSchema = Compactr.schema({ 
-	id: { type: 'number' },
-	name: { type: 'string' }
+const userSchema = schema({
+  type: 'object',
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    name: { type: 'string' },
+    age: { type: 'integer', format: 'int32' },
+    balance: { type: 'number', format: 'double' },
+    created: { type: 'string', format: 'date-time' },
+    tags: { type: 'array', items: { type: 'string' } }
+  }
 });
 
+const data = {
+  id: '550e8400-e29b-4d4e-a7d4-426614174000',
+  name: 'Alice',
+  age: 30,
+  balance: 1234.56,
+  created: '2025-10-28T14:30:00.000Z',
+  tags: ['premium', 'verified']
+};
 
-
-// Encoding
-userSchema.write({ id: 123, name: 'John' });
-
-// Get the encoded buffer
-const buffer = userSchema.buffer();
-
-// Decoding
+const buffer = userSchema.write(data).buffer();
 const decoded = userSchema.read(buffer);
 ```
 
-## Size comparison
+Compactr also supports component references ($ref).
 
-JSON: `{"id":123,"name":"John"}`: 24 bytes 
+* Only local references are allowed *
 
-Compactr (full): `<Buffer 02 00 01 01 04 7b 4a 6f 68 6e>`: 10 bytes
+**Component References**
 
-Compactr (partial): `<Buffer 7b 4a 6f 68 6e>`: 5 bytes
-
-
-## Protocol details
-
-### Data types
-
-Type | Count bytes | Byte size
---- | --- | ---
-boolean | 0 | 1
-number | 0 | 8
-integer | 0 | 8
-int32 | 0 | 4
-int64 | 0 | 8
-double | 0 | 8
-float | 0 | 8
-string | 1 | 2/char
-char8 | 1 | 1/char
-char16 | 1 | 2/char
-char32 | 1 | 4/char 
-array | 1 | (x)/entry
-object | 1 | (x)
-
-
-* Count bytes range can be specified per-item in the schema*
-
-See the full [Compactr protocol](https://github.com/compactr/protocol)
-
-## Benchmarks
-
-```
-[Array] JSON x 737 ops/sec ±1.04% (91 runs sampled)
-[Array] Compactr x 536 ops/sec ±1.25% (82 runs sampled)
-[Array] size: { json: 0, compactr: 10 }
-
-[Boolean] JSON x 996 ops/sec ±0.84% (93 runs sampled)
-[Boolean] Compactr x 1,439 ops/sec ±1.24% (83 runs sampled)
-[Boolean] Protobuf x 2,585 ops/sec ±1.32% (91 runs sampled)
-[Boolean] size: { json: 23, compactr: 5, protobuf: 5 }
-
-[Float] JSON x 713 ops/sec ±1.29% (88 runs sampled)
-[Float] Compactr x 1,056 ops/sec ±1.38% (86 runs sampled)
-[Float] Protobuf x 2,432 ops/sec ±1.45% (88 runs sampled)
-[Float] size: { json: 41, compactr: 12, protobuf: 12 }
-
-[Integer] JSON x 954 ops/sec ±0.77% (93 runs sampled)
-[Integer] Compactr x 1,520 ops/sec ±1.21% (89 runs sampled)
-[Integer] Protobuf x 2,676 ops/sec ±1.22% (90 runs sampled)
-[Integer] size: { json: 24, compactr: 8, protobuf: 7 }
-
-[Object] JSON x 512 ops/sec ±0.62% (90 runs sampled)
-[Object] Compactr x 412 ops/sec ±1.46% (81 runs sampled)
-[Object] Protobuf x 898 ops/sec ±0.92% (93 runs sampled)
-[Object] size: { json: 46, compactr: 13, protobuf: 25 }
-
-[String] JSON x 432 ops/sec ±0.79% (88 runs sampled)
-[String] Compactr x 428 ops/sec ±0.87% (87 runs sampled)
-[String] Protobuf x 738 ops/sec ±0.71% (90 runs sampled)
-[String] size: { json: 57, compactr: 14, protobuf: 28 }
+```typescript
+const schema = schema(
+  {
+    user: { $ref: '#/User' },
+    product: { $ref: '#/Product' }
+  },
+  {
+    schemas: {
+      User: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', format: 'int32' },
+          name: { type: 'string' }
+        }
+      },
+      Product: {
+        type: 'object',
+        properties: {
+          sku: { type: 'string' },
+          price: { type: 'number', format: 'double' }
+        }
+      }
+    }
+  }
+);
 ```
 
-## Want to help ?
+## Supported Types
 
-You are awesome! Open an issue on this project, identifying the feature that you want to tackle and we'll take the discussion there!
+Compactr supports the following OpenAPI types and formats:
+
+| Type | Format | Bytes | Description |
+| --- | --- | --- | --- |
+| boolean | - | 1 | Boolean value |
+| integer | int32 | 4 | 32-bit integer |
+| integer | int64 | 8 | 64-bit integer |
+| number | float | 4 | 32-bit floating point |
+| number | double | 8 | 64-bit floating point |
+| string | - | 2/char | UTF-8 string |
+| string | uuid | 16 | UUID (compressed) |
+| string | ipv4 | 4 | IPv4 address |
+| string | ipv6 | 16 | IPv6 address |
+| string | date | 4 | Date (YYYY-MM-DD) |
+| string | date-time | 8 | ISO 8601 date-time |
+| string | binary | variable | Base64 binary data |
+| array | - | variable | Array of items |
+| object | - | variable | Nested object |
 
 
-## License 
+## Size Comparison
+
+**Input:**
+```javascript
+{
+  id: 123,
+  name: 'John',
+  email: 'john@example.com',
+  active: true
+}
+```
+
+**JSON:** `{"id":123,"name":"John","email":"john@example.com","active":true}` - 61 bytes
+
+**Compactr:** `<Buffer 04 00 01 01 04 7b 01 04 4a 6f 68 6e 02 11 6a 6f 68 6e 40 65 78 61 6d 70 6c 65 2e 63 6f 6d 03 01 01>` - 32 bytes
+
+**Savings:** 48% smaller
+
+## Performance
+
+I realistic scenarios, compactr performs a bit slower than JSON.stringify/ JSON.parse as well as other schema-based protocols such as `protobuf`, but can yield a byte reduction of 3.5x.
+
+```
+[JSON-API Reponse] JSON x 289 ops/sec ±1.10% (83 runs sampled)
+[JSON-API Reponse] Compactr x 115 ops/sec ±0.93% (74 runs sampled)
+[JSON-API Reponse] Protobuf x 272 ops/sec ±1.06% (82 runs sampled)
+
+Buffer size (bytes): { json: 277, compactr: 78, protobuf: 129 }
+```
+
+## Testing
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+Run benchmarks:
+
+```bash
+npm run bench
+```
+
+Build the project:
+
+```bash
+npm run build
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
 
 [Apache 2.0](LICENSE) (c) 2025 Frederic Charette

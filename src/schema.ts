@@ -1,19 +1,9 @@
-/** Schema parsing component */
-
-/* Requires ------------------------------------------------------------------ */
-
 import Encoder from './encoder';
 import Decoder from './decoder';
 import Reader from './reader';
 import Writer from './writer';
 import Converter from './converter';
 
-/* Methods ------------------------------------------------------------------- */
-
-/**
- * Resolves the internal type based on OpenAPI type and format
- * @private
- */
 function resolveType(type, format) {
   if (type === 'integer') {
     const fmt = format || 'int32';
@@ -38,14 +28,11 @@ function resolveType(type, format) {
 }
 
 export default function Schema(schema, options = { keyOrder: false }) {
-  // Handle top-level schema object (OpenAPI format)
-  // If schema has type: 'object' and properties, unwrap it
   let unwrappedSchema = schema;
   if (schema.type === 'object' && schema.properties) {
     unwrappedSchema = schema.properties;
   }
 
-  // Normalize OpenAPI schema format to internal format
   const normalizedSchema = normalizeSchema(unwrappedSchema, options);
 
   const defaultSizes = {
@@ -67,26 +54,23 @@ export default function Schema(schema, options = { keyOrder: false }) {
     items: Object.keys(normalizedSchema),
     buffer: [],
     options,
-    indexToField: {}, // Performance: O(1) reverse lookup from index to field
-    itemsSet: null, // Performance: O(1) field validation in writer
+    indexToField: {},
+    itemsSet: null,
   };
   scope.indices = preformat(normalizedSchema);
 
-  // Build reverse index map for O(1) lookups during deserialization
   for (const fieldName of scope.items) {
     scope.indexToField[scope.indices[fieldName].index] = scope.indices[fieldName];
   }
 
-  // Build Set for O(1) field validation during serialization
   scope.itemsSet = new Set(scope.items);
 
-  /** @private */
   function resolveRef(ref, options) {
     if (!ref || !ref.startsWith('#/')) {
       throw new Error(`Invalid $ref format: ${ref}. Only internal references (#/...) are supported.`);
     }
 
-    const parts = ref.split('/').slice(1); // Remove leading '#'
+    const parts = ref.split('/').slice(1);
     let resolved = options.schemas;
 
     for (const part of parts) {
@@ -103,42 +87,33 @@ export default function Schema(schema, options = { keyOrder: false }) {
     return resolved;
   }
 
-  /** @private */
   function normalizeFieldDefinition(fieldDef, options) {
-    // Handle $ref
     if (fieldDef.$ref) {
       if (!options.schemas) {
         throw new Error(`$ref "${fieldDef.$ref}" found but no schemas provided in options`);
       }
-      // Resolve the reference
       let resolved = resolveRef(fieldDef.$ref, options);
 
-      // Unwrap if the component is a wrapped object schema
       if (resolved.type === 'object' && resolved.properties && !resolved.schema) {
         resolved = { ...resolved };
         resolved.schema = resolved.properties;
         delete resolved.properties;
       }
 
-      // Normalize the resolved component
       return normalizeFieldDefinition(resolved, options);
     }
 
-    // Create a copy to avoid mutating the original
     const normalized = { ...fieldDef };
 
-    // Transform OpenAPI 'properties' to internal 'schema'
     if (normalized.properties && !normalized.schema) {
       normalized.schema = normalizeSchema(normalized.properties, options);
       delete normalized.properties;
     }
 
-    // Normalize nested items
     if (normalized.items) {
       normalized.items = normalizeFieldDefinition(normalized.items, options);
     }
 
-    // Normalize oneOf/anyOf variants
     if (normalized.oneOf) {
       normalized.oneOf = normalized.oneOf.map(v => normalizeFieldDefinition(v, options));
     }
@@ -146,7 +121,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
       normalized.anyOf = normalized.anyOf.map(v => normalizeFieldDefinition(v, options));
     }
 
-    // Normalize nested schema
     if (normalized.schema && typeof normalized.schema === 'object') {
       normalized.schema = normalizeSchema(normalized.schema, options);
     }
@@ -154,7 +128,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
     return normalized;
   }
 
-  /** @private */
   function normalizeSchema(schema, options) {
     const normalized = {};
     for (const key in schema) {
@@ -165,24 +138,20 @@ export default function Schema(schema, options = { keyOrder: false }) {
   const writer = Writer(scope);
   const reader = Reader(scope);
 
-  /** @private */
   function preformat(schema) {
     const ret = {};
     Object.keys(schema)
       .sort()
       .forEach((key, index) => {
-        // Handle oneOf/anyOf fields
         if (schema[key].oneOf || schema[key].anyOf) {
           const variantDefs = schema[key].oneOf || schema[key].anyOf;
           const variants = variantDefs.map((variantDef) => {
             const variantType = variantDef.type;
             const variantFormat = variantDef.format;
             const variantInternalType = resolveType(variantType, variantFormat);
-            // Binary fields need 4 bytes, arrays/objects need 2 bytes for size counters
             const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : (variantInternalType === 'array' || variantInternalType === 'object' ? 2 : 1));
             const variantChildSchema = computeNestedVariant(variantDef);
 
-            // For object variants, extract schema keys for variant matching
             const schemaKeys = (variantInternalType === 'object' && variantDef.schema)
               ? Object.keys(variantDef.schema)
               : null;
@@ -214,11 +183,9 @@ export default function Schema(schema, options = { keyOrder: false }) {
           return;
         }
 
-        // Handle regular fields
         const fieldType = schema[key].type;
         const fieldFormat = schema[key].format;
         const internalType = resolveType(fieldType, fieldFormat);
-        // Binary fields need 4 bytes, arrays/objects need 2 bytes for size counters
         const count = schema[key].count || (internalType === 'binary' ? 4 : (internalType === 'array' || internalType === 'object' ? 2 : 1));
         const childSchema = computeNested(schema, key);
 
@@ -241,7 +208,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
     return ret;
   }
 
-  /** @private */
   function computeNested(schema, key) {
     const keyType = schema[key].type;
     const isObject = (keyType === 'object');
@@ -250,7 +216,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
 
     if (isObject === true || isArray === true) {
       if (isObject === true) {
-        // After normalization, schema should always be present for objects
         childSchema = Schema(schema[key].schema, options);
       }
       if (isArray === true) {
@@ -261,9 +226,7 @@ export default function Schema(schema, options = { keyOrder: false }) {
     return childSchema;
   }
 
-  /** @private */
   function processArrayItems(itemDef) {
-    // Handle oneOf/anyOf in array items
     if (itemDef.oneOf || itemDef.anyOf) {
       const variantDefs = itemDef.oneOf || itemDef.anyOf;
       const variants = variantDefs.map((variantDef) => {
@@ -273,7 +236,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
         const variantCount = variantDef.count || (variantInternalType === 'binary' ? 4 : (variantInternalType === 'array' || variantInternalType === 'object' ? 2 : 1));
         const variantChildSchema = processArrayItemsNested(variantDef);
 
-        // For object variants, extract schema keys for variant matching
         const schemaKeys = (variantInternalType === 'object' && variantDef.schema)
           ? Object.keys(variantDef.schema)
           : null;
@@ -304,7 +266,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
       };
     }
 
-    // Handle regular array items
     const itemType = itemDef.type;
     const itemFormat = itemDef.format;
     const internalItemType = resolveType(itemType, itemFormat);
@@ -320,14 +281,12 @@ export default function Schema(schema, options = { keyOrder: false }) {
     };
   }
 
-  /** @private */
   function processArrayItemsNested(itemDef) {
     const itemType = itemDef.type;
     const isObject = (itemType === 'object');
     const isArray = (itemType === 'array');
 
     if (isObject === true) {
-      // After normalization, schema should always be present for objects
       return Schema(itemDef.schema, options);
     }
 
@@ -338,7 +297,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
     return undefined;
   }
 
-  /** @private */
   function computeNestedVariant(variantDef) {
     const variantType = variantDef.type;
     const isObject = (variantType === 'object');
@@ -347,7 +305,6 @@ export default function Schema(schema, options = { keyOrder: false }) {
 
     if (isObject === true || isArray === true) {
       if (isObject === true) {
-        // After normalization, schema should always be present for objects
         childSchema = Schema(variantDef.schema, options);
       }
       if (isArray === true) {

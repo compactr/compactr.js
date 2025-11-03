@@ -25,12 +25,11 @@
   },
   "keywords": [
     "serialize",
-    "serializing",
-    "buffer",
-    "byte",
+    "openapi",
+    "swagger",
     "compress",
-    "protobuff",
-    "snappy",
+    "protobuf",
+    "encode",
     "msgpack"
   ],
   "files": [

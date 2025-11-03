@@ -1,16 +1,6 @@
-/** Data reader component */
-
-/* Requires ------------------------------------------------------------------ */
-
 import Decoder, { NULL_INDICATOR, VARIANT_BASE } from './decoder';
 
-/* Methods ------------------------------------------------------------------- */
-
 export default function Reader(scope) {
-  /**
-   * Read from buffer at specific offset (zero-copy for nested objects)
-   * @private
-   */
   function readFromOffset(bytes, offset, length) {
     const ret = {};
     if (scope.options.keyOrder === true) {
@@ -19,14 +9,13 @@ export default function Reader(scope) {
       }
     }
 
-    let caret = offset + 1; // Start after field count
+    let caret = offset + 1;
     const fieldCount = bytes[offset];
     const end = offset + length;
 
     for (let i = 0; i < fieldCount; i++) {
       if (caret >= end) break;
 
-      // Read field index
       const fieldIndex = bytes[caret];
       caret++;
 
@@ -35,18 +24,15 @@ export default function Reader(scope) {
         throw new Error(`Unknown field index: ${fieldIndex}`);
       }
 
-      // Check for discriminator byte if field is nullable or has variants
       if (field.nullable || field.variants) {
         const discriminatorByte = bytes[caret];
         caret++;
 
         if (discriminatorByte === NULL_INDICATOR) {
-          // Field is null - no size or content follows
           ret[field.name] = null;
           continue;
         }
 
-        // Handle variant fields
         if (field.variants) {
           const variantIndex = discriminatorByte - VARIANT_BASE;
           if (variantIndex < 0 || variantIndex >= field.variants.length) {
@@ -57,26 +43,21 @@ export default function Reader(scope) {
           const size = variant.size || readSize(bytes, caret, variant.count);
           caret += variant.count;
 
-          // Zero-copy decode: pass offset and length for all types
           ret[field.name] = variant.transformOut(bytes, caret, size);
           caret += size;
           continue;
         }
 
-        // Regular nullable field is present
         const size = field.size || readSize(bytes, caret, field.count);
         caret += field.count;
 
-        // Zero-copy decode: pass offset and length for all types
         ret[field.name] = field.transformOut(bytes, caret, size);
         caret += size;
       }
       else {
-        // Non-nullable, non-variant field
         const size = field.size || readSize(bytes, caret, field.count);
         caret += field.count;
 
-        // Zero-copy decode: pass offset and length for all types
         ret[field.name] = field.transformOut(bytes, caret, size);
         caret += size;
       }
@@ -93,11 +74,10 @@ export default function Reader(scope) {
       }
     }
 
-    let caret = 1; // Start after field count
+    let caret = 1;
     const fieldCount = bytes[0];
 
     for (let i = 0; i < fieldCount; i++) {
-      // Read field index
       const fieldIndex = bytes[caret];
       caret++;
 
@@ -106,18 +86,15 @@ export default function Reader(scope) {
         throw new Error(`Unknown field index: ${fieldIndex}`);
       }
 
-      // Check for discriminator byte if field is nullable or has variants
       if (field.nullable || field.variants) {
         const discriminatorByte = bytes[caret];
         caret++;
 
         if (discriminatorByte === NULL_INDICATOR) {
-          // Field is null - no size or content follows
           ret[field.name] = null;
           continue;
         }
 
-        // Handle variant fields
         if (field.variants) {
           const variantIndex = discriminatorByte - VARIANT_BASE;
           if (variantIndex < 0 || variantIndex >= field.variants.length) {
@@ -128,26 +105,21 @@ export default function Reader(scope) {
           const size = variant.size || readSize(bytes, caret, variant.count);
           caret += variant.count;
 
-          // Zero-copy decode: pass offset and length for all types
           ret[field.name] = variant.transformOut(bytes, caret, size);
           caret += size;
           continue;
         }
 
-        // Regular nullable field is present
         const size = field.size || readSize(bytes, caret, field.count);
         caret += field.count;
 
-        // Zero-copy decode: pass offset and length for all types
         ret[field.name] = field.transformOut(bytes, caret, size);
         caret += size;
       }
       else {
-        // Non-nullable, non-variant field
         const size = field.size || readSize(bytes, caret, field.count);
         caret += field.count;
 
-        // Zero-copy decode: pass offset and length for all types
         ret[field.name] = field.transformOut(bytes, caret, size);
         caret += size;
       }
@@ -156,11 +128,6 @@ export default function Reader(scope) {
     return ret;
   }
 
-  /**
-   * Performance: Fast size reading without array slicing
-   * Reads 1-4 bytes directly from buffer instead of creating slice
-   * @private
-   */
   function readSize(bytes, offset, count) {
     if (count === 1) return bytes[offset];
     if (count === 2) return (bytes[offset] << 8) | bytes[offset + 1];
@@ -168,7 +135,6 @@ export default function Reader(scope) {
       return (bytes[offset] << 24) | (bytes[offset + 1] << 16)
         | (bytes[offset + 2] << 8) | bytes[offset + 3];
     }
-    // Fallback for unexpected sizes (should not happen in practice)
     return Decoder.unsigned(bytes.slice(offset, offset + count));
   }
 
