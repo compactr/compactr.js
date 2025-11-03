@@ -99,7 +99,7 @@ export default function Writer(scope) {
       scope.position = writeFieldValue(keyData, field);
     }
 
-    return this;
+    return Buffer.from(scope.buffer.subarray(0, scope.position));
   }
 
   function writeFieldValue(value, fieldOrVariant) {
@@ -181,9 +181,5 @@ export default function Writer(scope) {
     return pos;
   }
 
-  function buffer() {
-    return Buffer.from(scope.buffer.subarray(0, scope.position));
-  }
-
-  return { write, buffer, sizes, writeToBuffer };
+  return { write, sizes, writeToBuffer };
 }

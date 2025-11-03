@@ -12,7 +12,7 @@ describe('OpenAPI spec test', () => {
     };
 
     it('should return the response object unchanged', () => {
-      expect(Schema.read(Schema.write(response).buffer())).toEqual(response);
+      expect(Schema.read(Schema.write(response))).toEqual(response);
     });
   });
 
@@ -34,7 +34,7 @@ describe('OpenAPI spec test', () => {
     };
 
     it('should return the response object unchanged', () => {
-      expect(Schema.read(Schema.write(response).buffer())).toEqual(response);
+      expect(Schema.read(Schema.write(response))).toEqual(response);
     });
   });
 });

@@ -12,12 +12,12 @@ import { init as jsonapiresponse } from './jsonapiresponse.ts';
 import { sequence } from './utils.ts';
 
 const benchmarks = [
-  array,
+  /*array,
   boolean,
   integer,
   schema,
   string,
-  uuid,
+  uuid,*/
   jsonapiresponse,
 ];
 

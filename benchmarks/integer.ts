@@ -58,7 +58,7 @@ export function init(mult) {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      packed = User.write({ id: i, int: Math.round(Math.random() * 1000000) }).buffer();
+      packed = User.write({ id: i, int: Math.round(Math.random() * 1000000) });
       unpacked = User.read(packed);
       if (packed.length > sizes.compactr) sizes.compactr = packed.length;
     }

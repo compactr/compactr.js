@@ -121,7 +121,7 @@ export function init(mult) {
               flag_c: false,
           },
           user_friends: []
-      }).buffer();
+      });
       unpacked = User.read(packed);
       if (packed.length > sizes.compactr) sizes.compactr = packed.length;
     }

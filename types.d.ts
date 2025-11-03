@@ -7,18 +7,12 @@ declare module 'compactr' {
 
   export interface SchemaInstance {
     /**
-     * Start writing some data against a schema
+     * Encodes data according to the schema
      * @param data The data to be encoded
      * @param options The options for the encoding
-     * @returns Self reference
+     * @returns The encoded buffer
      */
-    write(data: any, options?: WriteOptions): this
-
-    /**
-     * Returns the bytes from the encoded data buffer.
-     * @returns The data buffer
-     */
-    buffer(): Buffer
+    write(data: any, options?: WriteOptions): Buffer
 
     /**
      * Returns the byte sizes of a data object, for insight or troubleshooting

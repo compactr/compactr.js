@@ -50,7 +50,7 @@ const data = {
   tags: ['premium', 'verified']
 };
 
-const buffer = userSchema.write(data).buffer();
+const buffer = userSchema.write(data);
 const decoded = userSchema.read(buffer);
 ```
 

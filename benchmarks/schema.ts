@@ -71,7 +71,7 @@ export function init(mult) {
     let packed, unpacked;
 
     for(let i = 0; i<mult*mult; i++) {
-      packed = User.write({ id: i, obj: { str: randomUUID() } }).buffer();
+      packed = User.write({ id: i, obj: { str: randomUUID() } });
       unpacked = User.read(packed);
       if (packed.length > sizes.compactr) sizes.compactr = packed.length;
     }

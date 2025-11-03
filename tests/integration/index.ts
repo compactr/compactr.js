@@ -8,15 +8,15 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'boolean' } });
 
     it('should preserve boolean value and type - true', () => {
-      expect(Schema.read(Schema.write({ test: true }).buffer())).toEqual({ test: true });
+      expect(Schema.read(Schema.write({ test: true }))).toEqual({ test: true });
     });
 
     it('should preserve boolean value and type - false', () => {
-      expect(Schema.read(Schema.write({ test: false }).buffer())).toEqual({ test: false });
+      expect(Schema.read(Schema.write({ test: false }))).toEqual({ test: false });
     });
 
     it('should skip null or undefined values', () => {
-      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({});
+      expect(Schema.read(Schema.write({ test: null }))).toEqual({});
     });
   });
 
@@ -24,11 +24,11 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'number', format: 'double' } });
 
     it('should preserve number value and type', () => {
-      expect(Schema.read(Schema.write({ test: 23.23 }).buffer())).toEqual({ test: 23.23 });
+      expect(Schema.read(Schema.write({ test: 23.23 }))).toEqual({ test: 23.23 });
     });
 
     it('should preserve number value and type for negative values', () => {
-      expect(Schema.read(Schema.write({ test: -23.23 }).buffer())).toEqual({ test: -23.23 });
+      expect(Schema.read(Schema.write({ test: -23.23 }))).toEqual({ test: -23.23 });
     });
   });
 
@@ -36,11 +36,11 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'integer', format: 'int32' } });
 
     it('should preserve integer value and type', () => {
-      expect(Schema.read(Schema.write({ test: 123 }).buffer())).toEqual({ test: 123 });
+      expect(Schema.read(Schema.write({ test: 123 }))).toEqual({ test: 123 });
     });
 
     it('should preserve integer value and type for negative values', () => {
-      expect(Schema.read(Schema.write({ test: -456 }).buffer())).toEqual({ test: -456 });
+      expect(Schema.read(Schema.write({ test: -456 }))).toEqual({ test: -456 });
     });
   });
 
@@ -48,11 +48,11 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'integer', format: 'int64' } });
 
     it('should preserve int64 value and type', () => {
-      expect(Schema.read(Schema.write({ test: 9007199254740991 }).buffer())).toEqual({ test: 9007199254740991 });
+      expect(Schema.read(Schema.write({ test: 9007199254740991 }))).toEqual({ test: 9007199254740991 });
     });
 
     it('should preserve int64 value and type for negative values', () => {
-      expect(Schema.read(Schema.write({ test: -9007199254740991 }).buffer())).toEqual({ test: -9007199254740991 });
+      expect(Schema.read(Schema.write({ test: -9007199254740991 }))).toEqual({ test: -9007199254740991 });
     });
   });
 
@@ -60,12 +60,12 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'number', format: 'float' } });
 
     it('should preserve float value (with precision loss)', () => {
-      const result = Schema.read(Schema.write({ test: 3.14159 }).buffer());
+      const result = Schema.read(Schema.write({ test: 3.14159 }));
       expect(result.test).toBeCloseTo(3.14159, 5);
     });
 
     it('should preserve float value for negative values', () => {
-      const result = Schema.read(Schema.write({ test: -2.71828 }).buffer());
+      const result = Schema.read(Schema.write({ test: -2.71828 }));
       expect(result.test).toBeCloseTo(-2.71828, 5);
     });
   });
@@ -74,11 +74,11 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'integer' } });
 
     it('should default to int32 format', () => {
-      expect(Schema.read(Schema.write({ test: 42 }).buffer())).toEqual({ test: 42 });
+      expect(Schema.read(Schema.write({ test: 42 }))).toEqual({ test: 42 });
     });
 
     it('should handle negative values', () => {
-      expect(Schema.read(Schema.write({ test: -42 }).buffer())).toEqual({ test: -42 });
+      expect(Schema.read(Schema.write({ test: -42 }))).toEqual({ test: -42 });
     });
   });
 
@@ -86,11 +86,11 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'number' } });
 
     it('should default to double format', () => {
-      expect(Schema.read(Schema.write({ test: 3.141592653589793 }).buffer())).toEqual({ test: 3.141592653589793 });
+      expect(Schema.read(Schema.write({ test: 3.141592653589793 }))).toEqual({ test: 3.141592653589793 });
     });
 
     it('should handle negative values', () => {
-      expect(Schema.read(Schema.write({ test: -2.718281828459045 }).buffer())).toEqual({ test: -2.718281828459045 });
+      expect(Schema.read(Schema.write({ test: -2.718281828459045 }))).toEqual({ test: -2.718281828459045 });
     });
   });
 
@@ -98,15 +98,15 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'string' } });
 
     it('should preserve string value and type', () => {
-      expect(Schema.read(Schema.write({ test: 'hello world' }).buffer())).toEqual({ test: 'hello world' });
+      expect(Schema.read(Schema.write({ test: 'hello world' }))).toEqual({ test: 'hello world' });
     });
 
     it('should support special characters', () => {
-      expect(Schema.read(Schema.write({ test: '한자' }).buffer())).toEqual({ test: '한자' });
+      expect(Schema.read(Schema.write({ test: '한자' }))).toEqual({ test: '한자' });
     });
 
     it('should support emojis', () => {
-      expect(Schema.read(Schema.write({ test: '🚀' }).buffer())).toEqual({ test: '🚀' });
+      expect(Schema.read(Schema.write({ test: '🚀' }))).toEqual({ test: '🚀' });
     });
   });
 
@@ -115,12 +115,12 @@ describe('Data integrity - simple', () => {
 
     it('should preserve UUID value', () => {
       const uuid = '550e8400-e29b-4d4e-a7d4-426614174000';
-      expect(Schema.read(Schema.write({ test: uuid }).buffer())).toEqual({ test: uuid });
+      expect(Schema.read(Schema.write({ test: uuid }))).toEqual({ test: uuid });
     });
 
     it('should compress UUID to 16 bytes instead of 72', () => {
       const uuid = '550e8400-e29b-4d4e-a7d4-426614174000';
-      const buffer = Schema.write({ test: uuid }).buffer();
+      const buffer = Schema.write({ test: uuid });
       // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
       // Content: 16 bytes (UUID binary)
       // Total: 19 bytes (vs 75 bytes for string encoding: 3 header + 72 content)
@@ -129,14 +129,14 @@ describe('Data integrity - simple', () => {
 
     it('should handle uppercase UUIDs', () => {
       const uuid = '550E8400-E29B-4D4E-A7D4-426614174000';
-      const result = Schema.read(Schema.write({ test: uuid }).buffer());
+      const result = Schema.read(Schema.write({ test: uuid }));
       // UUID should be normalized to lowercase
       expect(result.test).toBe('550e8400-e29b-4d4e-a7d4-426614174000');
     });
 
     it('should handle nil UUID', () => {
       const uuid = '00000000-0000-0000-0000-000000000000';
-      expect(Schema.read(Schema.write({ test: uuid }).buffer())).toEqual({ test: uuid });
+      expect(Schema.read(Schema.write({ test: uuid }))).toEqual({ test: uuid });
     });
   });
 
@@ -145,12 +145,12 @@ describe('Data integrity - simple', () => {
 
     it('should preserve IPv4 value', () => {
       const ip = '192.168.1.1';
-      expect(Schema.read(Schema.write({ test: ip }).buffer())).toEqual({ test: ip });
+      expect(Schema.read(Schema.write({ test: ip }))).toEqual({ test: ip });
     });
 
     it('should compress IPv4 to 4 bytes instead of 30', () => {
       const ip = '192.168.1.1';
-      const buffer = Schema.write({ test: ip }).buffer();
+      const buffer = Schema.write({ test: ip });
       // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
       // Content: 4 bytes (IPv4 binary)
       // Total: 7 bytes (vs 33 bytes for string encoding)
@@ -158,8 +158,8 @@ describe('Data integrity - simple', () => {
     });
 
     it('should handle edge cases', () => {
-      expect(Schema.read(Schema.write({ test: '0.0.0.0' }).buffer())).toEqual({ test: '0.0.0.0' });
-      expect(Schema.read(Schema.write({ test: '255.255.255.255' }).buffer())).toEqual({ test: '255.255.255.255' });
+      expect(Schema.read(Schema.write({ test: '0.0.0.0' }))).toEqual({ test: '0.0.0.0' });
+      expect(Schema.read(Schema.write({ test: '255.255.255.255' }))).toEqual({ test: '255.255.255.255' });
     });
   });
 
@@ -168,12 +168,12 @@ describe('Data integrity - simple', () => {
 
     it('should compress IPv6 value', () => {
       const ip = '2001:0db8:85a3:0000:0000:8a2e:0370:7334';
-      expect(Schema.read(Schema.write({ test: ip }).buffer())).toEqual({ test: '2001:db8:85a3::8a2e:370:7334' });
+      expect(Schema.read(Schema.write({ test: ip }))).toEqual({ test: '2001:db8:85a3::8a2e:370:7334' });
     });
 
     it('should compress IPv6 to 16 bytes instead of 78', () => {
       const ip = '2001:0db8:85a3:0000:0000:8a2e:0370:7334';
-      const buffer = Schema.write({ test: ip }).buffer();
+      const buffer = Schema.write({ test: ip });
       // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
       // Content: 16 bytes (IPv6 binary)
       // Total: 19 bytes (vs 81 bytes for string encoding)
@@ -182,20 +182,20 @@ describe('Data integrity - simple', () => {
 
     it('should handle compressed IPv6 notation', () => {
       const ip = '2001:db8:85a3::8a2e:370:7334';
-      const result = Schema.read(Schema.write({ test: ip }).buffer());
+      const result = Schema.read(Schema.write({ test: ip }));
       // Should be decoded back with compression
       expect(result.test).toBe(ip);
     });
 
     it('should handle loopback', () => {
       const ip = '::1';
-      const result = Schema.read(Schema.write({ test: ip }).buffer());
+      const result = Schema.read(Schema.write({ test: ip }));
       expect(result.test).toBe('::1');
     });
 
     it('should handle all zeros', () => {
       const ip = '::';
-      const result = Schema.read(Schema.write({ test: ip }).buffer());
+      const result = Schema.read(Schema.write({ test: ip }));
       expect(result.test).toBe('::');
     });
   });
@@ -205,12 +205,12 @@ describe('Data integrity - simple', () => {
 
     it('should preserve date value', () => {
       const date = '2025-10-28';
-      expect(Schema.read(Schema.write({ test: date }).buffer())).toEqual({ test: date });
+      expect(Schema.read(Schema.write({ test: date }))).toEqual({ test: date });
     });
 
     it('should compress date to 4 bytes instead of 20', () => {
       const date = '2025-10-28';
-      const buffer = Schema.write({ test: date }).buffer();
+      const buffer = Schema.write({ test: date });
       // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
       // Content: 4 bytes (days since epoch)
       // Total: 7 bytes (vs 23 bytes for string encoding)
@@ -219,17 +219,17 @@ describe('Data integrity - simple', () => {
 
     it('should handle epoch date', () => {
       const date = '1970-01-01';
-      expect(Schema.read(Schema.write({ test: date }).buffer())).toEqual({ test: date });
+      expect(Schema.read(Schema.write({ test: date }))).toEqual({ test: date });
     });
 
     it('should handle dates before epoch', () => {
       const date = '1969-12-31';
-      expect(Schema.read(Schema.write({ test: date }).buffer())).toEqual({ test: date });
+      expect(Schema.read(Schema.write({ test: date }))).toEqual({ test: date });
     });
 
     it('should handle far future dates', () => {
       const date = '2099-12-31';
-      expect(Schema.read(Schema.write({ test: date }).buffer())).toEqual({ test: date });
+      expect(Schema.read(Schema.write({ test: date }))).toEqual({ test: date });
     });
   });
 
@@ -238,12 +238,12 @@ describe('Data integrity - simple', () => {
 
     it('should preserve date-time value', () => {
       const datetime = '2025-10-28T14:30:00.000Z';
-      expect(Schema.read(Schema.write({ test: datetime }).buffer())).toEqual({ test: datetime });
+      expect(Schema.read(Schema.write({ test: datetime }))).toEqual({ test: datetime });
     });
 
     it('should compress date-time to 8 bytes instead of 40+', () => {
       const datetime = '2025-10-28T14:30:00.000Z';
-      const buffer = Schema.write({ test: datetime }).buffer();
+      const buffer = Schema.write({ test: datetime });
       // Header: 1 byte (field count) + 1 byte (field index) + 1 byte (size) = 3 bytes
       // Content: 8 bytes (milliseconds since epoch)
       // Total: 11 bytes (vs 43+ bytes for string encoding)
@@ -252,18 +252,18 @@ describe('Data integrity - simple', () => {
 
     it('should handle epoch datetime', () => {
       const datetime = '1970-01-01T00:00:00.000Z';
-      expect(Schema.read(Schema.write({ test: datetime }).buffer())).toEqual({ test: datetime });
+      expect(Schema.read(Schema.write({ test: datetime }))).toEqual({ test: datetime });
     });
 
     it('should handle millisecond precision', () => {
       const datetime = '2025-10-28T14:30:00.123Z';
-      expect(Schema.read(Schema.write({ test: datetime }).buffer())).toEqual({ test: datetime });
+      expect(Schema.read(Schema.write({ test: datetime }))).toEqual({ test: datetime });
     });
 
     it('should normalize various ISO 8601 formats', () => {
       // Input without milliseconds, output should have .000Z
       const input = '2025-10-28T14:30:00Z';
-      const result = Schema.read(Schema.write({ test: input }).buffer());
+      const result = Schema.read(Schema.write({ test: input }));
       expect(result.test).toBe('2025-10-28T14:30:00.000Z');
     });
   });
@@ -273,12 +273,12 @@ describe('Data integrity - simple', () => {
 
     it('should preserve binary data via base64', () => {
       const base64 = 'SGVsbG8gV29ybGQh'; // "Hello World!"
-      expect(Schema.read(Schema.write({ test: base64 }).buffer())).toEqual({ test: base64 });
+      expect(Schema.read(Schema.write({ test: base64 }))).toEqual({ test: base64 });
     });
 
     it('should compress binary data efficiently', () => {
       const base64 = 'SGVsbG8gV29ybGQh'; // 16 chars = 32 bytes as string
-      const buffer = Schema.write({ test: base64 }).buffer();
+      const buffer = Schema.write({ test: base64 });
       // Header: 1 byte (field count) + 1 byte (field index) + 4 bytes (size) = 6 bytes
       // Content: 12 bytes (raw binary data decoded from base64)
       // Total: 18 bytes (vs 35 bytes for string encoding)
@@ -287,19 +287,19 @@ describe('Data integrity - simple', () => {
 
     it('should handle Buffer input', () => {
       const data = Buffer.from('Hello World!', 'utf8');
-      const result = Schema.read(Schema.write({ test: data }).buffer());
+      const result = Schema.read(Schema.write({ test: data }));
       expect(result.test).toBe('SGVsbG8gV29ybGQh');
     });
 
     it('should handle Uint8Array input', () => {
       const data = new Uint8Array([72, 101, 108, 108, 111]);
-      const result = Schema.read(Schema.write({ test: data }).buffer());
+      const result = Schema.read(Schema.write({ test: data }));
       expect(result.test).toBe('SGVsbG8='); // "Hello" in base64
     });
 
     it('should handle empty binary data', () => {
       const base64 = ''; // Empty
-      expect(Schema.read(Schema.write({ test: base64 }).buffer())).toEqual({ test: base64 });
+      expect(Schema.read(Schema.write({ test: base64 }))).toEqual({ test: base64 });
     });
 
     it('should handle large binary data', () => {
@@ -309,7 +309,7 @@ describe('Data integrity - simple', () => {
         bytes[i] = i;
       }
       const base64 = Buffer.from(bytes).toString('base64');
-      expect(Schema.read(Schema.write({ test: base64 }).buffer())).toEqual({ test: base64 });
+      expect(Schema.read(Schema.write({ test: base64 }))).toEqual({ test: base64 });
     });
   });
 
@@ -317,7 +317,7 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'array', items: { type: 'string' } } });
 
     it('should preserve array values and types', () => {
-      expect(Schema.read(Schema.write({ test: ['a', 'b', 'c'] }).buffer())).toEqual({ test: ['a', 'b', 'c'] });
+      expect(Schema.read(Schema.write({ test: ['a', 'b', 'c'] }))).toEqual({ test: ['a', 'b', 'c'] });
     });
   });
 
@@ -325,7 +325,7 @@ describe('Data integrity - simple', () => {
     const Schema = schema({ test: { type: 'object', schema: { test: { type: 'number', format: 'double' } } } });
 
     it('should preserve object values and types', () => {
-      expect(Schema.read(Schema.write({ test: { test: 23.23 } }).buffer())).toEqual({ test: { test: 23.23 } });
+      expect(Schema.read(Schema.write({ test: { test: 23.23 } }))).toEqual({ test: { test: 23.23 } });
     });
   });
 
@@ -342,30 +342,30 @@ describe('Data integrity - simple', () => {
 
     it('should handle string variant (first)', () => {
       const data = { value: 'hello' };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle integer variant (second)', () => {
       const data = { value: 42 };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle boolean variant (third)', () => {
       const data = { value: true };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should use correct discriminator for each variant', () => {
       // String (first variant) should have discriminator 0x01
-      const stringBuffer = Schema.write({ value: 'test' }).buffer();
+      const stringBuffer = Schema.write({ value: 'test' });
       expect(stringBuffer[2]).toBe(0x01); // discriminator byte
 
       // Integer (second variant) should have discriminator 0x02
-      const intBuffer = Schema.write({ value: 42 }).buffer();
+      const intBuffer = Schema.write({ value: 42 });
       expect(intBuffer[2]).toBe(0x02); // discriminator byte
 
       // Boolean (third variant) should have discriminator 0x03
-      const boolBuffer = Schema.write({ value: true }).buffer();
+      const boolBuffer = Schema.write({ value: true });
       expect(boolBuffer[2]).toBe(0x03); // discriminator byte
     });
   });
@@ -382,12 +382,12 @@ describe('Data integrity - simple', () => {
 
     it('should handle number variant', () => {
       const data = { data: 3.14 };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle string variant', () => {
       const data = { data: 'hello' };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -404,30 +404,30 @@ describe('Data integrity - simple', () => {
 
     it('should handle null value', () => {
       const data = { value: null };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle string variant when not null', () => {
       const data = { value: 'test' };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle integer variant when not null', () => {
       const data = { value: 123 };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should use 0x00 for null, 0x01+ for variants', () => {
       // Null should use 0x00
-      const nullBuffer = Schema.write({ value: null }).buffer();
+      const nullBuffer = Schema.write({ value: null });
       expect(nullBuffer[2]).toBe(0x00);
 
       // String variant should use 0x01
-      const stringBuffer = Schema.write({ value: 'test' }).buffer();
+      const stringBuffer = Schema.write({ value: 'test' });
       expect(stringBuffer[2]).toBe(0x01);
 
       // Integer variant should use 0x02
-      const intBuffer = Schema.write({ value: 42 }).buffer();
+      const intBuffer = Schema.write({ value: 42 });
       expect(intBuffer[2]).toBe(0x02);
     });
   });
@@ -444,12 +444,12 @@ describe('Data integrity - simple', () => {
 
     it('should handle array variant', () => {
       const data = { item: ['a', 'b', 'c'] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle object variant', () => {
       const data = { item: { x: 10, y: 20 } };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 });
@@ -459,11 +459,11 @@ describe('Data integrity - multi simple', () => {
     const Schema = schema({ test: { type: 'boolean' }, test2: { type: 'boolean' } });
 
     it('should preserve boolean value and type - false', () => {
-      expect(Schema.read(Schema.write({ test: false, test2: true }).buffer())).toEqual({ test: false, test2: true });
+      expect(Schema.read(Schema.write({ test: false, test2: true }))).toEqual({ test: false, test2: true });
     });
 
     it('should skip null or undefined values', () => {
-      expect(Schema.read(Schema.write({ test: null, test2: false }).buffer())).toEqual({ test2: false });
+      expect(Schema.read(Schema.write({ test: null, test2: false }))).toEqual({ test2: false });
     });
   });
 
@@ -471,7 +471,7 @@ describe('Data integrity - multi simple', () => {
     const Schema = schema({ test: { type: 'number', format: 'double' }, test2: { type: 'number', format: 'double' } });
 
     it('should preserve number value and type', () => {
-      expect(Schema.read(Schema.write({ test: 23.23, test2: -97.7 }).buffer())).toEqual({ test: 23.23, test2: -97.7 });
+      expect(Schema.read(Schema.write({ test: 23.23, test2: -97.7 }))).toEqual({ test: 23.23, test2: -97.7 });
     });
   });
 
@@ -479,7 +479,7 @@ describe('Data integrity - multi simple', () => {
     const Schema = schema({ test: { type: 'string' }, test2: { type: 'string' } });
 
     it('should preserve string value and type', () => {
-      expect(Schema.read(Schema.write({ test: 'hello world', test2: 'écho' }).buffer())).toEqual({ test: 'hello world', test2: 'écho' });
+      expect(Schema.read(Schema.write({ test: 'hello world', test2: 'écho' }))).toEqual({ test: 'hello world', test2: 'écho' });
     });
   });
 
@@ -487,7 +487,7 @@ describe('Data integrity - multi simple', () => {
     const Schema = schema({ test: { type: 'array', items: { type: 'string' } }, test2: { type: 'array', items: { type: 'string' } } });
 
     it('should preserve array values and types', () => {
-      expect(Schema.read(Schema.write({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] }).buffer())).toEqual({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] });
+      expect(Schema.read(Schema.write({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] }))).toEqual({ test: ['a', 'b', 'c'], test2: ['d', 'e', 'f'] });
     });
   });
 
@@ -495,7 +495,7 @@ describe('Data integrity - multi simple', () => {
     const Schema = schema({ test: { type: 'object', schema: { test: { type: 'number', format: 'double' } } }, test2: { type: 'object', schema: { test: { type: 'number', format: 'double' } } } });
 
     it('should preserve object values and types', () => {
-      expect(Schema.read(Schema.write({ test: { test: 23.23 }, test2: { test: -97.7 } }).buffer())).toEqual({ test: { test: 23.23 }, test2: { test: -97.7 } });
+      expect(Schema.read(Schema.write({ test: { test: 23.23 }, test2: { test: -97.7 } }))).toEqual({ test: { test: 23.23 }, test2: { test: -97.7 } });
     });
   });
 });
@@ -511,7 +511,7 @@ describe('Data integrity - multi mixed', () => {
     });
 
     it('should preserve values and types', () => {
-      expect(Schema.read(Schema.write({ bool: true, num: 23.23, str: 'hello world', arr: ['a', 'b', 'c'], obj: { sub: 'way' } }).buffer())).toEqual({ bool: true, num: 23.23, str: 'hello world', arr: ['a', 'b', 'c'], obj: { sub: 'way' } });
+      expect(Schema.read(Schema.write({ bool: true, num: 23.23, str: 'hello world', arr: ['a', 'b', 'c'], obj: { sub: 'way' } }))).toEqual({ bool: true, num: 23.23, str: 'hello world', arr: ['a', 'b', 'c'], obj: { sub: 'way' } });
     });
   });
 });
@@ -524,12 +524,12 @@ describe('Format size differences', () => {
     const DoubleSchema = schema({ value: { type: 'number', format: 'double' } });
 
     it('float should use 4 bytes for value (7 bytes total with metadata)', () => {
-      const buffer = FloatSchema.write({ value: 3.14 }).buffer();
+      const buffer = FloatSchema.write({ value: 3.14 });
       expect(buffer.length).toBe(7); // 1 field count + 1 field index + 1 size + 4 value
     });
 
     it('double should use 8 bytes for value (11 bytes total with metadata)', () => {
-      const buffer = DoubleSchema.write({ value: 3.14 }).buffer();
+      const buffer = DoubleSchema.write({ value: 3.14 });
       expect(buffer.length).toBe(11); // 1 field count + 1 field index + 1 size + 8 value
     });
   });
@@ -539,12 +539,12 @@ describe('Format size differences', () => {
     const Int64Schema = schema({ value: { type: 'integer', format: 'int64' } });
 
     it('int32 should use 4 bytes for value (7 bytes total with metadata)', () => {
-      const buffer = Int32Schema.write({ value: 12345 }).buffer();
+      const buffer = Int32Schema.write({ value: 12345 });
       expect(buffer.length).toBe(7); // 1 field count + 1 field index + 1 size + 4 value
     });
 
     it('int64 should use 8 bytes for value (11 bytes total with metadata)', () => {
-      const buffer = Int64Schema.write({ value: 12345 }).buffer();
+      const buffer = Int64Schema.write({ value: 12345 });
       expect(buffer.length).toBe(11); // 1 field count + 1 field index + 1 size + 8 value
     });
   });
@@ -557,16 +557,16 @@ describe('Nullable properties', () => {
     const Schema = schema({ test: { type: 'string', nullable: true } });
 
     it('should preserve null value', () => {
-      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+      expect(Schema.read(Schema.write({ test: null }))).toEqual({ test: null });
     });
 
     it('should preserve non-null string value', () => {
-      expect(Schema.read(Schema.write({ test: 'hello' }).buffer())).toEqual({ test: 'hello' });
+      expect(Schema.read(Schema.write({ test: 'hello' }))).toEqual({ test: 'hello' });
     });
 
     it('should encode null with minimal bytes (header only)', () => {
-      const buffer = Schema.write({ test: null }).buffer();
-      const nonNullBuffer = Schema.write({ test: 'a' }).buffer();
+      const buffer = Schema.write({ test: null });
+      const nonNullBuffer = Schema.write({ test: 'a' });
       expect(buffer.length).toBeLessThan(nonNullBuffer.length);
     });
   });
@@ -575,11 +575,11 @@ describe('Nullable properties', () => {
     const Schema = schema({ test: { type: 'number', format: 'double', nullable: true } });
 
     it('should preserve null value', () => {
-      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+      expect(Schema.read(Schema.write({ test: null }))).toEqual({ test: null });
     });
 
     it('should preserve non-null number value', () => {
-      expect(Schema.read(Schema.write({ test: 42.5 }).buffer())).toEqual({ test: 42.5 });
+      expect(Schema.read(Schema.write({ test: 42.5 }))).toEqual({ test: 42.5 });
     });
   });
 
@@ -587,11 +587,11 @@ describe('Nullable properties', () => {
     const Schema = schema({ test: { type: 'integer', format: 'int32', nullable: true } });
 
     it('should preserve null value', () => {
-      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+      expect(Schema.read(Schema.write({ test: null }))).toEqual({ test: null });
     });
 
     it('should preserve non-null integer value', () => {
-      expect(Schema.read(Schema.write({ test: 123 }).buffer())).toEqual({ test: 123 });
+      expect(Schema.read(Schema.write({ test: 123 }))).toEqual({ test: 123 });
     });
   });
 
@@ -599,15 +599,15 @@ describe('Nullable properties', () => {
     const Schema = schema({ test: { type: 'boolean', nullable: true } });
 
     it('should preserve null value', () => {
-      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+      expect(Schema.read(Schema.write({ test: null }))).toEqual({ test: null });
     });
 
     it('should preserve false value (not confused with null)', () => {
-      expect(Schema.read(Schema.write({ test: false }).buffer())).toEqual({ test: false });
+      expect(Schema.read(Schema.write({ test: false }))).toEqual({ test: false });
     });
 
     it('should preserve true value', () => {
-      expect(Schema.read(Schema.write({ test: true }).buffer())).toEqual({ test: true });
+      expect(Schema.read(Schema.write({ test: true }))).toEqual({ test: true });
     });
   });
 
@@ -620,19 +620,19 @@ describe('Nullable properties', () => {
 
     it('should handle mix of null and non-null values', () => {
       const data = { nullableField: null, regularField: 'hello', anotherNullable: 42 };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should skip non-nullable fields when null', () => {
       const data = { nullableField: 'test', regularField: null, anotherNullable: null };
-      const result = Schema.read(Schema.write(data).buffer());
+      const result = Schema.read(Schema.write(data));
       expect(result).toEqual({ nullableField: 'test', anotherNullable: null });
       expect(result.regularField).toBeUndefined();
     });
 
     it('should preserve all null values in nullable fields', () => {
       const data = { nullableField: null, regularField: 'value', anotherNullable: null };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -646,11 +646,11 @@ describe('Nullable properties', () => {
     });
 
     it('should preserve null value', () => {
-      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+      expect(Schema.read(Schema.write({ test: null }))).toEqual({ test: null });
     });
 
     it('should preserve non-null object value', () => {
-      expect(Schema.read(Schema.write({ test: { name: 'John' } }).buffer())).toEqual({ test: { name: 'John' } });
+      expect(Schema.read(Schema.write({ test: { name: 'John' } }))).toEqual({ test: { name: 'John' } });
     });
   });
 
@@ -664,20 +664,20 @@ describe('Nullable properties', () => {
     });
 
     it('should preserve null value', () => {
-      expect(Schema.read(Schema.write({ test: null }).buffer())).toEqual({ test: null });
+      expect(Schema.read(Schema.write({ test: null }))).toEqual({ test: null });
     });
 
     it('should preserve non-null array value', () => {
-      expect(Schema.read(Schema.write({ test: ['a', 'b', 'c'] }).buffer())).toEqual({ test: ['a', 'b', 'c'] });
+      expect(Schema.read(Schema.write({ test: ['a', 'b', 'c'] }))).toEqual({ test: ['a', 'b', 'c'] });
     });
 
     it('should preserve empty array (different from null)', () => {
-      expect(Schema.read(Schema.write({ test: [] }).buffer())).toEqual({ test: [] });
+      expect(Schema.read(Schema.write({ test: [] }))).toEqual({ test: [] });
     });
 
     it('empty array should have different encoding than null', () => {
-      const emptyArrayBuffer = Schema.write({ test: [] }).buffer();
-      const nullBuffer = Schema.write({ test: null }).buffer();
+      const emptyArrayBuffer = Schema.write({ test: [] });
+      const nullBuffer = Schema.write({ test: null });
       expect(emptyArrayBuffer).not.toEqual(nullBuffer);
     });
   });
@@ -687,8 +687,8 @@ describe('Nullable properties', () => {
       const Schema = schema({ test: { type: 'string', nullable: true } });
 
       it('should distinguish empty string from null', () => {
-        const emptyString = Schema.read(Schema.write({ test: '' }).buffer());
-        const nullValue = Schema.read(Schema.write({ test: null }).buffer());
+        const emptyString = Schema.read(Schema.write({ test: '' }));
+        const nullValue = Schema.read(Schema.write({ test: null }));
 
         expect(emptyString).toEqual({ test: '' });
         expect(nullValue).toEqual({ test: null });
@@ -696,8 +696,8 @@ describe('Nullable properties', () => {
       });
 
       it('should have different byte encodings', () => {
-        const emptyStringBuffer = Schema.write({ test: '' }).buffer();
-        const nullBuffer = Schema.write({ test: null }).buffer();
+        const emptyStringBuffer = Schema.write({ test: '' });
+        const nullBuffer = Schema.write({ test: null });
         expect(emptyStringBuffer).not.toEqual(nullBuffer);
       });
     });
@@ -706,8 +706,8 @@ describe('Nullable properties', () => {
       const Schema = schema({ test: { type: 'number', format: 'double', nullable: true } });
 
       it('should distinguish zero from null', () => {
-        const zero = Schema.read(Schema.write({ test: 0 }).buffer());
-        const nullValue = Schema.read(Schema.write({ test: null }).buffer());
+        const zero = Schema.read(Schema.write({ test: 0 }));
+        const nullValue = Schema.read(Schema.write({ test: null }));
 
         expect(zero).toEqual({ test: 0 });
         expect(nullValue).toEqual({ test: null });
@@ -719,8 +719,8 @@ describe('Nullable properties', () => {
       const Schema = schema({ test: { type: 'boolean', nullable: true } });
 
       it('should distinguish false from null', () => {
-        const falseValue = Schema.read(Schema.write({ test: false }).buffer());
-        const nullValue = Schema.read(Schema.write({ test: null }).buffer());
+        const falseValue = Schema.read(Schema.write({ test: false }));
+        const nullValue = Schema.read(Schema.write({ test: null }));
 
         expect(falseValue).toEqual({ test: false });
         expect(nullValue).toEqual({ test: null });
@@ -737,11 +737,11 @@ describe('OpenAPI-compatible array formats', () => {
     const Schema = schema({ test: { type: 'array', items: { type: 'integer', format: 'int32' } } });
 
     it('should preserve array of integers', () => {
-      expect(Schema.read(Schema.write({ test: [1, 2, 3, 4, 5] }).buffer())).toEqual({ test: [1, 2, 3, 4, 5] });
+      expect(Schema.read(Schema.write({ test: [1, 2, 3, 4, 5] }))).toEqual({ test: [1, 2, 3, 4, 5] });
     });
 
     it('should handle negative integers', () => {
-      expect(Schema.read(Schema.write({ test: [-100, 0, 100] }).buffer())).toEqual({ test: [-100, 0, 100] });
+      expect(Schema.read(Schema.write({ test: [-100, 0, 100] }))).toEqual({ test: [-100, 0, 100] });
     });
   });
 
@@ -750,7 +750,7 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should preserve array of int64 values', () => {
       const data = { test: [9007199254740991, -9007199254740991, 0] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -758,7 +758,7 @@ describe('OpenAPI-compatible array formats', () => {
     const Schema = schema({ test: { type: 'array', items: { type: 'number', format: 'float' } } });
 
     it('should preserve array of floats with precision loss', () => {
-      const result = Schema.read(Schema.write({ test: [3.14, 2.71, 1.41] }).buffer());
+      const result = Schema.read(Schema.write({ test: [3.14, 2.71, 1.41] }));
       expect(result.test[0]).toBeCloseTo(3.14, 5);
       expect(result.test[1]).toBeCloseTo(2.71, 5);
       expect(result.test[2]).toBeCloseTo(1.41, 5);
@@ -769,7 +769,7 @@ describe('OpenAPI-compatible array formats', () => {
     const Schema = schema({ test: { type: 'array', items: { type: 'number', format: 'double' } } });
 
     it('should preserve array of doubles', () => {
-      expect(Schema.read(Schema.write({ test: [3.141592653589793, 2.718281828459045] }).buffer())).toEqual({ test: [3.141592653589793, 2.718281828459045] });
+      expect(Schema.read(Schema.write({ test: [3.141592653589793, 2.718281828459045] }))).toEqual({ test: [3.141592653589793, 2.718281828459045] });
     });
   });
 
@@ -784,14 +784,14 @@ describe('OpenAPI-compatible array formats', () => {
           '00000000-0000-0000-0000-000000000000',
         ],
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should compress UUIDs efficiently', () => {
       const data = {
         test: ['550e8400-e29b-4d4e-a7d4-426614174000', '6ba7b810-9dad-11d1-80b4-00c04fd430c8'],
       };
-      const buffer = Schema.write(data).buffer();
+      const buffer = Schema.write(data);
       // Each UUID is 16 bytes + 1 byte size = 17 bytes per UUID
       // Plus array overhead
       expect(buffer.length).toBeLessThan(100); // Much less than string encoding
@@ -803,7 +803,7 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should preserve array of IPv4 addresses', () => {
       const data = { test: ['192.168.1.1', '10.0.0.1', '172.16.0.1'] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -814,7 +814,7 @@ describe('OpenAPI-compatible array formats', () => {
       const data = {
         test: ['2001:db8:85a3::8a2e:370:7334', '::1', '::'],
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -823,7 +823,7 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should preserve array of dates', () => {
       const data = { test: ['2025-10-28', '2024-01-01', '1970-01-01'] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -834,7 +834,7 @@ describe('OpenAPI-compatible array formats', () => {
       const data = {
         test: ['2025-10-28T14:30:00.000Z', '2024-01-01T00:00:00.000Z'],
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -843,12 +843,12 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should preserve array of binary data', () => {
       const data = { test: ['SGVsbG8=', 'V29ybGQ=', 'Zm9vYmFy'] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle Buffer inputs', () => {
       const input = { test: [Buffer.from('Hello'), Buffer.from('World')] };
-      const result = Schema.read(Schema.write(input).buffer());
+      const result = Schema.read(Schema.write(input));
       expect(result.test).toEqual(['SGVsbG8=', 'V29ybGQ=']);
     });
   });
@@ -858,17 +858,17 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should preserve null values in array', () => {
       const data = { test: ['a', null, 'b', null, 'c'] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should distinguish empty string from null', () => {
       const data = { test: ['', null, 'text'] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle all null array', () => {
       const data = { test: [null, null, null] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -877,12 +877,12 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should preserve null values with integers', () => {
       const data = { test: [1, null, 2, null, 3] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should distinguish zero from null', () => {
       const data = { test: [0, null, -1] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -902,22 +902,22 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should handle mixed types in array', () => {
       const data = { test: ['hello', 42, true, 'world', false, 123] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle all strings', () => {
       const data = { test: ['a', 'b', 'c'] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle all integers', () => {
       const data = { test: [1, 2, 3] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle all booleans', () => {
       const data = { test: [true, false, true] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -936,7 +936,7 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should handle mixed numbers and strings', () => {
       const data = { test: [3.14, 'pi', 2.71, 'e'] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -956,7 +956,7 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should handle null with oneOf variants', () => {
       const data = { test: ['hello', null, 42, null, 'world'] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -973,12 +973,12 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should handle 2D arrays', () => {
       const data = { test: [[1, 2, 3], [4, 5, 6], [7, 8, 9]] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle empty nested arrays', () => {
       const data = { test: [[], [1], []] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -995,7 +995,7 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should handle 2D string arrays', () => {
       const data = { test: [['a', 'b'], ['c', 'd', 'e'], ['f']] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1015,7 +1015,7 @@ describe('OpenAPI-compatible array formats', () => {
 
     it('should handle array of objects', () => {
       const data = { test: [{ x: 1, y: 2 }, { x: 3, y: 4 }, { x: 5, y: 6 }] };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1043,7 +1043,7 @@ describe('OpenAPI-compatible array formats', () => {
           [4, 5],
         ],
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 });
@@ -1079,7 +1079,7 @@ describe('OpenAPI-compatible object formats', () => {
           ip: '192.168.1.1',
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1103,7 +1103,7 @@ describe('OpenAPI-compatible object formats', () => {
           number: null,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should preserve non-null values', () => {
@@ -1114,7 +1114,7 @@ describe('OpenAPI-compatible object formats', () => {
           number: 42,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle mix of null and non-null', () => {
@@ -1125,7 +1125,7 @@ describe('OpenAPI-compatible object formats', () => {
           number: null,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1153,7 +1153,7 @@ describe('OpenAPI-compatible object formats', () => {
           data: 'success',
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle integer variant', () => {
@@ -1163,7 +1163,7 @@ describe('OpenAPI-compatible object formats', () => {
           data: 42,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle object variant', () => {
@@ -1173,7 +1173,7 @@ describe('OpenAPI-compatible object formats', () => {
           data: { message: 'Operation completed' },
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1200,7 +1200,7 @@ describe('OpenAPI-compatible object formats', () => {
           value: 3.14159,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle string variant', () => {
@@ -1210,7 +1210,7 @@ describe('OpenAPI-compatible object formats', () => {
           value: 'text value',
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1251,7 +1251,7 @@ describe('OpenAPI-compatible object formats', () => {
           },
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1287,7 +1287,7 @@ describe('OpenAPI-compatible object formats', () => {
           ],
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1315,7 +1315,7 @@ describe('OpenAPI-compatible object formats', () => {
           value: null,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle string variant', () => {
@@ -1325,7 +1325,7 @@ describe('OpenAPI-compatible object formats', () => {
           value: 'text',
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle integer variant', () => {
@@ -1335,7 +1335,7 @@ describe('OpenAPI-compatible object formats', () => {
           value: 42,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1381,7 +1381,7 @@ describe('OpenAPI-compatible object formats', () => {
           created: '2025-10-28T14:30:00.000Z',
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle with string metadata variant', () => {
@@ -1399,7 +1399,7 @@ describe('OpenAPI-compatible object formats', () => {
           created: '2025-10-28T15:00:00.000Z',
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1425,7 +1425,7 @@ describe('OpenAPI-compatible object formats', () => {
           fourth: 3.14,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should handle properties in different order than schema', () => {
@@ -1445,7 +1445,7 @@ describe('OpenAPI-compatible object formats', () => {
           fourth: 3.14,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(expected);
+      expect(Schema.read(Schema.write(data))).toEqual(expected);
     });
 
     it('should handle properties in reverse order', () => {
@@ -1465,7 +1465,7 @@ describe('OpenAPI-compatible object formats', () => {
           fourth: 2.71,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(expected);
+      expect(Schema.read(Schema.write(data))).toEqual(expected);
     });
 
     it('should handle properties in random order', () => {
@@ -1485,7 +1485,7 @@ describe('OpenAPI-compatible object formats', () => {
           fourth: 1.41,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(expected);
+      expect(Schema.read(Schema.write(data))).toEqual(expected);
     });
   });
 
@@ -1508,7 +1508,7 @@ describe('OpenAPI-compatible object formats', () => {
           undeclared: 'should be ignored',
         },
       };
-      const result = Schema.read(Schema.write(input).buffer());
+      const result = Schema.read(Schema.write(input));
       expect(result).toEqual({ data: { declared: 'value' } });
       expect(result.data).not.toHaveProperty('undeclared');
 
@@ -1579,7 +1579,7 @@ describe('OpenAPI native format support', () => {
           age: 30,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1612,7 +1612,7 @@ describe('OpenAPI native format support', () => {
           email: 'john@example.com',
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1665,7 +1665,7 @@ describe('OpenAPI native format support', () => {
           ],
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1712,7 +1712,7 @@ describe('OpenAPI native format support', () => {
           },
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
 
     it('should resolve $ref in oneOf (bank account)', () => {
@@ -1725,7 +1725,7 @@ describe('OpenAPI native format support', () => {
           },
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1812,7 +1812,7 @@ describe('OpenAPI native format support', () => {
           },
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1868,7 +1868,7 @@ describe('OpenAPI native format support', () => {
           total: 99.99,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1901,7 +1901,7 @@ describe('OpenAPI native format support', () => {
           { id: 3, name: 'Charlie' },
         ],
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1925,7 +1925,7 @@ describe('OpenAPI native format support', () => {
         age: 30,
         active: true,
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -1961,7 +1961,7 @@ describe('OpenAPI native format support', () => {
           notifications: true,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 
@@ -2005,7 +2005,7 @@ describe('OpenAPI native format support', () => {
           price: 29.99,
         },
       };
-      expect(Schema.read(Schema.write(data).buffer())).toEqual(data);
+      expect(Schema.read(Schema.write(data))).toEqual(data);
     });
   });
 });
